@@ -1,0 +1,6 @@
+[submodule "vendor/subhook"]
+	path = vendor/subhook
+	url = https://github.com/Zeex/subhook
+[submodule "vendor/loguru"]
+	path = vendor/loguru
+	url = https://github.com/emilk/loguru
