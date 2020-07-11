@@ -1,11 +1,10 @@
 #include <Windows.h>
-#include <d3d11.h>
 #include <psapi.h>
-#include <iostream>
 #include <loguru.hpp>
 #include <string>
+#include <thread>
 
-#include "utils/hook/manager.h"
+#include "core.h"
 
 #define HELPER_EXE_NAME "OverlayHelper"
 
@@ -59,6 +58,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         DisableThreadLibraryCalls((HMODULE)hinstDLL);
 
         LOG_F(INFO, "Overlay Core v1.0\n");
+
+        // Start overlay core
+        overlay::core::core::get()->start();
     }
 
     return true;
