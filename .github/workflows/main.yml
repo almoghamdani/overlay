@@ -21,7 +21,23 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Get latest CMake
+      # Using 'latest' branch, the latest CMake is installed.
+      uses: lukka/get-cmake@latest
+
+    - name: Start MSVC developer console
+      uses: ilammy/msvc-dev-cmd@v1
 
     # Build the overlay
     - name: Build overlay core, helper and demo
-      run: build.bat
+      uses: lukka/run-cmake@v2
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+        cmakeBuildType: Release
+        buildWithCMakeArgs: "--config Release -- -v:quiet -m"
+        buildDirectory: ${{ runner.temp }}/build
+        buildWithCMake: true
