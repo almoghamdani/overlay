@@ -38,7 +38,7 @@ jobs:
     - name: Build Overlay Core, Helper and Demo
       uses: lukka/run-cmake@v2
       with:
-        cmakeListsOrSettingsJson: CMakeListsTxtBasic
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeBuildType: Release
         cmakeGenerator: Ninja
