@@ -44,3 +44,10 @@ jobs:
         cmakeAppendedArgs: '-GNinja -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
+
+    # Save built overlay
+    - name: Save build
+      uses: actions/upload-artifact@v2
+      with:
+        name: overlay-bin
+        path: ${{ runner.temp }}/build/bin
