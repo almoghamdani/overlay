@@ -24,9 +24,11 @@ jobs:
       with:
         submodules: true
 
-    - name: Get latest CMake and Ninja
+    - name: Get latest CMake
       # Using 'latest' branch, the latest CMake is installed.
       uses: lukka/get-cmake@latest
+
+    - name: Get latest Ninja
       uses: seanmiddleditch/gha-setup-ninja@master
 
     # Start MSVC developer console with x64 arch
