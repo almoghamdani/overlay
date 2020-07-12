@@ -24,20 +24,24 @@ jobs:
       with:
         submodules: true
 
-    - name: Get latest CMake
+    - name: Get latest CMake and Ninja
       # Using 'latest' branch, the latest CMake is installed.
       uses: lukka/get-cmake@latest
+      uses: seanmiddleditch/gha-setup-ninja@master
 
+    # Start MSVC developer console with x64 arch
     - name: Start MSVC developer console
       uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
 
     # Build the overlay
-    - name: Build overlay core, helper and demo
+    - name: Build Overlay Core, Helper and Demo
       uses: lukka/run-cmake@v2
       with:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeBuildType: Release
-        buildWithCMakeArgs: "--config Release -- -v:quiet -m"
+        cmakeAppendedArgs: '-GNinja '
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true

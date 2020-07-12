@@ -10,11 +10,7 @@ IF NOT DEFINED DevEnvDir (
 )
 
 :: Create the cmake project
-cd build
-cmake -DCMAKE_GENERATOR_PLATFORM=x64 ..
+cmake -G Ninja -B build
 
-:: Build the solution
-msbuild Overlay.sln
-
-:: Return to launcher folder
-cd ..
+:: Build the project
+cmake --build build
