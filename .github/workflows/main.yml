@@ -41,7 +41,6 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeBuildType: Release
-        cmakeGenerator: Ninja
-        cmakeAppendedArgs: '-DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
+        cmakeAppendedArgs: '-GNinja -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
