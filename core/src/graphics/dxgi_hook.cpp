@@ -3,51 +3,37 @@
 #include <iostream>
 #include <loguru.hpp>
 
+#include "../core.h"
 #include "../utils/hook/manager.h"
 #include "../utils/hook/vtable.h"
 
-HRESULT DXGISwapChainPresentHook(IDXGISwapChain *swapChain, UINT syncInterval, UINT flags) {
-    HRESULT ret;
-
-    // Call original function
-    ret = overlay::hook::manager::get_trampoline("DXGISwapChainPresent")
-              .call<HRESULT>(swapChain, syncInterval, flags);
-
-    return ret;
+HRESULT overlay::core::graphics::DXGISwapChainPresentHook(IDXGISwapChain *swapChain,
+                                                          UINT syncInterval, UINT flags) {
+    return overlay::core::core::get()->getDxgiHook()->present_hook(swapChain, syncInterval, flags);
 }
 
-HRESULT DXGISwapChainResizeBuffersHook(IDXGISwapChain *swapChain, UINT bufferCount, UINT width,
-                                       UINT height, DXGI_FORMAT newFormat, UINT swapChainFlags) {
-    HRESULT ret;
-
-    // Call original function
-    ret = overlay::hook::manager::get_trampoline("DXGISwapChainResizeBuffers")
-              .call<HRESULT>(swapChain, bufferCount, width, height, newFormat, swapChainFlags);
-
-    return ret;
+HRESULT overlay::core::graphics::DXGISwapChainResizeBuffersHook(IDXGISwapChain *swapChain,
+                                                                UINT bufferCount, UINT width,
+                                                                UINT height, DXGI_FORMAT newFormat,
+                                                                UINT swapChainFlags) {
+    return overlay::core::core::get()->getDxgiHook()->resize_buffers_hook(
+        swapChain, bufferCount, width, height, newFormat, swapChainFlags);
 }
 
-HRESULT DXGISwapChainResizeTargetHook(IDXGISwapChain *swapChain,
-                                      const DXGI_MODE_DESC *pNewTargetParameters) {
-    HRESULT ret;
-
-    // Call original function
-    ret = overlay::hook::manager::get_trampoline("DXGISwapChainResizeTarget")
-              .call<HRESULT>(swapChain, pNewTargetParameters);
-
-    return ret;
+HRESULT overlay::core::graphics::DXGISwapChainResizeTargetHook(
+    IDXGISwapChain *swapChain, const DXGI_MODE_DESC *pNewTargetParameters) {
+    return overlay::core::core::get()->getDxgiHook()->resize_target_hook(swapChain,
+                                                                         pNewTargetParameters);
 }
 
-HRESULT DXGISwapChain1Present1Hook(IDXGISwapChain1 *swapChain, UINT syncInterval, UINT presentFlags,
-                                   const DXGI_PRESENT_PARAMETERS *pPresentParameters) {
-    HRESULT ret;
-
-    // Call original function
-    ret = overlay::hook::manager::get_trampoline("DXGISwapChain1Present1")
-              .call<HRESULT>(swapChain, syncInterval, presentFlags, pPresentParameters);
-
-    return ret;
+HRESULT overlay::core::graphics::DXGISwapChain1Present1Hook(
+    IDXGISwapChain1 *swapChain, UINT syncInterval, UINT presentFlags,
+    const DXGI_PRESENT_PARAMETERS *pPresentParameters) {
+    return overlay::core::core::get()->getDxgiHook()->present1_hook(
+        swapChain, syncInterval, presentFlags, pPresentParameters);
 }
+
+overlay::core::graphics::dxgi_hook::dxgi_hook() : _graphicsInitiated(false) {}
 
 bool overlay::core::graphics::dxgi_hook::hook() {
     bool hooked = false;
@@ -169,6 +155,43 @@ bool overlay::core::graphics::dxgi_hook::hook_directx10(HWND window) {
     return hooked;
 }
 
+bool overlay::core::graphics::dxgi_hook::init_graphics(IDXGISwapChain *swapChain) {
+    HWND injectWindow = core::get()->getInjectWindow();
+
+    DXGI_SWAP_CHAIN_DESC swapDesc;
+
+    // If the graphics is already initiated
+    if (_graphicsInitiated) {
+        return true;
+    }
+
+    // Get the swap-chain's description
+    if (FAILED(swapChain->GetDesc(&swapDesc))) {
+        return false;
+    }
+
+    // If the swap-chain's output window is the inject window, set the main graphics window to it
+    if ((injectWindow != NULL && swapDesc.OutputWindow == injectWindow) ||
+        (injectWindow == NULL && swapDesc.OutputWindow != NULL)) {
+        // Set graphics window
+        core::get()->setGraphicsWindow(swapDesc.OutputWindow);
+
+        // Set the graphics as initiated
+        _graphicsInitiated = true;
+
+        return true;
+    }
+
+    return false;
+}
+
+void overlay::core::graphics::dxgi_hook::beforePresent(IDXGISwapChain *swapChain) {
+    // If the graphics isn't initiated, try to initialize it
+    if (!_graphicsInitiated) {
+        init_graphics(swapChain);
+    }
+}
+
 bool overlay::core::graphics::dxgi_hook::hook_swap_chain(IDXGISwapChain *swapChain) {
     void *swapChainPresentFunc =
         hook::vtable::get_function_pointer(swapChain, DXGI_SWAP_CHAIN_PRESENT_VTABLE_INDEX);
@@ -222,4 +245,57 @@ bool overlay::core::graphics::dxgi_hook::hook_swap_chain(IDXGISwapChain *swapCha
     }
 
     return true;
+}
+
+HRESULT overlay::core::graphics::dxgi_hook::present_hook(IDXGISwapChain *swapChain,
+                                                         UINT syncInterval, UINT flags) {
+    HRESULT ret;
+
+    // Call before present handler
+    beforePresent(swapChain);
+
+    // Call original function
+    ret = hook::manager::get_trampoline("DXGISwapChainPresent")
+              .call<HRESULT>(swapChain, syncInterval, flags);
+
+    return ret;
+}
+
+HRESULT overlay::core::graphics::dxgi_hook::resize_buffers_hook(IDXGISwapChain *swapChain,
+                                                                UINT bufferCount, UINT width,
+                                                                UINT height, DXGI_FORMAT newFormat,
+                                                                UINT swapChainFlags) {
+    HRESULT ret;
+
+    // Call original function
+    ret = hook::manager::get_trampoline("DXGISwapChainResizeBuffers")
+              .call<HRESULT>(swapChain, bufferCount, width, height, newFormat, swapChainFlags);
+
+    return ret;
+}
+
+HRESULT overlay::core::graphics::dxgi_hook::resize_target_hook(
+    IDXGISwapChain *swapChain, const DXGI_MODE_DESC *pNewTargetParameters) {
+    HRESULT ret;
+
+    // Call original function
+    ret = hook::manager::get_trampoline("DXGISwapChainResizeTarget")
+              .call<HRESULT>(swapChain, pNewTargetParameters);
+
+    return ret;
+}
+
+HRESULT overlay::core::graphics::dxgi_hook::present1_hook(
+    IDXGISwapChain1 *swapChain, UINT syncInterval, UINT presentFlags,
+    const DXGI_PRESENT_PARAMETERS *pPresentParameters) {
+    HRESULT ret;
+
+    // Call before present handler
+    beforePresent(swapChain);
+
+    // Call original function
+    ret = hook::manager::get_trampoline("DXGISwapChain1Present1")
+              .call<HRESULT>(swapChain, syncInterval, presentFlags, pPresentParameters);
+
+    return ret;
 }

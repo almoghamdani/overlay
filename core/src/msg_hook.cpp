@@ -1,8 +1,15 @@
 #include <Windows.h>
 
-extern "C" __declspec(dllexport) LRESULT CALLBACK msg_hook(int code,
-														   WPARAM wParam,
-														   LPARAM lParam)
-{
-	return CallNextHookEx(0, code, wParam, lParam);
+#include "core.h"
+
+extern "C" __declspec(dllexport) LRESULT CALLBACK msg_hook(int code, WPARAM wParam, LPARAM lParam) {
+    static bool injectWindowSet = false;
+
+    // If the inject window was not set yet, set it
+    if (!injectWindowSet) {
+        overlay::core::core::get()->setInjectWindow(((MSG *)lParam)->hwnd);
+        injectWindowSet = true;
+    }
+
+    return CallNextHookEx(0, code, wParam, lParam);
 }
