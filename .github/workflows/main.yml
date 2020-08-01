@@ -34,6 +34,18 @@ jobs:
       with:
         arch: x64
 
+    # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
+    - name: Restore from cache and run vcpkg
+      uses: lukka/run-vcpkg@v3
+      with:
+        # Response file stored in source control, it provides the list of ports and triplet(s).
+        vcpkgArguments: '@${{ github.workspace }}/vcpkg_win.txt'
+        # Location of the vcpkg as submodule of the repository.
+        vcpkgDirectory: '${{ github.workspace }}/vendor/vcpkg'
+        # Since the cache must be invalidated when content of the response file changes, let's
+        # compute its hash and append this to the computed cache's key.
+        appendedCacheKey: ${{ hashFiles(${{ github.workspace }}/vcpkg_win.txt) }}
+
     # Build the overlay
     - name: Build Overlay Core, Helper and Demo
       uses: lukka/run-cmake@v2
@@ -41,7 +53,7 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeBuildType: Release
-        cmakeAppendedArgs: '-GNinja -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
+        cmakeAppendedArgs: '-GNinja -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
         buildDirectory: ${{ runner.temp }}/build
         buildWithCMake: true
 

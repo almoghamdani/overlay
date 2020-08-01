@@ -4,3 +4,6 @@
 [submodule "vendor/loguru"]
 	path = vendor/loguru
 	url = https://github.com/emilk/loguru
+[submodule "vendor/vcpkg"]
+	path = vendor/vcpkg
+	url = https://github.com/microsoft/vcpkg
