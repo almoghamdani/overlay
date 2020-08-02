@@ -14,8 +14,7 @@ set (CMAKE_CXX_STANDARD 17)
 
 # Get all the cpp and h files for the library
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
-file(GLOB_RECURSE PROTOS "src/protos/*.proto")
-get_filename_component(PROTOS_PATH "src/protos" ABSOLUTE)
+file(GLOB_RECURSE PROTOS "src/*.proto")
 
 # Set runtime library if compiling against gRPC and protobuf
 if(PROTOS)
@@ -37,6 +36,7 @@ set(PROTO_SRCS "")
 set(GRPC_SRCS "")
 foreach(PROTO_FILE ${PROTOS})
 	get_filename_component(PROTO_FILE_RAW_NAME ${PROTO_FILE} NAME_WE)
+	get_filename_component(PROTO_FILE_DIR ${PROTO_FILE} DIRECTORY)
 	set(PROTO_SRC "${CMAKE_CURRENT_BINARY_DIR}/gens/${PROTO_FILE_RAW_NAME}.pb.cc")
 	set(PROTO_HDR "${CMAKE_CURRENT_BINARY_DIR}/gens/${PROTO_FILE_RAW_NAME}.pb.h")
 	set(GRPC_SRC "${CMAKE_CURRENT_BINARY_DIR}/gens/${PROTO_FILE_RAW_NAME}.grpc.pb.cc")
@@ -48,7 +48,7 @@ foreach(PROTO_FILE ${PROTOS})
       COMMAND $<TARGET_FILE:protobuf::protoc>
       ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}/gens"
         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}/gens"
-        -I "${PROTOS_PATH}"
+        -I "${PROTO_FILE_DIR}"
         --plugin=protoc-gen-grpc="$<TARGET_FILE:gRPC::grpc_cpp_plugin>"
         "${PROTO_FILE}"
 	  DEPENDS "${PROTO_FILE}")
