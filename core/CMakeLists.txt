@@ -71,6 +71,9 @@ include_directories(../vendor/loguru)
 # Ignore deprecations
 add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
+# Set windows version to fix gRPC issue
+add_definitions(-D_WIN32_WINNT=0xA00)
+
 # Add the overlay core as an executable to be compiled
 add_library(OverlayCore SHARED ${SOURCES} ${PROTO_SRCS} ${GRPC_SRCS} ${LOGURU_SOURCES})
 
