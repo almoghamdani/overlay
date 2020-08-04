@@ -78,4 +78,4 @@ add_definitions(-D_WIN32_WINNT=0xA00)
 add_library(OverlayCore SHARED ${SOURCES} ${PROTO_SRCS} ${GRPC_SRCS} ${LOGURU_SOURCES})
 
 # Link the overlay core to the dependencies' libs
-target_link_libraries(OverlayCore subhook gRPC::grpc++)
+target_link_libraries(OverlayCore PRIVATE subhook gRPC::grpc++)
