@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package overlay.core.ipc;
+
+service Events {
+	rpc SubscribeToEvent (EventSubscribeRequest) returns (stream EventReply) {}
+}
+
+message FPSEvent {
+	double fps = 1;
+}
+
+message EventReply {
+	oneof event {
+		FPSEvent fps = 1;
+	}
+}
+
+message EventSubscribeRequest {
+	int64 type = 1;
+}

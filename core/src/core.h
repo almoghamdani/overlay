@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "graphics/dxgi_hook.h"
+#include "ipc/rpc_server.h"
 #include "utils/singleton.h"
 
 namespace overlay {
@@ -19,12 +20,15 @@ class Core : public utils::Singleton<Core> {
   HWND get_graphics_window() const;
 
   graphics::DxgiHook *get_dxgi_hook();
+  ipc::RpcServer *get_rpc_server();
 
  private:
   std::thread main_thread_;
 
   HWND inject_window_;
   HWND graphics_windows_;
+
+  ipc::RpcServer rpc_server_;
 
   graphics::DxgiHook dxgi_hook_;
 

@@ -13,6 +13,9 @@ void Core::Start() {
 void Core::MainThread() {
   // Hook DXGI api (DirectX 10 - 12)
   dxgi_hook_.Hook();
+
+  // Start the RPC server
+  rpc_server_.Start();
 }
 
 void Core::set_inject_window(HWND window) {
@@ -30,6 +33,8 @@ void Core::set_graphics_window(HWND window) {
 HWND Core::get_graphics_window() const { return graphics_windows_; }
 
 graphics::DxgiHook *Core::get_dxgi_hook() { return &dxgi_hook_; }
+
+ipc::RpcServer *Core::get_rpc_server() { return &rpc_server_; }
 
 }  // namespace core
 }  // namespace overlay
