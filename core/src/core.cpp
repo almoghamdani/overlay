@@ -13,14 +13,14 @@ void overlay::core::core::main_thread() {
 }
 
 void overlay::core::core::setInjectWindow(HWND window) {
-    LOG_F(INFO, "Application's main thread window is 0x%x.");
+    LOG_F(INFO, "Application's main thread window is 0x%x.", window);
     _injectWindow = window;
 }
 
 HWND overlay::core::core::getInjectWindow() const { return _injectWindow; }
 
 void overlay::core::core::setGraphicsWindow(HWND window) {
-    LOG_F(INFO, "Setting graphics window to 0x%x.");
+    LOG_F(INFO, "Setting graphics window to 0x%x.", window);
     _graphicsWindow = window;
 }
 
