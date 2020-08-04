@@ -2,28 +2,34 @@
 
 #include <loguru.hpp>
 
-void overlay::core::core::start() {
-    // Start core main thread
-    _mainThread = std::thread(&core::main_thread, this);
+namespace overlay {
+namespace core {
+
+void Core::Start() {
+  // Start core main thread
+  main_thread_ = std::thread(&Core::MainThread, this);
 }
 
-void overlay::core::core::main_thread() {
-    // Hook DXGI api (DirectX 10 - 12)
-    _dxgiHook.hook();
+void Core::MainThread() {
+  // Hook DXGI api (DirectX 10 - 12)
+  dxgi_hook_.Hook();
 }
 
-void overlay::core::core::setInjectWindow(HWND window) {
-    LOG_F(INFO, "Application's main thread window is 0x%x.", window);
-    _injectWindow = window;
+void Core::set_inject_window(HWND window) {
+  LOG_F(INFO, "Application's main thread window is 0x%x.", window);
+  inject_window_ = window;
 }
 
-HWND overlay::core::core::getInjectWindow() const { return _injectWindow; }
+HWND Core::get_inject_window() const { return inject_window_; }
 
-void overlay::core::core::setGraphicsWindow(HWND window) {
-    LOG_F(INFO, "Setting graphics window to 0x%x.", window);
-    _graphicsWindow = window;
+void Core::set_graphics_window(HWND window) {
+  LOG_F(INFO, "Setting graphics window to 0x%x.", window);
+  graphics_windows_ = window;
 }
 
-HWND overlay::core::core::getGraphicsWindow() const { return _graphicsWindow; }
+HWND Core::get_graphics_window() const { return graphics_windows_; }
 
-overlay::core::graphics::dxgi_hook *overlay::core::core::getDxgiHook() { return &_dxgiHook; }
+graphics::DxgiHook *Core::get_dxgi_hook() { return &dxgi_hook_; }
+
+}  // namespace core
+}  // namespace overlay

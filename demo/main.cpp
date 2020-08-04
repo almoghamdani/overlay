@@ -10,15 +10,15 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    std::string destProgram = argv[1];
+    std::string dest_program = argv[1];
 
-    STARTUPINFO info = {sizeof(info)};
-    PROCESS_INFORMATION processInfo;
+    STARTUPINFOA info = {sizeof(info)};
+    PROCESS_INFORMATION process_info;
 
     // Try to create the dest process
     std::cout << "Starting dest process.." << std::endl;
-    if (!CreateProcess(destProgram.c_str(), "", NULL, NULL, TRUE, 0, NULL, NULL, &info,
-                       &processInfo)) {
+    if (!CreateProcessA(dest_program.c_str(), "", NULL, NULL, TRUE, 0, NULL, NULL, &info,
+                       &process_info)) {
         std::cerr << "Unable to start dest program!" << std::endl;
         return -1;
     }
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 
     // Try to inject the overlay to the process
     std::cout << "Injecting to dest process.." << std::endl;
-    if (!OverlayInjectToProcess(processInfo.dwProcessId)) {
+    if (!OverlayInjectToProcess(process_info.dwProcessId)) {
         std::cerr << "Unable to inject overlay to process!" << std::endl;
         return -1;
     }

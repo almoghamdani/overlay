@@ -3,51 +3,62 @@
 #include <Shellapi.h>
 #include <TlHelp32.h>
 
-DWORD overlay::helper::utils::get_main_thread_id_for_process(DWORD pid) {
-    THREADENTRY32 tEntry;
-    ULONGLONG ullMinCreateTime = (ULONGLONG)(~(ULONGLONG)0);
-    DWORD tid = 0;
+namespace overlay {
+namespace helper {
+namespace utils {
 
-    // Create snapshot of the dest process
-    HANDLE hThreadSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
+DWORD GetMainThreadIdForProcess(DWORD pid) {
+  THREADENTRY32 thread_entry;
+  ULONGLONG min_thread_create_time = (ULONGLONG)(~(ULONGLONG)0);
+  DWORD tid = 0;
 
-    // If the snapshot is invalid (probably process not found)
-    if (hThreadSnapshot == INVALID_HANDLE_VALUE) {
-        return 0;
-    }
+  // Create snapshot of the dest process
+  HANDLE thread_snapshot_handle =
+      CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, pid);
 
-    // Set size of structure
-    tEntry.dwSize = sizeof(THREADENTRY32);
+  // If the snapshot is invalid (probably process not found)
+  if (thread_snapshot_handle == INVALID_HANDLE_VALUE) {
+    return 0;
+  }
 
-    // For each thread in the snapshot
-    for (BOOL success = Thread32First(hThreadSnapshot, &tEntry);
-         !tid && success && GetLastError() != ERROR_NO_MORE_FILES;
-         success = Thread32Next(hThreadSnapshot, &tEntry)) {
-        // If the thread belongs to the dest process
-        if (tEntry.th32OwnerProcessID == pid) {
-            // Open the thread object
-            HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION, TRUE, tEntry.th32ThreadID);
+  // Set size of structure
+  thread_entry.dwSize = sizeof(THREADENTRY32);
 
-            if (hThread) {
-                FILETIME afTimes[4] = {0};
+  // For each thread in the snapshot
+  for (BOOL success = Thread32First(thread_snapshot_handle, &thread_entry);
+       !tid && success && GetLastError() != ERROR_NO_MORE_FILES;
+       success = Thread32Next(thread_snapshot_handle, &thread_entry)) {
+    // If the thread belongs to the dest process
+    if (thread_entry.th32OwnerProcessID == pid) {
+      // Open the thread object
+      HANDLE hThread =
+          OpenThread(THREAD_QUERY_INFORMATION, TRUE, thread_entry.th32ThreadID);
 
-                // Check the time the thread was created in order to find the thread who started
-                // first (main thread)
-                if (GetThreadTimes(hThread, &afTimes[0], &afTimes[1], &afTimes[2], &afTimes[3])) {
-                    ULONGLONG ullTest = ((ULONGLONG(afTimes[0].dwHighDateTime) << 32) |
-                                         ((afTimes[0].dwLowDateTime) & 0xFFFFFFFF));
-                    if (ullTest && ullTest < ullMinCreateTime) {
-                        ullMinCreateTime = ullTest;
-                        tid = tEntry.th32ThreadID;
-                    }
-                }
+      if (hThread) {
+        FILETIME afTimes[4] = {0};
 
-                CloseHandle(hThread);
-            }
+        // Check the time the thread was created in order to find the thread who
+        // started first (main thread)
+        if (GetThreadTimes(hThread, &afTimes[0], &afTimes[1], &afTimes[2],
+                           &afTimes[3])) {
+          ULONGLONG ullTest = ((ULONGLONG(afTimes[0].dwHighDateTime) << 32) |
+                               ((afTimes[0].dwLowDateTime) & 0xFFFFFFFF));
+          if (ullTest && ullTest < min_thread_create_time) {
+            min_thread_create_time = ullTest;
+            tid = thread_entry.th32ThreadID;
+          }
         }
+
+        CloseHandle(hThread);
+      }
     }
+  }
 
-    CloseHandle(hThreadSnapshot);
+  CloseHandle(thread_snapshot_handle);
 
-    return tid;
+  return tid;
 }
+
+}  // namespace utils
+}  // namespace helper
+}  // namespace overlay

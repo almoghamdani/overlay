@@ -2,19 +2,21 @@
 
 namespace overlay {
 namespace utils {
-template <typename T>
-class singleton {
-   public:
-    static T *get() {
-        if (!_instance) {
-            _instance = new T;
-        }
 
-        return _instance;
+template <typename T>
+class Singleton {
+ public:
+  static T *Get() {
+    if (!instance_) {
+      instance_ = new T;
     }
 
-   private:
-    inline static T *_instance = nullptr;
+    return instance_;
+  }
+
+ private:
+  inline static T *instance_ = nullptr;
 };
-};  // namespace utils
-};  // namespace overlay
+
+}  // namespace utils
+}  // namespace overlay

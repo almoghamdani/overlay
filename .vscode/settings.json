@@ -1,4 +1,4 @@
 {
-	"C_Cpp.clang_format_style": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 100, IncludeBlocks: Preserve }",
+	"C_Cpp.clang_format_style": "{ BasedOnStyle: Google }",
 	"C_Cpp.clang_format_sortIncludes": true
 }

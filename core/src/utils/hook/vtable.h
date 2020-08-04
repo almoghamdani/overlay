@@ -2,10 +2,14 @@
 #include <stdint.h>
 
 namespace overlay {
+namespace utils {
 namespace hook {
-class vtable {
-   public:
-    static void *get_function_pointer(void *obj, uint64_t index);
+
+class Vtable {
+ public:
+  static void *GetFunctionPointer(void *obj, uint64_t index);
 };
-};  // namespace hook
-};  // namespace overlay
+
+}  // namespace hook
+}  // namespace utils
+}  // namespace overlay

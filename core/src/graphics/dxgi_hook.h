@@ -4,16 +4,16 @@
 #include <dxgi1_2.h>
 
 typedef HRESULT(WINAPI *pFnD3D10CreateDeviceAndSwapChain)(
-    IDXGIAdapter *pAdapter, D3D10_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags,
-    UINT SDKVersion, DXGI_SWAP_CHAIN_DESC *pSwapChainDesc, IDXGISwapChain **ppSwapChain,
-    ID3D10Device **ppDevice);
+    IDXGIAdapter *pAdapter, D3D10_DRIVER_TYPE DriverType, HMODULE Software,
+    UINT Flags, UINT SDKVersion, DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
+    IDXGISwapChain **ppSwapChain, ID3D10Device **ppDevice);
 
 typedef HRESULT (*pFnD3D11CreateDeviceAndSwapChain)(
-    IDXGIAdapter *pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags,
-    const D3D_FEATURE_LEVEL *pFeatureLevels, UINT FeatureLevels, UINT SDKVersion,
-    const DXGI_SWAP_CHAIN_DESC *pSwapChainDesc, IDXGISwapChain **ppSwapChain,
-    ID3D11Device **ppDevice, D3D_FEATURE_LEVEL *pFeatureLevel,
-    ID3D11DeviceContext **ppImmediateContext);
+    IDXGIAdapter *pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software,
+    UINT Flags, const D3D_FEATURE_LEVEL *pFeatureLevels, UINT FeatureLevels,
+    UINT SDKVersion, const DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
+    IDXGISwapChain **ppSwapChain, ID3D11Device **ppDevice,
+    D3D_FEATURE_LEVEL *pFeatureLevel, ID3D11DeviceContext **ppImmediateContext);
 
 #define DXGI_SWAP_CHAIN_PRESENT_VTABLE_INDEX 8
 #define DXGI_SWAP_CHAIN_RESIZE_BUFFERS_VTABLE_INDEX 13
@@ -23,43 +23,50 @@ typedef HRESULT (*pFnD3D11CreateDeviceAndSwapChain)(
 namespace overlay {
 namespace core {
 namespace graphics {
-class dxgi_hook {
-   public:
-    dxgi_hook();
 
-    bool hook();
+class DxgiHook {
+ public:
+  DxgiHook();
 
-   private:
-    bool _graphicsInitiated;
+  bool Hook();
 
-    bool hook_swap_chain(IDXGISwapChain *swapChain);
+ private:
+  bool graphics_initiated_;
 
-    bool hook_directx11(HWND window);
-    bool hook_directx10(HWND window);
+  bool HookSwapChain(IDXGISwapChain *swap_chain);
 
-    bool init_graphics(IDXGISwapChain *swapChain);
+  bool HookDirectx11(HWND window);
+  bool HookDirectx10(HWND window);
 
-    void beforePresent(IDXGISwapChain *swapChain);
+  bool InitGraphics(IDXGISwapChain *swap_chain);
 
-    HRESULT present_hook(IDXGISwapChain *swapChain, UINT syncInterval, UINT flags);
-    HRESULT resize_buffers_hook(IDXGISwapChain *swapChain, UINT bufferCount, UINT width,
-                                UINT height, DXGI_FORMAT newFormat, UINT swapChainFlags);
-    HRESULT resize_target_hook(IDXGISwapChain *swapChain,
-                               const DXGI_MODE_DESC *pNewTargetParameters);
-    HRESULT present1_hook(IDXGISwapChain1 *swapChain, UINT syncInterval, UINT presentFlags,
-                          const DXGI_PRESENT_PARAMETERS *pPresentParameters);
+  void BeforePresent(IDXGISwapChain *swap_chain);
 
-    friend HRESULT DXGISwapChainPresentHook(IDXGISwapChain *swapChain, UINT syncInterval,
-                                            UINT flags);
-    friend HRESULT DXGISwapChainResizeBuffersHook(IDXGISwapChain *swapChain, UINT bufferCount,
-                                                  UINT width, UINT height, DXGI_FORMAT newFormat,
-                                                  UINT swapChainFlags);
-    friend HRESULT DXGISwapChainResizeTargetHook(IDXGISwapChain *swapChain,
-                                                 const DXGI_MODE_DESC *pNewTargetParameters);
-    friend HRESULT DXGISwapChain1Present1Hook(IDXGISwapChain1 *swapChain, UINT syncInterval,
-                                              UINT presentFlags,
-                                              const DXGI_PRESENT_PARAMETERS *pPresentParameters);
+  HRESULT PresentHook(IDXGISwapChain *swap_chain, UINT sync_interval,
+                      UINT flags);
+  HRESULT ResizeBuffersHook(IDXGISwapChain *swap_chain, UINT buffer_count,
+                            UINT width, UINT height, DXGI_FORMAT new_format,
+                            UINT swap_chain_flags);
+  HRESULT ResizeTargetHook(IDXGISwapChain *swap_chain,
+                           const DXGI_MODE_DESC *new_target_parameters_ptr);
+  HRESULT Present1Hook(IDXGISwapChain1 *swap_chain, UINT sync_interval,
+                       UINT present_flags,
+                       const DXGI_PRESENT_PARAMETERS *present_parameters_ptr);
+
+  friend HRESULT DXGISwapChainPresentHook(IDXGISwapChain *swapChain,
+                                          UINT syncInterval, UINT flags);
+  friend HRESULT DXGISwapChainResizeBuffersHook(IDXGISwapChain *swapChain,
+                                                UINT bufferCount, UINT width,
+                                                UINT height,
+                                                DXGI_FORMAT newFormat,
+                                                UINT swapChainFlags);
+  friend HRESULT DXGISwapChainResizeTargetHook(
+      IDXGISwapChain *swapChain, const DXGI_MODE_DESC *pNewTargetParameters);
+  friend HRESULT DXGISwapChain1Present1Hook(
+      IDXGISwapChain1 *swapChain, UINT syncInterval, UINT presentFlags,
+      const DXGI_PRESENT_PARAMETERS *pPresentParameters);
 };
-};  // namespace graphics
-};  // namespace core
-};  // namespace overlay
+
+}  // namespace graphics
+}  // namespace core
+}  // namespace overlay

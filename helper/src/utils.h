@@ -4,7 +4,9 @@
 namespace overlay {
 namespace helper {
 namespace utils {
-DWORD get_main_thread_id_for_process(DWORD pid);
-};
-};  // namespace helper
-};  // namespace overlay
+
+DWORD GetMainThreadIdForProcess(DWORD pid);
+
+}  // namespace utils
+}  // namespace helper
+}  // namespace overlay

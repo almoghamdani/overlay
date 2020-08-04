@@ -1,15 +1,23 @@
 #include "vtable.h"
 
-void *overlay::hook::vtable::get_function_pointer(void *obj, uint64_t index) {
-    void *vAddr = nullptr;
+namespace overlay {
+namespace utils {
+namespace hook {
 
-    if (obj) {
-        uintptr_t *vtablePtr = reinterpret_cast<uintptr_t *>(*(uintptr_t *)obj);
+void *Vtable::GetFunctionPointer(void *obj, uint64_t index) {
+  void *vAddr = nullptr;
 
-        if (vtablePtr) {
-            vAddr = reinterpret_cast<void *>(*(vtablePtr + index));
-        }
+  if (obj) {
+    uintptr_t *vtablePtr = reinterpret_cast<uintptr_t *>(*(uintptr_t *)obj);
+
+    if (vtablePtr) {
+      vAddr = reinterpret_cast<void *>(*(vtablePtr + index));
     }
+  }
 
-    return vAddr;
+  return vAddr;
 }
+
+}  // namespace hook
+}  // namespace utils
+}  // namespace overlay

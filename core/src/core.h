@@ -1,33 +1,35 @@
-#include "utils/singleton.h"
-
 #include <Windows.h>
+
 #include <thread>
 
 #include "graphics/dxgi_hook.h"
+#include "utils/singleton.h"
 
 namespace overlay {
 namespace core {
-class core : public utils::singleton<core> {
-   public:
-    void start();
 
-    void setInjectWindow(HWND window);
-    HWND getInjectWindow() const;
+class Core : public utils::Singleton<Core> {
+ public:
+  void Start();
 
-    void setGraphicsWindow(HWND window);
-    HWND getGraphicsWindow() const;
+  void set_inject_window(HWND window);
+  HWND get_inject_window() const;
 
-    graphics::dxgi_hook *getDxgiHook();
+  void set_graphics_window(HWND window);
+  HWND get_graphics_window() const;
 
-   private:
-    std::thread _mainThread;
+  graphics::DxgiHook *get_dxgi_hook();
 
-    HWND _injectWindow;
-    HWND _graphicsWindow;
+ private:
+  std::thread main_thread_;
 
-    graphics::dxgi_hook _dxgiHook;
+  HWND inject_window_;
+  HWND graphics_windows_;
 
-    void main_thread();
+  graphics::DxgiHook dxgi_hook_;
+
+  void MainThread();
 };
-};  // namespace core
-};  // namespace overlay
+
+}  // namespace core
+}  // namespace overlay
