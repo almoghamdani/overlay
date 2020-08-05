@@ -27,10 +27,13 @@ void RpcServer::Start() {
   server_ = server_builder.BuildAndStart();
 
   // Start the server's main thread
+  // TODO: Handle stopping threads
   server_thread_ = std::thread([this]() { server_->Wait(); });
-  LOG_F(INFO, "RPC Server is running and listening on port %d", port_);
+  LOG_F(INFO, "RPC Server is running and listening on port %d.", port_);
+
+  token_server_.StartTokenGeneratorServer(port_);
 }
 
-}  // namespace rpc
+}  // namespace ipc
 }  // namespace core
 }  // namespace overlay

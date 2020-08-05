@@ -68,6 +68,9 @@ include_directories(../vendor/subhook)
 set(LOGURU_SOURCES "../vendor/loguru/loguru.hpp" "../vendor/loguru/loguru.cpp")
 include_directories(../vendor/loguru)
 
+# Include shared headers
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../shared)
+
 # Ignore deprecations
 add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
@@ -78,4 +81,4 @@ add_definitions(-D_WIN32_WINNT=0xA00)
 add_library(OverlayCore SHARED ${SOURCES} ${PROTO_SRCS} ${GRPC_SRCS} ${LOGURU_SOURCES})
 
 # Link the overlay core to the dependencies' libs
-target_link_libraries(OverlayCore PRIVATE subhook gRPC::grpc++)
+target_link_libraries(OverlayCore PRIVATE rpcrt4.lib subhook gRPC::grpc++)

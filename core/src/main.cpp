@@ -59,7 +59,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     // Disable calling DllMain for DLL_THREAD_ATTACH and DLL_THREAD_DETACH
     DisableThreadLibraryCalls((HMODULE)hinstDLL);
 
-    LOG_F(INFO, "Overlay Core v1.0\n");
+    LOG_F(INFO, "Overlay Core v1.0 (PID: %d)\n", GetCurrentProcessId());
 
     // Start overlay core
     overlay::core::Core::Get()->Start();

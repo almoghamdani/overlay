@@ -80,6 +80,7 @@ _deps
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/c_cpp_configuration.json
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
