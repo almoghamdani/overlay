@@ -23,15 +23,8 @@ include_directories(../vendor/subhook)
 set(LOGURU_SOURCES "../vendor/loguru/loguru.hpp" "../vendor/loguru/loguru.cpp")
 include_directories(../vendor/loguru)
 
-# Compile protos object library
-get_target_property(OVERLAY_PROTOS_BINARY_DIR OverlayProtos BINARY_DIR)
-include_directories(${OVERLAY_PROTOS_BINARY_DIR}/gens)
-
-# Include shared headers
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../shared)
-
 # Add the overlay core as an shared library to be compiled
-add_library(OverlayCore SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayProtos> ${LOGURU_SOURCES})
+add_library(OverlayCore SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared> ${LOGURU_SOURCES})
 
 # Link the overlay core to the dependencies' libs
 target_link_libraries(OverlayCore PRIVATE rpcrt4.lib subhook gRPC::grpc++)

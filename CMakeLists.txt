@@ -26,7 +26,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
 # Set binary dir
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-add_subdirectory(protos OverlayProtos)
+# Compile overlay shared object library
+add_subdirectory(shared OverlayShared)
+get_target_property(OVERLAY_SHARED_BINARY_DIR OverlayShared BINARY_DIR)
+include_directories(${OVERLAY_SHARED_BINARY_DIR}/gens shared/src)
+
 add_subdirectory(core OverlayCore)
 add_subdirectory(helper OverlayHelper)
 add_subdirectory(demo OverlayDemo)

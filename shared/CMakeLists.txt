@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
-project(OverlayProtos)
+project(OverlayShared)
 
-# Get all the proto files for the project
-file(GLOB_RECURSE PROTOS "*.proto")
+# Get all the src and proto files for the project
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
+file(GLOB_RECURSE PROTOS "protos/*.proto")
 
 # Set runtime library
 set(CMAKE_CXX_FLAGS_RELEASE "/MT")
@@ -38,12 +39,10 @@ foreach(PROTO_FILE ${PROTOS})
         "${PROTO_FILE}"
 	  DEPENDS "${PROTO_FILE}")
 endforeach()
+set_source_files_properties(${PROTO_SRCS} ${GRPC_SRCS} PROPERTIES COMPILE_FLAGS "/W0") # Ignore all warnings for protobuf generated files
 
-# Add the overlay protos as an object library
-add_library(OverlayProtos OBJECT ${PROTO_SRCS} ${GRPC_SRCS})
+# Add the overlay shared as an object library
+add_library(OverlayShared OBJECT ${SOURCES} ${PROTO_SRCS} ${GRPC_SRCS})
 
 # Link it to gRPC
-target_link_libraries(OverlayProtos PRIVATE gRPC::grpc++)
-
-# Ignore warnings
-target_compile_options(OverlayProtos PRIVATE "/W0")
+target_link_libraries(OverlayShared PRIVATE gRPC::grpc++)
