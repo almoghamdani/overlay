@@ -3,8 +3,12 @@
 #include <stdint.h>
 
 #include <memory>
+#include <mutex>
 #include <thread>
+#include <unordered_map>
 
+#include "auth_service_impl.h"
+#include "client.h"
 #include "events_service_impl.h"
 #include "token_server.h"
 
@@ -18,14 +22,23 @@ class RpcServer {
 
   void Start();
 
+  void RegisterClient(std::string client_id, DWORD process_id);
+  const Client *GetClient(std::string client_id);
+
+  TokenServer *get_token_server();
+
  private:
   std::unique_ptr<grpc::Server> server_;
   int port_;
 
   std::thread server_thread_;
 
+  std::unordered_map<std::string, Client> clients_;
+  std::mutex clients_mutex_;
+
   TokenServer token_server_;
   EventsServiceImpl events_service_;
+  AuthServiceImpl auth_service_;
 };
 
 }  // namespace ipc

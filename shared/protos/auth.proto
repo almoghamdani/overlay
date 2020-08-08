@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package overlay;
+
+service Authentication {
+	rpc AuthenticateWithToken (TokenAuthenticationRequest) returns (TokenAuthenticationReply) {}
+}
+
+message TokenAuthenticationRequest {
+	bytes token = 1;
+}
+
+message TokenAuthenticationReply {
+
+}

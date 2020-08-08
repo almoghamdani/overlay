@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package overlay.core.ipc;
+package overlay;
 
 service Events {
 	rpc SubscribeToEvent (EventSubscribeRequest) returns (stream EventReply) {}
