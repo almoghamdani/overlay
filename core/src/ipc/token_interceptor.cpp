@@ -3,7 +3,7 @@
 #include <grpcpp/server_context.h>
 #include <windows.h>
 
-#include "../core.h"
+#include "core.h"
 
 namespace overlay {
 namespace core {

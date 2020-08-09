@@ -3,6 +3,7 @@ project(OverlayHelper)
 
 # Get all the cpp and h files for the helper
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h" "include/*.h")
+include_directories(src include)
 
 # Find gRPC
 find_package(gRPC CONFIG REQUIRED)

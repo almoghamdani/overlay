@@ -2,13 +2,13 @@
 
 #include <iostream>
 
-#include "../include/overlay_helper.h"
+#include "overlay_helper.h"
 #include "utils.h"
 
 namespace overlay {
 namespace helper {
 namespace injection {
-    
+
 bool InjectDllToThread(std::string dll, DWORD tid) {
   // Load the core library DLL and get the proc address of the msg hook
   HMODULE lib = LoadLibraryA(dll.c_str());

@@ -6,6 +6,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4098 /ignore
 
 # Get all the cpp and h files for the library
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
+include_directories(src)
 
 # Find gRPC
 find_package(gRPC CONFIG REQUIRED)
