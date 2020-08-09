@@ -30,7 +30,8 @@ class TokenServer {
  public:
   TokenServer();
 
-  void StartTokenGeneratorServer(uint16_t rpc_server_port);
+  void StartTokenGeneratorServer(uint16_t rpc_server_port,
+                                 std::string server_certificate);
 
   DWORD GetTokenProcessId(GUID token);
   void InvalidateProcessToken(GUID token);
@@ -42,7 +43,7 @@ class TokenServer {
   std::unordered_map<GUID, DWORD> tokens_;
   std::mutex tokens_mutex_;
 
-  void PipeMainThread(uint16_t rpc_server_port);
+  void PipeMainThread(uint16_t rpc_server_port, std::string server_certificate);
 
   std::string GeneratePipeName() const;
 

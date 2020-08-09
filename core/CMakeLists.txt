@@ -11,6 +11,10 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 find_package(gRPC CONFIG REQUIRED)
 message(STATUS "Using gRPC ${gRPC_VERSION}")
 
+# Find OpenSSL
+find_package(OpenSSL REQUIRED)
+message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+
 # Compile the subhook library
 set(SUBHOOK_STATIC ON)
 set(SUBHOOK_INSTALL OFF)
@@ -27,4 +31,4 @@ include_directories(../vendor/loguru)
 add_library(OverlayCore SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared> ${LOGURU_SOURCES})
 
 # Link the overlay core to the dependencies' libs
-target_link_libraries(OverlayCore PRIVATE rpcrt4.lib subhook gRPC::grpc++)
+target_link_libraries(OverlayCore PRIVATE rpcrt4.lib subhook gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto)

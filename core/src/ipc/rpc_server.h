@@ -33,12 +33,16 @@ class RpcServer {
 
   std::thread server_thread_;
 
+  grpc::SslServerCredentialsOptions::PemKeyCertPair key_cert_pair_;
+
   std::unordered_map<std::string, Client> clients_;
   std::mutex clients_mutex_;
 
   TokenServer token_server_;
   EventsServiceImpl events_service_;
   AuthServiceImpl auth_service_;
+
+  grpc::SslServerCredentialsOptions::PemKeyCertPair GenerateKeyCertPair() const;
 };
 
 }  // namespace ipc

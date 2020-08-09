@@ -12,7 +12,8 @@ namespace ipc {
 
 TokenServer::TokenServer() : pipe_(INVALID_HANDLE_VALUE) {}
 
-void TokenServer::StartTokenGeneratorServer(uint16_t rpc_server_port) {
+void TokenServer::StartTokenGeneratorServer(uint16_t rpc_server_port,
+                                            std::string server_certificate) {
   std::string pipe_name = GeneratePipeName();
 
   // Create named pipe for outbound communication
@@ -29,8 +30,8 @@ void TokenServer::StartTokenGeneratorServer(uint16_t rpc_server_port) {
         pipe_name.c_str(), pipe_);
 
   // Start pipe main thread
-  main_thread_ =
-      std::thread(&TokenServer::PipeMainThread, this, rpc_server_port);
+  main_thread_ = std::thread(&TokenServer::PipeMainThread, this,
+                             rpc_server_port, server_certificate);
 }
 
 DWORD TokenServer::GetTokenProcessId(GUID token) {
@@ -49,7 +50,8 @@ void TokenServer::InvalidateProcessToken(GUID token) {
   tokens_.erase(token);
 }
 
-void TokenServer::PipeMainThread(uint16_t rpc_server_port) {
+void TokenServer::PipeMainThread(uint16_t rpc_server_port,
+                                 std::string server_certificate) {
   AuthenticateResponse response = {0};
   DWORD written_bytes = 0;
 
@@ -58,6 +60,8 @@ void TokenServer::PipeMainThread(uint16_t rpc_server_port) {
   std::unique_lock tokens_lk(tokens_mutex_, std::defer_lock);
 
   response.rpc_server_port = rpc_server_port;
+  std::memcpy(response.server_certificate, server_certificate.data(),
+              server_certificate.size() + 1);
 
   // TODO: Handle stopping threads
   while (true) {
