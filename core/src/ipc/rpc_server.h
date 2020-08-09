@@ -31,8 +31,6 @@ class RpcServer {
   std::unique_ptr<grpc::Server> server_;
   int port_;
 
-  std::thread server_thread_;
-
   grpc::SslServerCredentialsOptions::PemKeyCertPair key_cert_pair_;
 
   std::unordered_map<std::string, Client> clients_;

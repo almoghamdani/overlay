@@ -17,7 +17,7 @@ namespace ipc {
 RpcServer::RpcServer() : server_(), port_(0) {}
 
 void RpcServer::Start() {
-  CHECK_F(!server_, "RPC Server is already started!");
+  CHECK_F(!server_, "RPC Server has already started!");
 
   std::vector<
       std::unique_ptr<grpc::experimental::ServerInterceptorFactoryInterface>>
@@ -51,10 +51,6 @@ void RpcServer::Start() {
 
   // Start the server
   server_ = server_builder.BuildAndStart();
-
-  // Start the server's main thread
-  // TODO: Handle stopping threads
-  server_thread_ = std::thread([this]() { server_->Wait(); });
   LOG_F(INFO, "RPC Server is running and listening on port %d.", port_);
 
   token_server_.StartTokenGeneratorServer(port_, key_cert_pair_.cert_chain);
