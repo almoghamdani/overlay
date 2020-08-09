@@ -15,7 +15,7 @@ IF NOT DEFINED DevEnvDir (
 if "%1"=="-R" (
     cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-static -Wno-dev
 ) else (
-    cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows-static
+    cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows-static -Wdev
 )
 
 :: Build the project
