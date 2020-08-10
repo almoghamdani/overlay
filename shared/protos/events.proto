@@ -4,6 +4,7 @@ package overlay;
 
 service Events {
 	rpc SubscribeToEvent (EventSubscribeRequest) returns (stream EventReply) {}
+	rpc UnsubscribeEvent (EventUnsubscribeRequest) returns (EventUnsubscribeResponse) {}
 }
 
 message FPSEvent {
@@ -17,5 +18,13 @@ message EventReply {
 }
 
 message EventSubscribeRequest {
-	int64 type = 1;
+	uint64 type = 1;
+}
+
+message EventUnsubscribeRequest {
+	uint64 type = 1;
+}
+
+message EventUnsubscribeResponse {
+
 }

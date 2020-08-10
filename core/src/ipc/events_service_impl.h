@@ -1,17 +1,67 @@
 #pragma once
+#include <grpcpp/grpcpp.h>
+
+#include <mutex>
+#include <thread>
+#include <unordered_map>
+
+#pragma warning(push)
+#pragma warning(disable : 4127 4244 4267)
 #include "events.grpc.pb.h"
+#pragma warning(pop)
 
 namespace overlay {
 namespace core {
 namespace ipc {
+class AsyncEventsServiceWorker;
 
-class EventsServiceImpl final : public Events::Service {
+class EventsServiceImpl final
+    : public Events::WithAsyncMethod_SubscribeToEvent<Events::Service> {
  public:
-  grpc::Status SubscribeToEvent(grpc::ServerContext *context,
-                                const EventSubscribeRequest *request,
-                                grpc::ServerWriter<EventReply> *writer);
+  grpc::Status UnsubscribeEvent(grpc::ServerContext *context,
+                                const EventUnsubscribeRequest *request,
+                                EventUnsubscribeResponse *response);
+
+  void AsyncInitialize(grpc::ServerBuilder &server_builder);
+  void StartHandlingAsyncRpcs();
+
+  void RegisterEventWorker(EventReply::EventCase event_type,
+                           AsyncEventsServiceWorker *worker);
+  void RemoveEventWorker(EventReply::EventCase event_type,
+                         AsyncEventsServiceWorker *worker);
+
+ private:
+  std::unique_ptr<grpc::ServerCompletionQueue> completion_queue_;
+  std::thread async_rpcs_thread_;
+
+  std::unordered_multimap<EventReply::EventCase, AsyncEventsServiceWorker *>
+      event_workers_;
+  std::mutex event_workers_mutex_;
 };
 
-}  // namespace rpc
+class AsyncEventsServiceWorker {
+ public:
+  AsyncEventsServiceWorker(EventsServiceImpl *service,
+                           grpc::ServerCompletionQueue *completion_queue);
+
+  void Handle();
+  void SendEvent(EventReply &event);
+  void Finish(grpc::Status status);
+
+  std::string GetClientId() const;
+
+ private:
+  EventsServiceImpl *service_;
+
+  grpc::ServerCompletionQueue *completion_queue_;
+  grpc::ServerContext context_;
+
+  EventSubscribeRequest request_;
+  grpc::ServerAsyncWriter<EventReply> writer_;
+
+  bool finished_, registered_;
+};
+
+}  // namespace ipc
 }  // namespace core
 }  // namespace overlay

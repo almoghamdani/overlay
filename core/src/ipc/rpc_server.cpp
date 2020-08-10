@@ -49,8 +49,12 @@ void RpcServer::Start() {
   server_builder.experimental().SetInterceptorCreators(
       std::move(interceptor_creators));
 
+  // Initialize async services
+  events_service_.AsyncInitialize(server_builder);
+
   // Start the server
   server_ = server_builder.BuildAndStart();
+  events_service_.StartHandlingAsyncRpcs();
   LOG_F(INFO, "RPC Server is running and listening on port %d.", port_);
 
   token_server_.StartTokenGeneratorServer(port_, key_cert_pair_.cert_chain);
