@@ -24,6 +24,7 @@ class RpcServer {
 
   void RegisterClient(std::string client_id, DWORD process_id);
   const Client *GetClient(std::string client_id);
+  const std::unordered_map<std::string, Client> GetAllClients();
 
   TokenServer *get_token_server();
 

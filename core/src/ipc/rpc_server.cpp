@@ -82,6 +82,12 @@ const Client *RpcServer::GetClient(std::string client_id) {
   }
 }
 
+const std::unordered_map<std::string, Client> RpcServer::GetAllClients() {
+  std::lock_guard client_lk(clients_mutex_);
+
+  return clients_;
+}
+
 grpc::SslServerCredentialsOptions::PemKeyCertPair
 RpcServer::GenerateKeyCertPair() const {
   grpc::SslServerCredentialsOptions::PemKeyCertPair key_cert_pair;
