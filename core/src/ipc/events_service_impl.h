@@ -30,11 +30,16 @@ class EventsServiceImpl final
   void RemoveEventWorker(EventReply::EventCase event_type,
                          AsyncEventsServiceWorker *worker);
 
+  bool SendEventToClient(std::string client_id, EventReply event);
+  void BroadcastEvent(EventReply event);
+
  private:
   std::unique_ptr<grpc::ServerCompletionQueue> completion_queue_;
   std::thread async_rpcs_thread_;
 
-  std::unordered_multimap<EventReply::EventCase, AsyncEventsServiceWorker *>
+  std::unordered_map<
+      EventReply::EventCase,
+      std::unordered_map<std::string, AsyncEventsServiceWorker *>>
       event_workers_;
   std::mutex event_workers_mutex_;
 };
@@ -46,7 +51,9 @@ class AsyncEventsServiceWorker {
 
   void Handle();
   void SendEvent(EventReply &event);
+
   void Finish(grpc::Status status);
+  void ForceFinish();
 
   std::string GetClientId() const;
 

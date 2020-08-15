@@ -19,14 +19,13 @@ grpc::Status EventsServiceImpl::UnsubscribeEvent(
 
   std::lock_guard workers_lk(event_workers_mutex_);
 
-  auto its = event_workers_.equal_range((EventReply::EventCase)request->type());
-
-  // Find the worker
-  for (auto it = its.first; it != its.second; it++) {
-    if (it->second->GetClientId() == context->peer()) {
-      it->second->Finish(grpc::Status::OK);
-      break;
-    }
+  try {
+    event_workers_.at((EventReply::EventCase)request->type())
+        .at(context->peer())
+        ->Finish(grpc::Status::OK);
+  } catch (...) {
+    return grpc::Status(grpc::StatusCode::NOT_FOUND,
+                        "No function was subscribed to this event");
   }
 
   return grpc::Status::OK;
@@ -51,6 +50,8 @@ void EventsServiceImpl::StartHandlingAsyncRpcs() {
 
       if (ok) {
         static_cast<AsyncEventsServiceWorker *>(tag)->Handle();
+      } else if (tag) {
+        static_cast<AsyncEventsServiceWorker *>(tag)->ForceFinish();
       }
     }
   });
@@ -61,7 +62,7 @@ void EventsServiceImpl::RegisterEventWorker(EventReply::EventCase event_type,
   CHECK_F(event_type > EventReply::EventCase::EVENT_NOT_SET);
   std::lock_guard workers_lk(event_workers_mutex_);
 
-  event_workers_.insert(std::make_pair(event_type, worker));
+  event_workers_[event_type][worker->GetClientId()] = worker;
 }
 
 void EventsServiceImpl::RemoveEventWorker(EventReply::EventCase event_type,
@@ -69,14 +70,37 @@ void EventsServiceImpl::RemoveEventWorker(EventReply::EventCase event_type,
   CHECK_F(event_type > EventReply::EventCase::EVENT_NOT_SET);
   std::lock_guard workers_lk(event_workers_mutex_);
 
-  auto its = event_workers_.equal_range(event_type);
+  try {
+    event_workers_.at(event_type).erase(worker->GetClientId());
+  } catch (...) {
+  }
+}
 
-  // Find the worker
-  for (auto it = its.first; it != its.second; it++) {
-    if (it->second == worker) {
-      event_workers_.erase(it);
-      break;
-    }
+bool EventsServiceImpl::SendEventToClient(std::string client_id,
+                                          EventReply event) {
+  CHECK_F(event.event_case() > EventReply::EventCase::EVENT_NOT_SET);
+  std::lock_guard workers_lk(event_workers_mutex_);
+
+  try {
+    event_workers_.at(event.event_case()).at(client_id)->SendEvent(event);
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
+void EventsServiceImpl::BroadcastEvent(EventReply event) {
+  CHECK_F(event.event_case() > EventReply::EventCase::EVENT_NOT_SET);
+  std::lock_guard workers_lk(event_workers_mutex_);
+
+  if (!event_workers_.count(event.event_case())) {
+    return;
+  }
+
+  auto workers = event_workers_.at(event.event_case());
+
+  for (auto &worker : workers) {
+    worker.second->SendEvent(event);
   }
 }
 
@@ -93,11 +117,7 @@ AsyncEventsServiceWorker::AsyncEventsServiceWorker(
 
 void AsyncEventsServiceWorker::Handle() {
   if (finished_) {
-    if (registered_) {
-      service_->RemoveEventWorker((EventReply::EventCase)request_.type(), this);
-    }
-
-    delete this;
+    ForceFinish();
   } else if (!registered_) {
     // Start new worker instance for new clients
     new AsyncEventsServiceWorker(service_, completion_queue_);
@@ -108,9 +128,9 @@ void AsyncEventsServiceWorker::Handle() {
       Finish(grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                           "Invalid event type"));
     } else {
+      registered_ = true;
       service_->RegisterEventWorker((EventReply::EventCase)request_.type(),
                                     this);
-      registered_ = true;
     }
   }
 }
@@ -125,8 +145,16 @@ void AsyncEventsServiceWorker::Finish(grpc::Status status) {
   finished_ = true;
 }
 
+void AsyncEventsServiceWorker::ForceFinish() {
+  if (registered_) {
+    service_->RemoveEventWorker((EventReply::EventCase)request_.type(), this);
+  }
+
+  delete this;
+}
+
 std::string overlay::core::ipc::AsyncEventsServiceWorker::GetClientId() const {
-  CHECK_F(registered_ == true && finished_ == false);
+  CHECK_F(registered_ == true);
   return context_.peer();
 }
 
