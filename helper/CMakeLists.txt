@@ -9,7 +9,7 @@ include_directories(src include)
 find_package(gRPC CONFIG REQUIRED)
 
 # Add the overlay helper as an shared library to be compiled
-add_definitions(-DOVERLAY_HELPER)
+add_definitions(-DOVERLAY_HELPER_MAKEDLL)
 add_library(OverlayHelper SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared>)
 
 # Link the overlay helper to the dependencies' libs

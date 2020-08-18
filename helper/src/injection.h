@@ -15,6 +15,6 @@ namespace injection {
 
 bool InjectDllToThread(std::string dll, DWORD tid);
 
-}  // namespace utils
+}  // namespace injection
 }  // namespace helper
 }  // namespace overlay

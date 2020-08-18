@@ -1,8 +1,9 @@
 #include "injection.h"
 
+#include <overlay/injection.h>
+
 #include <iostream>
 
-#include "overlay_helper.h"
 #include "utils.h"
 
 namespace overlay {
@@ -49,11 +50,9 @@ bool InjectDllToThread(std::string dll, DWORD tid) {
 }
 
 }  // namespace injection
-}  // namespace helper
-}  // namespace overlay
 
-bool OverlayInjectToProcess(DWORD pid) {
-  DWORD tid = overlay::helper::utils::GetMainThreadIdForProcess(pid);
+bool InjectCoreToProcess(DWORD pid) {
+  DWORD tid = utils::GetMainThreadIdForProcess(pid);
 
   // If the dest process wasn't found
   if (tid == 0) {
@@ -62,10 +61,13 @@ bool OverlayInjectToProcess(DWORD pid) {
   }
 
   // Inject the core DLL to the dest process
-  if (!overlay::helper::injection::InjectDllToThread(CORE_DLL_NAME, tid)) {
+  if (!injection::InjectDllToThread(CORE_DLL_NAME, tid)) {
     std::cerr << "[OverlayHelper] Unknown error occurred!" << std::endl;
     return false;
   }
 
   return true;
 }
+
+}  // namespace helper
+}  // namespace overlay
