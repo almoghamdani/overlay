@@ -1,6 +1,9 @@
 #ifndef OVERLAY_ERROR_H
 #define OVERLAY_ERROR_H
+#include <overlay/export.h>
+
 #include <exception>
+#include <sstream>
 #include <string>
 
 namespace overlay {
@@ -14,15 +17,22 @@ enum class ErrorCode {
   ProcessNotFound
 };
 
-std::string GetErrorCodeDescription(ErrorCode code);
+HELPER_EXPORT std::string GetErrorCodeDescription(ErrorCode code);
 
 class Error : public std::exception {
  public:
-  Error(ErrorCode code);
+  Error(ErrorCode code) : code_(code) {
+    std::stringstream ss;
 
-  const char* what() const throw();
+    ss << "[Overlay Helper Error] " << GetErrorCodeDescription(code)
+       << " (Code: " << (int)code << ")";
 
-  ErrorCode code() const;
+    error_string_ = ss.str();
+  }
+
+  const char* what() const throw() { return error_string_.c_str(); }
+
+  ErrorCode code() const { return code_; }
 
  private:
   ErrorCode code_;
