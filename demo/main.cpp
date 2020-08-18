@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   if (argc < 2) {
     std::cerr << "Usage: OverlayDemo.exe [Dest Program Path]" << std::endl;
     return -1;
@@ -28,7 +28,10 @@ int main(int argc, char **argv) {
 
   // Try to inject the overlay to the process
   std::cout << "Injecting to dest process.." << std::endl;
-  if (!ovhp::InjectCoreToProcess(process_info.dwProcessId)) {
+  try {
+    ovhp::InjectCoreToProcess(process_info.dwProcessId);
+  } catch (std::exception& ex) {
+    std::cerr << ex.what() << std::endl;
     std::cerr << "Unable to inject overlay to process!" << std::endl;
     return -1;
   }

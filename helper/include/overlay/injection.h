@@ -6,7 +6,7 @@
 namespace overlay {
 namespace helper {
 
-HELPER_EXPORT bool InjectCoreToProcess(DWORD pid);
+HELPER_EXPORT void InjectCoreToProcess(DWORD pid);
 
 }  // namespace helper
 }  // namespace overlay

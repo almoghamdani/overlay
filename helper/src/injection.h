@@ -13,7 +13,7 @@ namespace overlay {
 namespace helper {
 namespace injection {
 
-bool InjectDllToThread(std::string dll, DWORD tid);
+void InjectDllToThread(std::string dll, DWORD tid);
 
 }  // namespace injection
 }  // namespace helper
