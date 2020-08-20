@@ -4,6 +4,7 @@ project(OverlayShared)
 # Get all the src and proto files for the project
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 file(GLOB_RECURSE PROTOS "protos/*.proto")
+include_directories(src)
 
 # Set runtime library
 set(CMAKE_CXX_FLAGS_RELEASE "/MT")

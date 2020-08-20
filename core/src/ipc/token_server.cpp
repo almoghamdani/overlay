@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "authenticate_response.h"
+#include "utils/token.h"
 
 namespace overlay {
 namespace core {
@@ -14,7 +15,7 @@ TokenServer::TokenServer() : pipe_(INVALID_HANDLE_VALUE) {}
 
 void TokenServer::StartTokenGeneratorServer(uint16_t rpc_server_port,
                                             std::string server_certificate) {
-  std::string pipe_name = GeneratePipeName();
+  std::string pipe_name = utils::token::GeneratePipeName(GetCurrentProcessId());
 
   // Create named pipe for outbound communication
   pipe_ = CreateNamedPipeA(pipe_name.c_str(), PIPE_ACCESS_OUTBOUND,
@@ -84,14 +85,6 @@ void TokenServer::PipeMainThread(uint16_t rpc_server_port,
   }
 }
 
-std::string TokenServer::GeneratePipeName() const {
-  std::stringstream ss;
-
-  ss << "\\\\.\\pipe\\" << PIPE_IDENTIFIER << "-" << GetCurrentProcessId();
-
-  return ss.str();
-}
-
 GUID TokenServer::GenerateTokenForProcess(DWORD pid) {
   GUID token;
 
@@ -111,21 +104,9 @@ GUID TokenServer::GenerateTokenForProcess(DWORD pid) {
   tokens_[token] = pid;
 
   LOG_F(INFO, "Generated token '%s' for process %d.",
-        TokenToString(&token).c_str(), pid);
+        utils::token::TokenToString(&token).c_str(), pid);
 
   return token;
-}
-
-std::string TokenServer::TokenToString(GUID *token) {
-  char guid_string[37];  // 32 hex chars + 4 hyphens + null terminator
-
-  snprintf(guid_string, sizeof(guid_string),
-           "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x", token->Data1,
-           token->Data2, token->Data3, token->Data4[0], token->Data4[1],
-           token->Data4[2], token->Data4[3], token->Data4[4], token->Data4[5],
-           token->Data4[6], token->Data4[7]);
-
-  return guid_string;
 }
 
 }  // namespace ipc

@@ -7,8 +7,6 @@
 #include <thread>
 #include <unordered_map>
 
-#define PIPE_IDENTIFIER "overlay-token-generator"
-
 // Simple hash for GUID
 namespace std {
 
@@ -45,10 +43,7 @@ class TokenServer {
 
   void PipeMainThread(uint16_t rpc_server_port, std::string server_certificate);
 
-  std::string GeneratePipeName() const;
-
   GUID GenerateTokenForProcess(DWORD pid);
-  std::string TokenToString(GUID *token);
 };
 
 }  // namespace ipc
