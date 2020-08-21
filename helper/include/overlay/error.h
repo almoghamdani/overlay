@@ -14,7 +14,9 @@ enum class ErrorCode {
   UnknownError,
   CoreDllNotFound,
   InvalidCoreDll,
-  ProcessNotFound
+  ProcessNotFound,
+  AlreadyConnected,
+  AuthFailed
 };
 
 HELPER_EXPORT std::string GetErrorCodeDescription(ErrorCode code);
