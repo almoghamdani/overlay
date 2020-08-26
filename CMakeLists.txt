@@ -16,9 +16,6 @@ cmake_policy(SET CMP0077 NEW)
 # Ignore deprecations
 add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
 
-# Set windows version to fix gRPC issue
-add_definitions(-D_WIN32_WINNT=0xA00)
-
 # Set runtime library
 set(CMAKE_CXX_FLAGS_RELEASE "/O2 /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
