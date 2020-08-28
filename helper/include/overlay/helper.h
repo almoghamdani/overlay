@@ -3,6 +3,7 @@
 
 #include <overlay/client.h>
 #include <overlay/error.h>
+#include <overlay/events.h>
 #include <overlay/injection.h>
 
 namespace ovhp = overlay::helper;

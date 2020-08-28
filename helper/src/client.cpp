@@ -9,22 +9,27 @@
 
 #include "auth.grpc.pb.h"
 #include "authenticate_response.h"
+#include "event_manager.h"
 #include "utils/token.h"
 
 namespace overlay {
 namespace helper {
 
 struct Client::Impl {
-  Impl() : overlay_pid_(0), channel_(nullptr) {}
+  Impl() : overlay_pid_(0), channel_(nullptr), event_manager_(nullptr) {}
 
   AuthenticateResponse GetAuthInfo() const;
   std::shared_ptr<grpc::Channel> ConnectToServerChannel() const;
 
   std::string FormatServerUrl(uint16_t port) const;
 
+  std::shared_ptr<Event> GenerateEvent(EventReply &response) const;
+
   DWORD overlay_pid_;
 
   std::shared_ptr<grpc::Channel> channel_;
+
+  std::unique_ptr<EventManager> event_manager_;
 };
 
 Client::Client() : pimpl_(new Impl) {}
@@ -41,6 +46,29 @@ void Client::ConnectToOverlay(DWORD pid) {
 
   // Connect to the server
   pimpl_->channel_ = pimpl_->ConnectToServerChannel();
+
+  // Create event manager and start it
+  pimpl_->event_manager_ = std::make_unique<EventManager>(pimpl_->channel_);
+  pimpl_->event_manager_->StartHandlingAsyncRpcs();
+}
+
+void Client::SubscribeToEvent(
+    EventType event_type,
+    std::function<void(std::shared_ptr<Event>)> callback) {
+  if (pimpl_->channel_ == nullptr) {
+    throw Error(ErrorCode::NotConnected);
+  }
+
+  pimpl_->event_manager_->SubscribeToEvent(
+      static_cast<EventReply::EventCase>(event_type),
+      [this, callback](EventReply &response) {
+        callback(pimpl_->GenerateEvent(response));
+      });
+}
+
+void Client::UnsubscribeEvent(EventType event_type) {
+  pimpl_->event_manager_->UnsubscribeEvent(
+      static_cast<EventReply::EventCase>(event_type));
 }
 
 AuthenticateResponse Client::Impl::GetAuthInfo() const {
@@ -105,6 +133,16 @@ std::string Client::Impl::FormatServerUrl(uint16_t port) const {
   ss << "localhost:" << port;
 
   return ss.str();
+}
+
+std::shared_ptr<Event> Client::Impl::GenerateEvent(EventReply &response) const {
+  switch (response.event_case()) {
+    case EventReply::EventCase::kFps:
+      return std::shared_ptr<Event>(new FpsEvent(response.fps().fps()));
+
+    default:
+      return std::shared_ptr<Event>(nullptr);
+  }
 }
 
 }  // namespace helper

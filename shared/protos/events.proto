@@ -7,13 +7,13 @@ service Events {
 	rpc UnsubscribeEvent (EventUnsubscribeRequest) returns (EventUnsubscribeResponse) {}
 }
 
-message FPSEvent {
-	double fps = 1;
-}
-
 message EventReply {
+	message FpsEvent {
+		double fps = 1;
+	}
+
 	oneof event {
-		FPSEvent fps = 1;
+		FpsEvent fps = 1;
 	}
 }
 

@@ -18,10 +18,13 @@ std::string GetErrorCodeDescription(ErrorCode code) {
       return "The requested process wasn't found";
 
     case ErrorCode::AlreadyConnected:
-      return "Client is already connected to an overlay process";
+      return "The client is already connected to an overlay process";
 
     case ErrorCode::AuthFailed:
       return "Unable to authenticate to the overlay server";
+
+    case ErrorCode::NotConnected:
+      return "The client isn't connected to an overlay server";
 
     default:
     case ErrorCode::UnknownError:
