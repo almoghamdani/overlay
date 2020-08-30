@@ -27,6 +27,7 @@ class RpcServer {
   const std::unordered_map<std::string, Client> GetAllClients();
 
   TokenServer *get_token_server();
+  EventsServiceImpl *get_events_service();
 
  private:
   std::unique_ptr<grpc::Server> server_;

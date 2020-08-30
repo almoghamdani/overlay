@@ -11,8 +11,10 @@ void Core::Start() {
 }
 
 void Core::MainThread() {
-  // Hook DXGI api (DirectX 10 - 12)
-  dxgi_hook_.Hook();
+  // Hook graphics
+  if (!graphics_manager_.Hook()) {
+    LOG_F(ERROR, "Unable to hook graphics!");
+  }
 
   // Start the RPC server
   rpc_server_.Start();
@@ -32,7 +34,9 @@ void Core::set_graphics_window(HWND window) {
 
 HWND Core::get_graphics_window() const { return graphics_windows_; }
 
-graphics::DxgiHook *Core::get_dxgi_hook() { return &dxgi_hook_; }
+graphics::GraphicsManager *Core::get_graphics_manager() {
+  return &graphics_manager_;
+}
 
 ipc::RpcServer *Core::get_rpc_server() { return &rpc_server_; }
 

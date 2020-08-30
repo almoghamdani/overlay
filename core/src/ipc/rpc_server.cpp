@@ -161,6 +161,8 @@ RpcServer::GenerateKeyCertPair() const {
 
 TokenServer *RpcServer::get_token_server() { return &token_server_; }
 
+EventsServiceImpl *RpcServer::get_events_service() { return &events_service_; }
+
 }  // namespace ipc
 }  // namespace core
 }  // namespace overlay

@@ -13,28 +13,31 @@ namespace graphics {
 
 HRESULT DXGISwapChainPresentHook(IDXGISwapChain *swapChain, UINT syncInterval,
                                  UINT flags) {
-  return Core::Get()->get_dxgi_hook()->PresentHook(swapChain, syncInterval,
-                                                   flags);
+  return Core::Get()->get_graphics_manager()->get_dxgi_hook()->PresentHook(
+      swapChain, syncInterval, flags);
 }
 
 HRESULT DXGISwapChainResizeBuffersHook(IDXGISwapChain *swapChain,
                                        UINT bufferCount, UINT width,
                                        UINT height, DXGI_FORMAT newFormat,
                                        UINT swapChainFlags) {
-  return Core::Get()->get_dxgi_hook()->ResizeBuffersHook(
-      swapChain, bufferCount, width, height, newFormat, swapChainFlags);
+  return Core::Get()
+      ->get_graphics_manager()
+      ->get_dxgi_hook()
+      ->ResizeBuffersHook(swapChain, bufferCount, width, height, newFormat,
+                          swapChainFlags);
 }
 
 HRESULT DXGISwapChainResizeTargetHook(
     IDXGISwapChain *swapChain, const DXGI_MODE_DESC *pNewTargetParameters) {
-  return Core::Get()->get_dxgi_hook()->ResizeTargetHook(swapChain,
-                                                        pNewTargetParameters);
+  return Core::Get()->get_graphics_manager()->get_dxgi_hook()->ResizeTargetHook(
+      swapChain, pNewTargetParameters);
 }
 
 HRESULT DXGISwapChain1Present1Hook(
     IDXGISwapChain1 *swapChain, UINT syncInterval, UINT presentFlags,
     const DXGI_PRESENT_PARAMETERS *pPresentParameters) {
-  return Core::Get()->get_dxgi_hook()->Present1Hook(
+  return Core::Get()->get_graphics_manager()->get_dxgi_hook()->Present1Hook(
       swapChain, syncInterval, presentFlags, pPresentParameters);
 }
 
@@ -196,6 +199,8 @@ void DxgiHook::BeforePresent(IDXGISwapChain *swap_chain) {
   if (!graphics_initiated_) {
     InitGraphics(swap_chain);
   }
+
+  core::Core::Get()->get_graphics_manager()->get_stats_calculator()->Frame();
 }
 
 bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {

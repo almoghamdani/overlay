@@ -2,7 +2,7 @@
 
 #include <thread>
 
-#include "graphics/dxgi_hook.h"
+#include "graphics/graphics_manager.h"
 #include "ipc/rpc_server.h"
 #include "utils/singleton.h"
 
@@ -19,7 +19,7 @@ class Core : public utils::Singleton<Core> {
   void set_graphics_window(HWND window);
   HWND get_graphics_window() const;
 
-  graphics::DxgiHook *get_dxgi_hook();
+  graphics::GraphicsManager *get_graphics_manager();
   ipc::RpcServer *get_rpc_server();
 
  private:
@@ -30,7 +30,7 @@ class Core : public utils::Singleton<Core> {
 
   ipc::RpcServer rpc_server_;
 
-  graphics::DxgiHook dxgi_hook_;
+  graphics::GraphicsManager graphics_manager_;
 
   void MainThread();
 };

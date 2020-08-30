@@ -8,12 +8,13 @@ service Events {
 }
 
 message EventReply {
-	message FpsEvent {
-		double fps = 1;
+	message ApplicationStatsEvent {
+		double frameTime = 1;
+		double fps = 2;
 	}
 
 	oneof event {
-		FpsEvent fps = 1;
+		ApplicationStatsEvent applicationStats = 1;
 	}
 }
 

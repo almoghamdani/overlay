@@ -3,7 +3,7 @@
 namespace overlay {
 namespace helper {
 
-enum class EventType { Fps = 1 };
+enum class EventType { ApplicationStats = 1 };
 
 struct Event {
   Event(EventType type) : type(type) {}
@@ -11,9 +11,11 @@ struct Event {
   EventType type;
 };
 
-struct FpsEvent : public Event {
-  FpsEvent(double fps) : Event(EventType::Fps), fps(fps) {}
+struct ApplicationStatsEvent : public Event {
+  ApplicationStatsEvent(double frame_time, double fps)
+      : Event(EventType::ApplicationStats), frame_time(frame_time), fps(fps) {}
 
+  double frame_time;
   double fps;
 };
 

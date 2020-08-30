@@ -137,8 +137,10 @@ std::string Client::Impl::FormatServerUrl(uint16_t port) const {
 
 std::shared_ptr<Event> Client::Impl::GenerateEvent(EventReply &response) const {
   switch (response.event_case()) {
-    case EventReply::EventCase::kFps:
-      return std::shared_ptr<Event>(new FpsEvent(response.fps().fps()));
+    case EventReply::EventCase::kApplicationStats:
+      return std::shared_ptr<Event>(
+          new ApplicationStatsEvent(response.applicationstats().frametime(),
+                                    response.applicationstats().fps()));
 
     default:
       return std::shared_ptr<Event>(nullptr);
