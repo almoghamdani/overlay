@@ -1,4 +1,4 @@
-grpc
-openssl
---triplet
-x64-windows-static
+grpc:x64-windows-static
+grpc:x86-windows-static
+openssl:x64-windows-static
+openssl:x86-windows-static

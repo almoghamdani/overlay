@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -94,8 +95,8 @@ class Manager {
 
  private:
   inline static std::unordered_map<std::string, std::shared_ptr<subhook::Hook>>
-      *hooks_ =
-          new std::unordered_map<std::string, std::shared_ptr<subhook::Hook>>();
+      hooks_;
+  inline static std::mutex hooks_mutex_;
 };
 
 }  // namespace hook

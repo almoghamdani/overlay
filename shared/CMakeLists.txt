@@ -6,10 +6,6 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 file(GLOB_RECURSE PROTOS "protos/*.proto")
 include_directories(src)
 
-# Set runtime library
-set(CMAKE_CXX_FLAGS_RELEASE "/MT")
-set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
-
 # Find Protobuf
 set(Protobuf_MODULE_COMPATIBLE TRUE)
 find_package(Protobuf CONFIG REQUIRED)

@@ -33,3 +33,8 @@ add_library(OverlayCore SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared> ${LOGU
 
 # Link the overlay core to the dependencies' libs
 target_link_libraries(OverlayCore PRIVATE rpcrt4.lib subhook gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	target_link_libraries(OverlayCore PRIVATE msvcrtd.lib)
+else ()
+	target_link_libraries(OverlayCore PRIVATE msvcrt.lib)
+endif ()

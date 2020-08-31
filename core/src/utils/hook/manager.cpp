@@ -11,10 +11,17 @@ bool Manager::InstallHook(std::string hook_name, void *src, void *dst) {
   std::shared_ptr<subhook::Hook> hook = std::make_shared<subhook::Hook>();
 
   // Try to install the hook
+#ifdef _WIN64
   success = hook->Install(src, dst, subhook::HookFlag64BitOffset);
+#else
+  success = hook->Install(src, dst);
+#endif
 
   // Add the hook to the map of hooks
-  hooks_->insert({hook_name, hook});
+  {
+    std::lock_guard lk(hooks_mutex_);
+    hooks_[hook_name] = hook;
+  }
 
   return success;
 }
@@ -27,8 +34,10 @@ bool Manager::InstallWinapiHook(std::string hook_name, HMODULE module,
 }
 
 std::shared_ptr<subhook::Hook> Manager::GetHookPtr(std::string hook_name) {
+  std::lock_guard lk(hooks_mutex_);
+
   try {
-    return hooks_->find(hook_name)->second;
+    return hooks_.at(hook_name);
   } catch (...) {
     throw std::runtime_error("The hook " + hook_name + " wasn't found");
   }
@@ -37,10 +46,12 @@ std::shared_ptr<subhook::Hook> Manager::GetHookPtr(std::string hook_name) {
 bool Manager::RemoveHook(std::string hook_name) {
   std::shared_ptr<subhook::Hook> hook;
 
-  try {
-    hook = hooks_->find(hook_name)->second;
+  std::lock_guard lk(hooks_mutex_);
 
-    hooks_->erase(hook_name);
+  try {
+    hook = hooks_.at(hook_name);
+
+    hooks_.erase(hook_name);
   } catch (...) {
     throw std::runtime_error("The hook " + hook_name + " wasn't found");
   }
@@ -51,8 +62,10 @@ bool Manager::RemoveHook(std::string hook_name) {
 Address Manager::GetTrampoline(std::string hook_name) {
   std::shared_ptr<subhook::Hook> hook;
 
+  std::lock_guard lk(hooks_mutex_);
+
   try {
-    hook = hooks_->find(hook_name)->second;
+    hook = hooks_.at(hook_name);
   } catch (...) {
     throw std::runtime_error("The hook " + hook_name + " wasn't found");
   }

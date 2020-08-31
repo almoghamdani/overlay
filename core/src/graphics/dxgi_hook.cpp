@@ -11,16 +11,16 @@ namespace overlay {
 namespace core {
 namespace graphics {
 
-HRESULT DXGISwapChainPresentHook(IDXGISwapChain *swapChain, UINT syncInterval,
-                                 UINT flags) {
+HRESULT STDMETHODCALLTYPE DXGISwapChainPresentHook(IDXGISwapChain *swapChain,
+                                                   UINT syncInterval,
+                                                   UINT flags) {
   return Core::Get()->get_graphics_manager()->get_dxgi_hook()->PresentHook(
       swapChain, syncInterval, flags);
 }
 
-HRESULT DXGISwapChainResizeBuffersHook(IDXGISwapChain *swapChain,
-                                       UINT bufferCount, UINT width,
-                                       UINT height, DXGI_FORMAT newFormat,
-                                       UINT swapChainFlags) {
+HRESULT STDMETHODCALLTYPE DXGISwapChainResizeBuffersHook(
+    IDXGISwapChain *swapChain, UINT bufferCount, UINT width, UINT height,
+    DXGI_FORMAT newFormat, UINT swapChainFlags) {
   return Core::Get()
       ->get_graphics_manager()
       ->get_dxgi_hook()
@@ -28,13 +28,13 @@ HRESULT DXGISwapChainResizeBuffersHook(IDXGISwapChain *swapChain,
                           swapChainFlags);
 }
 
-HRESULT DXGISwapChainResizeTargetHook(
+HRESULT STDMETHODCALLTYPE DXGISwapChainResizeTargetHook(
     IDXGISwapChain *swapChain, const DXGI_MODE_DESC *pNewTargetParameters) {
   return Core::Get()->get_graphics_manager()->get_dxgi_hook()->ResizeTargetHook(
       swapChain, pNewTargetParameters);
 }
 
-HRESULT DXGISwapChain1Present1Hook(
+HRESULT STDMETHODCALLTYPE DXGISwapChain1Present1Hook(
     IDXGISwapChain1 *swapChain, UINT syncInterval, UINT presentFlags,
     const DXGI_PRESENT_PARAMETERS *pPresentParameters) {
   return Core::Get()->get_graphics_manager()->get_dxgi_hook()->Present1Hook(
@@ -219,7 +219,7 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   if (!utils::hook::Manager::InstallHook("DXGISwapChainPresent",
                                          swap_chain_present_func,
                                          DXGISwapChainPresentHook)) {
-    LOG_F(ERROR,
+    LOG_F(INFO,
           "Unable to hook DXGISwapChainPresent function! Swap-chain: %p, "
           "Function: %p",
           swap_chain, swap_chain_present_func);
@@ -230,7 +230,7 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   if (!utils::hook::Manager::InstallHook("DXGISwapChainResizeBuffers",
                                          swap_chain_resize_buffers_func,
                                          DXGISwapChainResizeBuffersHook)) {
-    LOG_F(ERROR,
+    LOG_F(INFO,
           "Unable to hook DXGISwapChainResizeBuffers function! Swap-chain: %p, "
           "Function: %p",
           swap_chain, swap_chain_resize_buffers_func);
@@ -241,7 +241,7 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   if (!utils::hook::Manager::InstallHook("DXGISwapChainResizeTarget",
                                          swap_chain_resize_target_func,
                                          DXGISwapChainResizeTargetHook)) {
-    LOG_F(ERROR,
+    LOG_F(INFO,
           "Unable to hook DXGISwapChainResizeTarget function! Swap-chain: %p, "
           "Function: %p",
           swap_chain, swap_chain_resize_target_func);
@@ -257,7 +257,7 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
     if (!utils::hook::Manager::InstallHook("DXGISwapChain1Present1",
                                            swap_chain1_present1_func,
                                            DXGISwapChain1Present1Hook)) {
-      LOG_F(ERROR,
+      LOG_F(INFO,
             "Unable to hook DXGISwapChain1Present1 function! Swap-chain: %p, "
             "Function: %p",
             swap_chain1, swap_chain1_present1_func);

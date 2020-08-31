@@ -16,7 +16,7 @@ bool IsLoadedByHelper() {
   // Get a list of all the modules in this process.
   if (EnumProcessModules(GetCurrentProcess(), modules, sizeof(modules),
                          &size)) {
-    for (int i = 0; i < (size / sizeof(HMODULE)); i++) {
+    for (unsigned int i = 0; i < (size / sizeof(HMODULE)); i++) {
       TCHAR moduleName[MAX_PATH];
 
       // Get the full path to the module's file.

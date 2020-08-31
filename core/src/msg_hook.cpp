@@ -2,7 +2,7 @@
 
 #include "core.h"
 
-extern "C" __declspec(dllexport) LRESULT CALLBACK
+extern "C" __declspec(dllexport) LRESULT
     msg_hook(int code, WPARAM wParam, LPARAM lParam) {
   static bool injectWindowSet = false;
 

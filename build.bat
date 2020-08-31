@@ -2,7 +2,7 @@
 
 SET ARCH=x64
 
-::If the build folder doesn't exist, create it
+:: If the build folder doesn't exist, create it
 IF NOT EXIST build mkdir build
 
 :: Initialize the visual studio developer command line with x64 if it's not initialized yet

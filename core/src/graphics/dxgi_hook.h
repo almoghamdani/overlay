@@ -8,7 +8,7 @@ typedef HRESULT(WINAPI *pFnD3D10CreateDeviceAndSwapChain)(
     UINT Flags, UINT SDKVersion, DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
     IDXGISwapChain **ppSwapChain, ID3D10Device **ppDevice);
 
-typedef HRESULT (*pFnD3D11CreateDeviceAndSwapChain)(
+typedef HRESULT(WINAPI *pFnD3D11CreateDeviceAndSwapChain)(
     IDXGIAdapter *pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software,
     UINT Flags, const D3D_FEATURE_LEVEL *pFeatureLevels, UINT FeatureLevels,
     UINT SDKVersion, const DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
@@ -53,16 +53,14 @@ class DxgiHook {
                        UINT present_flags,
                        const DXGI_PRESENT_PARAMETERS *present_parameters_ptr);
 
-  friend HRESULT DXGISwapChainPresentHook(IDXGISwapChain *swapChain,
-                                          UINT syncInterval, UINT flags);
-  friend HRESULT DXGISwapChainResizeBuffersHook(IDXGISwapChain *swapChain,
-                                                UINT bufferCount, UINT width,
-                                                UINT height,
-                                                DXGI_FORMAT newFormat,
-                                                UINT swapChainFlags);
-  friend HRESULT DXGISwapChainResizeTargetHook(
+  friend HRESULT STDMETHODCALLTYPE DXGISwapChainPresentHook(
+      IDXGISwapChain *swapChain, UINT syncInterval, UINT flags);
+  friend HRESULT STDMETHODCALLTYPE DXGISwapChainResizeBuffersHook(
+      IDXGISwapChain *swapChain, UINT bufferCount, UINT width, UINT height,
+      DXGI_FORMAT newFormat, UINT swapChainFlags);
+  friend HRESULT STDMETHODCALLTYPE DXGISwapChainResizeTargetHook(
       IDXGISwapChain *swapChain, const DXGI_MODE_DESC *pNewTargetParameters);
-  friend HRESULT DXGISwapChain1Present1Hook(
+  friend HRESULT STDMETHODCALLTYPE DXGISwapChain1Present1Hook(
       IDXGISwapChain1 *swapChain, UINT syncInterval, UINT presentFlags,
       const DXGI_PRESENT_PARAMETERS *pPresentParameters);
 };
