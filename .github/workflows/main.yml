@@ -28,12 +28,6 @@ jobs:
       # Using 'latest' branch, the latest CMake is installed.
       uses: lukka/get-cmake@latest
 
-    # Start MSVC developer console with x64 arch
-    - name: Start MSVC developer console
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: x64
-
     # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
     - name: Restore from cache and run vcpkg
       uses: lukka/run-vcpkg@v3
@@ -46,8 +40,40 @@ jobs:
         # compute its hash and append this to the computed cache's key.
         appendedCacheKey: ${{ hashFiles('vcpkg_win.txt') }}
 
-    # Build the overlay
-    - name: Build Overlay Core, Helper and Demo
+    # Build the overlay for 32-bit
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x86
+    - name: Build Overlay (32-bit Debug)
+      uses: lukka/run-cmake@v2
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+        cmakeAppendedArgs: '-GNinja -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x86-windows-static -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
+        buildDirectory: ${{ runner.temp }}/build
+        buildWithCMake: true
+    - name: Build Overlay (32-bit Release)
+      uses: lukka/run-cmake@v2
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+        cmakeAppendedArgs: '-GNinja -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x86-windows-static -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
+        buildDirectory: ${{ runner.temp }}/build
+        buildWithCMake: true
+
+    # Build the overlay for 32-bit
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+    - name: Build Overlay (64-bit Debug)
+      uses: lukka/run-cmake@v2
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+        cmakeAppendedArgs: '-GNinja -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
+        buildDirectory: ${{ runner.temp }}/build
+        buildWithCMake: true
+    - name: Build Overlay (64-bit Release)
       uses: lukka/run-cmake@v2
       with:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
@@ -57,8 +83,13 @@ jobs:
         buildWithCMake: true
 
     # Save built overlay
-    - name: Save build
+    - name: Save x86 build
       uses: actions/upload-artifact@v2
       with:
-        name: overlay-bin
-        path: ${{ github.workspace }}/bin
+        name: overlay-x86
+        path: ${{ github.workspace }}/bin/x86
+    - name: Save x64 build
+      uses: actions/upload-artifact@v2
+      with:
+        name: overlay-x64
+        path: ${{ github.workspace }}/bin/x64
