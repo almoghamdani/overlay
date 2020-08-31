@@ -3,9 +3,8 @@
 #include <iostream>
 #include <loguru.hpp>
 
-#include "../core.h"
-#include "../utils/hook/manager.h"
-#include "../utils/hook/vtable.h"
+#include "core.h"
+#include "utils/hook/vtable.h"
 
 namespace overlay {
 namespace core {
@@ -216,9 +215,8 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   void *swap_chain1_present1_func = nullptr;
 
   // Hook present function
-  if (!utils::hook::Manager::InstallHook("DXGISwapChainPresent",
-                                         swap_chain_present_func,
-                                         DXGISwapChainPresentHook)) {
+  if (!present_hook_.Install(swap_chain_present_func,
+                             DXGISwapChainPresentHook)) {
     LOG_F(INFO,
           "Unable to hook DXGISwapChainPresent function! Swap-chain: %p, "
           "Function: %p",
@@ -227,9 +225,8 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   }
 
   // Hook resize buffers function
-  if (!utils::hook::Manager::InstallHook("DXGISwapChainResizeBuffers",
-                                         swap_chain_resize_buffers_func,
-                                         DXGISwapChainResizeBuffersHook)) {
+  if (!resize_buffers_hook_.Install(swap_chain_resize_buffers_func,
+                                    DXGISwapChainResizeBuffersHook)) {
     LOG_F(INFO,
           "Unable to hook DXGISwapChainResizeBuffers function! Swap-chain: %p, "
           "Function: %p",
@@ -238,9 +235,8 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   }
 
   // Hook resize target function
-  if (!utils::hook::Manager::InstallHook("DXGISwapChainResizeTarget",
-                                         swap_chain_resize_target_func,
-                                         DXGISwapChainResizeTargetHook)) {
+  if (!resize_target_hook_.Install(swap_chain_resize_target_func,
+                                   DXGISwapChainResizeTargetHook)) {
     LOG_F(INFO,
           "Unable to hook DXGISwapChainResizeTarget function! Swap-chain: %p, "
           "Function: %p",
@@ -254,9 +250,8 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
     // Hook present function
     swap_chain1_present1_func = utils::hook::Vtable::GetFunctionPointer(
         swap_chain1, DXGI_SWAP_CHAIN1_PRESENT1_VTABLE_INDEX);
-    if (!utils::hook::Manager::InstallHook("DXGISwapChain1Present1",
-                                           swap_chain1_present1_func,
-                                           DXGISwapChain1Present1Hook)) {
+    if (!present1_hook_.Install(swap_chain1_present1_func,
+                                DXGISwapChain1Present1Hook)) {
       LOG_F(INFO,
             "Unable to hook DXGISwapChain1Present1 function! Swap-chain: %p, "
             "Function: %p",
@@ -276,8 +271,8 @@ HRESULT DxgiHook::PresentHook(IDXGISwapChain *swap_chain, UINT sync_interval,
   BeforePresent(swap_chain);
 
   // Call original function
-  ret = utils::hook::Manager::GetTrampoline("DXGISwapChainPresent")
-            .Call<HRESULT>(swap_chain, sync_interval, flags);
+  ret = present_hook_.get_trampoline().CallStdMethod<HRESULT>(
+      swap_chain, sync_interval, flags);
 
   return ret;
 }
@@ -289,9 +284,8 @@ HRESULT DxgiHook::ResizeBuffersHook(IDXGISwapChain *swap_chain,
   HRESULT ret;
 
   // Call original function
-  ret = utils::hook::Manager::GetTrampoline("DXGISwapChainResizeBuffers")
-            .Call<HRESULT>(swap_chain, buffer_count, width, height, new_format,
-                           swap_chain_flags);
+  ret = resize_buffers_hook_.get_trampoline().CallStdMethod<HRESULT>(
+      swap_chain, buffer_count, width, height, new_format, swap_chain_flags);
 
   return ret;
 }
@@ -302,8 +296,8 @@ HRESULT DxgiHook::ResizeTargetHook(
   HRESULT ret;
 
   // Call original function
-  ret = utils::hook::Manager::GetTrampoline("DXGISwapChainResizeTarget")
-            .Call<HRESULT>(swap_chain, new_target_parameters_ptr);
+  ret = resize_target_hook_.get_trampoline().CallStdMethod<HRESULT>(
+      swap_chain, new_target_parameters_ptr);
 
   return ret;
 }
@@ -317,9 +311,8 @@ HRESULT DxgiHook::Present1Hook(
   BeforePresent(swap_chain);
 
   // Call original function
-  ret = utils::hook::Manager::GetTrampoline("DXGISwapChain1Present1")
-            .Call<HRESULT>(swap_chain, sync_interval, present_flags,
-                           present_parameters_ptr);
+  ret = present1_hook_.get_trampoline().CallStdMethod<HRESULT>(
+      swap_chain, sync_interval, present_flags, present_parameters_ptr);
 
   return ret;
 }

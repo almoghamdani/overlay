@@ -21,6 +21,11 @@ class Address {
     return ((R(*)(Args...))addr_)(args...);
   };
 
+  template <typename R, typename... Args>
+  R CallStdMethod(Args... args) {
+    return ((R(STDMETHODCALLTYPE *)(Args...))addr_)(args...);
+  };
+
  protected:
   uintptr_t addr_;
 };

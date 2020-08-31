@@ -3,6 +3,8 @@
 #include <d3d11.h>
 #include <dxgi1_2.h>
 
+#include "utils/hook/hook.h"
+
 typedef HRESULT(WINAPI *pFnD3D10CreateDeviceAndSwapChain)(
     IDXGIAdapter *pAdapter, D3D10_DRIVER_TYPE DriverType, HMODULE Software,
     UINT Flags, UINT SDKVersion, DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
@@ -32,6 +34,9 @@ class DxgiHook {
 
  private:
   bool graphics_initiated_;
+
+  utils::hook::Hook present_hook_, resize_buffers_hook_, resize_target_hook_,
+      present1_hook_;
 
   bool HookSwapChain(IDXGISwapChain *swap_chain);
 
