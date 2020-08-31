@@ -50,7 +50,7 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeAppendedArgs: '-GNinja -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x86-windows-static -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
-        buildDirectory: ${{ runner.temp }}/build
+        buildDirectory: ${{ runner.temp }}/build/x86
         buildWithCMake: true
     - name: Build Overlay (32-bit Release)
       uses: lukka/run-cmake@v2
@@ -58,10 +58,10 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeAppendedArgs: '-GNinja -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x86-windows-static -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
-        buildDirectory: ${{ runner.temp }}/build
+        buildDirectory: ${{ runner.temp }}/build/x86
         buildWithCMake: true
 
-    # Build the overlay for 32-bit
+    # Build the overlay for 64-bit
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
@@ -71,7 +71,7 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeAppendedArgs: '-GNinja -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
-        buildDirectory: ${{ runner.temp }}/build
+        buildDirectory: ${{ runner.temp }}/build/x64
         buildWithCMake: true
     - name: Build Overlay (64-bit Release)
       uses: lukka/run-cmake@v2
@@ -79,7 +79,7 @@ jobs:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeAppendedArgs: '-GNinja -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_C_COMPILER:PATH="cl.exe" -DCMAKE_CXX_COMPILER:PATH="cl.exe" '
-        buildDirectory: ${{ runner.temp }}/build
+        buildDirectory: ${{ runner.temp }}/build/x64
         buildWithCMake: true
 
     # Save built overlay
