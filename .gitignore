@@ -3,6 +3,7 @@
 # Edit at https://www.gitignore.io/?templates=c++,cmake,linux,windows,visualstudio,visualstudiocode
 
 # Ignore build folders
+bin
 build
 
 # Ignore cef binary folder

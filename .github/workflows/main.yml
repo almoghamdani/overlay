@@ -61,4 +61,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: overlay-bin
-        path: ${{ runner.temp }}/build/bin
+        path: ${{ github.workspace }}/bin
