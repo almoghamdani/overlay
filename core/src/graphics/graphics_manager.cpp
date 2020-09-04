@@ -11,6 +11,8 @@ namespace overlay {
 namespace core {
 namespace graphics {
 
+GraphicsManager::GraphicsManager() : renderer_(nullptr) {}
+
 bool GraphicsManager::Hook() {
   bool hooked = false;
 
@@ -41,14 +43,6 @@ bool GraphicsManager::Hook() {
   return hooked;
 }
 
-Dx9Hook *GraphicsManager::get_dx9_hook() { return &dx9_hook_; }
-
-DxgiHook *GraphicsManager::get_dxgi_hook() { return &dxgi_hook_; }
-
-StatsCalculator *GraphicsManager::get_stats_calculator() {
-  return &stats_calculator_;
-}
-
 void GraphicsManager::BroadcastApplicationStats(double frame_time, double fps) {
   EventReply event;
   EventReply::ApplicationStatsEvent *stats_event =
@@ -61,6 +55,27 @@ void GraphicsManager::BroadcastApplicationStats(double frame_time, double fps) {
 
   core::Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(
       event);
+}
+
+void GraphicsManager::Render() {
+  std::vector<Sprite> sprites;
+
+  if (renderer_) {
+    renderer_->RenderSprites(sprites);
+  }
+}
+
+Dx9Hook *GraphicsManager::get_dx9_hook() { return &dx9_hook_; }
+
+DxgiHook *GraphicsManager::get_dxgi_hook() { return &dxgi_hook_; }
+
+StatsCalculator *GraphicsManager::get_stats_calculator() {
+  return &stats_calculator_;
+}
+
+void GraphicsManager::set_renderer(
+    std::unique_ptr<IGraphicsRenderer> &&renderer) {
+  renderer_ = std::move(renderer);
 }
 
 }  // namespace graphics

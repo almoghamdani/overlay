@@ -3,6 +3,7 @@
 #include <loguru.hpp>
 
 #include "core.h"
+#include "dx9_renderer.h"
 #include "utils/hook/vtable.h"
 
 namespace overlay {
@@ -143,11 +144,16 @@ bool Dx9Hook::Hook(HWND dummy_window) {
 }
 
 void Dx9Hook::Unhook() {
+  if (graphics_initiated_) {
+    Core::Get()->get_graphics_manager()->set_renderer(nullptr);
+  }
+
   present_hook_.Remove();
   swap_chain_present_hook_.Remove();
   reset_hook_.Remove();
   present_ex_hook_.Remove();
   reset_ex_hook_.Remove();
+  
   graphics_initiated_ = false;
 }
 
@@ -204,6 +210,8 @@ bool Dx9Hook::InitGraphics(IDirect3DDevice9 *device) {
   IDirect3DSwapChain9 *swap_chain = nullptr;
   D3DPRESENT_PARAMETERS present_parameters;
 
+  std::unique_ptr<Dx9Renderer> renderer = nullptr;
+
   if (graphics_initiated_) {
     return true;
   }
@@ -219,6 +227,15 @@ bool Dx9Hook::InitGraphics(IDirect3DDevice9 *device) {
   if ((injectWindow != NULL &&
        present_parameters.hDeviceWindow == injectWindow) ||
       (injectWindow == NULL && present_parameters.hDeviceWindow != NULL)) {
+    // Create DirectX 9 Renderer
+    renderer = std::make_unique<Dx9Renderer>(device);
+    if (!renderer->Init()) {
+      return false;
+    }
+    Core::Get()->get_graphics_manager()->set_renderer(
+        std::move(std::unique_ptr<IGraphicsRenderer>(
+            static_cast<IGraphicsRenderer *>(renderer.release()))));
+
     Core::Get()->set_graphics_window(present_parameters.hDeviceWindow);
 
     graphics_initiated_ = true;
@@ -234,7 +251,8 @@ void Dx9Hook::BeforePresent(IDirect3DDevice9 *device) {
     InitGraphics(device);
   }
 
-  core::Core::Get()->get_graphics_manager()->get_stats_calculator()->Frame();
+  Core::Get()->get_graphics_manager()->Render();
+  Core::Get()->get_graphics_manager()->get_stats_calculator()->Frame();
 }
 
 bool Dx9Hook::HookD3d9ex(IDirect3DDevice9Ex *device) {

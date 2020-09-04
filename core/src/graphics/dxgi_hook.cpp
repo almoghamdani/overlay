@@ -197,7 +197,8 @@ void DxgiHook::BeforePresent(IDXGISwapChain *swap_chain) {
     InitGraphics(swap_chain);
   }
 
-  core::Core::Get()->get_graphics_manager()->get_stats_calculator()->Frame();
+  Core::Get()->get_graphics_manager()->Render();
+  Core::Get()->get_graphics_manager()->get_stats_calculator()->Frame();
 }
 
 bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
