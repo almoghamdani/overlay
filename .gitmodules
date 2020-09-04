@@ -7,3 +7,6 @@
 [submodule "vendor/vcpkg"]
 	path = vendor/vcpkg
 	url = https://github.com/microsoft/vcpkg
+[submodule "vendor/dxsdk"]
+	path = vendor/dxsdk
+	url = https://github.com/apitrace/dxsdk

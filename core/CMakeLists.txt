@@ -28,6 +28,9 @@ include_directories(../vendor/subhook)
 set(LOGURU_SOURCES "../vendor/loguru/loguru.hpp" "../vendor/loguru/loguru.cpp")
 include_directories(../vendor/loguru)
 
+# Include DirectX SDK headers
+include_directories(../vendor/dxsdk/Include)
+
 # Add the overlay core as an shared library to be compiled
 add_library(OverlayCore SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared> ${LOGURU_SOURCES})
 
