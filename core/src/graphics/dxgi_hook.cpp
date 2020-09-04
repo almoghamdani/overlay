@@ -42,15 +42,8 @@ HRESULT STDMETHODCALLTYPE DXGISwapChain1Present1Hook(
 
 DxgiHook::DxgiHook() : graphics_initiated_(false) {}
 
-bool DxgiHook::Hook() {
+bool DxgiHook::Hook(HWND dummy_window) {
   bool hooked = false;
-
-  // Create a dummy window to create the directx swap chains for
-  HWND dummy_window = CreateWindowA("STATIC", "OVERLAY_DUMMY_WINDOW", WS_POPUP,
-                                    0, 0, 2, 2, HWND_MESSAGE, NULL, NULL, NULL);
-  if (!dummy_window) {
-    return false;
-  }
 
   // Try to hook DirectX 10
   if (HookDirectx10(dummy_window)) {
@@ -64,10 +57,15 @@ bool DxgiHook::Hook() {
     hooked = true;
   }
 
-  // Destroy the dummy window
-  DestroyWindow(dummy_window);
-
   return hooked;
+}
+
+void DxgiHook::Unhook() {
+  present_hook_.Remove();
+  resize_buffers_hook_.Remove();
+  resize_target_hook_.Remove();
+  present1_hook_.Remove();
+  graphics_initiated_ = false;
 }
 
 bool DxgiHook::HookDirectx11(HWND window) {
@@ -217,7 +215,7 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   // Hook present function
   if (!present_hook_.Install(swap_chain_present_func,
                              DXGISwapChainPresentHook)) {
-    LOG_F(INFO,
+    LOG_F(ERROR,
           "Unable to hook DXGISwapChainPresent function! Swap-chain: %p, "
           "Function: %p",
           swap_chain, swap_chain_present_func);
@@ -227,7 +225,7 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   // Hook resize buffers function
   if (!resize_buffers_hook_.Install(swap_chain_resize_buffers_func,
                                     DXGISwapChainResizeBuffersHook)) {
-    LOG_F(INFO,
+    LOG_F(ERROR,
           "Unable to hook DXGISwapChainResizeBuffers function! Swap-chain: %p, "
           "Function: %p",
           swap_chain, swap_chain_resize_buffers_func);
@@ -237,7 +235,7 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   // Hook resize target function
   if (!resize_target_hook_.Install(swap_chain_resize_target_func,
                                    DXGISwapChainResizeTargetHook)) {
-    LOG_F(INFO,
+    LOG_F(ERROR,
           "Unable to hook DXGISwapChainResizeTarget function! Swap-chain: %p, "
           "Function: %p",
           swap_chain, swap_chain_resize_target_func);
@@ -252,7 +250,7 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
         swap_chain1, DXGI_SWAP_CHAIN1_PRESENT1_VTABLE_INDEX);
     if (!present1_hook_.Install(swap_chain1_present1_func,
                                 DXGISwapChain1Present1Hook)) {
-      LOG_F(INFO,
+      LOG_F(ERROR,
             "Unable to hook DXGISwapChain1Present1 function! Swap-chain: %p, "
             "Function: %p",
             swap_chain1, swap_chain1_present1_func);

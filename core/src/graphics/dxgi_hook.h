@@ -3,6 +3,7 @@
 #include <d3d11.h>
 #include <dxgi1_2.h>
 
+#include "graphics_hook.h"
 #include "utils/hook/hook.h"
 
 typedef HRESULT(WINAPI *pFnD3D10CreateDeviceAndSwapChain)(
@@ -26,11 +27,12 @@ namespace overlay {
 namespace core {
 namespace graphics {
 
-class DxgiHook {
+class DxgiHook : public IGraphicsHook {
  public:
   DxgiHook();
 
-  bool Hook();
+  virtual bool Hook(HWND dummy_window);
+  virtual void Unhook();
 
  private:
   bool graphics_initiated_;

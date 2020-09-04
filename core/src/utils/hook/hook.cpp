@@ -13,6 +13,8 @@ bool Hook::Install(void *src, void *dst) {
 #endif
 }
 
+bool Hook::Remove() { return hook_.Remove(); }
+
 Address Hook::get_trampoline() const {
   return Address((uintptr_t)hook_.GetTrampoline());
 }

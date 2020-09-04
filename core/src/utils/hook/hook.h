@@ -12,6 +12,7 @@ namespace hook {
 class Hook {
  public:
   bool Install(void *src, void *dst);
+  bool Remove();
 
   Address get_trampoline() const;
 
