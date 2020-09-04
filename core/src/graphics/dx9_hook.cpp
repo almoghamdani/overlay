@@ -291,7 +291,7 @@ HRESULT Dx9Hook::SwapChainPresentHook(IDirect3DSwapChain9 *swap_chain,
     BeforePresent(device);
   }
 
-  ret = swap_chain_present_hook_.get_trampoline().Call<HRESULT>(
+  ret = swap_chain_present_hook_.get_trampoline().CallStdMethod<HRESULT>(
       swap_chain, source_rect, dest_rect, dest_window_override, dirty_region,
       flags);
 
@@ -302,8 +302,8 @@ HRESULT Dx9Hook::DeviceResetHook(
     IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *presentation_parameters) {
   HRESULT ret;
 
-  ret = reset_hook_.get_trampoline().Call<HRESULT>(device,
-                                                   presentation_parameters);
+  ret = reset_hook_.get_trampoline().CallStdMethod<HRESULT>(
+      device, presentation_parameters);
 
   return ret;
 }
@@ -317,7 +317,7 @@ HRESULT Dx9Hook::DevicePresentExHook(IDirect3DDevice9Ex *device,
 
   BeforePresent(device);
 
-  ret = present_ex_hook_.get_trampoline().Call<HRESULT>(
+  ret = present_ex_hook_.get_trampoline().CallStdMethod<HRESULT>(
       device, source_rect, dest_rect, dest_window_override, dirty_region,
       flags);
 
@@ -329,7 +329,7 @@ HRESULT Dx9Hook::DeviceResetExHook(
     D3DDISPLAYMODEEX *fullscreen_display_mode) {
   HRESULT ret;
 
-  ret = reset_ex_hook_.get_trampoline().Call<HRESULT>(
+  ret = reset_ex_hook_.get_trampoline().CallStdMethod<HRESULT>(
       device, presentation_parameters, fullscreen_display_mode);
 
   return ret;
