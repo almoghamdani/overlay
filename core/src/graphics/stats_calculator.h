@@ -6,7 +6,7 @@
 #include <mutex>
 #include <thread>
 
-#define FRAME_TIME_SAMPLES 300
+#define INITIAL_FRAME_SAMPLES_CAP 50
 #define STATS_CALC_TIME std::chrono::milliseconds(35)
 
 namespace overlay {
@@ -27,6 +27,8 @@ class StatsCalculator {
   std::chrono::high_resolution_clock::time_point last_calc_time_;
   std::thread calc_thread_;
   std::condition_variable calc_cv_;
+
+  uint64_t frame_samples_cap_;
 
   void CalculateStats();
 };

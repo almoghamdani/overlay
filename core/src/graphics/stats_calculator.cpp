@@ -9,7 +9,8 @@ namespace graphics {
 StatsCalculator::StatsCalculator()
     : frame_render_start_(std::chrono::high_resolution_clock::now()),
       last_calc_time_(std::chrono::high_resolution_clock::now()),
-      calc_thread_(&StatsCalculator::CalculateStats, this) {}
+      calc_thread_(&StatsCalculator::CalculateStats, this),
+      frame_samples_cap_(INITIAL_FRAME_SAMPLES_CAP) {}
 
 void StatsCalculator::Frame() {
   std::unique_lock lk(frame_times_mutex_);
@@ -55,13 +56,14 @@ void StatsCalculator::CalculateStats() {
     }
 
     // Remove old samples
-    while (frame_times.size() > FRAME_TIME_SAMPLES) {
+    while (frame_times.size() > frame_samples_cap_) {
       frame_time_sum -= frame_times.front().count();
       frame_times.pop_front();
     }
 
     avg_frame_time = frame_time_sum / (1000000.0 * frame_times.size());
     avg_fps = 1 / avg_frame_time * 1000.0;
+    frame_samples_cap_ = (uint64_t)avg_fps;
 
     core::Core::Get()->get_graphics_manager()->BroadcastApplicationStats(
         avg_frame_time, avg_fps);
