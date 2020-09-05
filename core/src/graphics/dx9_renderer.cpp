@@ -79,7 +79,11 @@ void Dx9Renderer::DrawSprite(const Sprite &sprite) {
   }
 
   // Copy the buffer data to the rect data
-  memcpy(texture_rect.pBits, sprite.buffer.data(), sprite.buffer.size());
+  for (uint64_t line = 0; line < sprite.height; line++) {
+    memcpy((uint8_t *)texture_rect.pBits + line * texture_rect.Pitch,
+           (uint32_t *)sprite.buffer.data() + line * sprite.width,
+           sprite.width * sizeof(uint32_t));
+  }
 
   // Unlock the texture data
   if (FAILED(sprite_texture->UnlockRect(0))) {
