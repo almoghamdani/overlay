@@ -10,3 +10,6 @@
 [submodule "vendor/dxsdk"]
 	path = vendor/dxsdk
 	url = https://github.com/apitrace/dxsdk
+[submodule "vendor/cxxopts"]
+	path = vendor/cxxopts
+	url = https://github.com/jarro2783/cxxopts

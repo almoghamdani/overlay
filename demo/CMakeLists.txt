@@ -13,6 +13,9 @@ file(GLOB_RECURSE SOURCES "*.cpp" "*.h")
 # Include overlay helper
 include_directories(../helper/include)
 
+# Include cxxopts
+include_directories(../vendor/cxxopts/include)
+
 # Add the overlay demo as an executable to be compiled
 add_executable(OverlayDemo ${SOURCES})
 
