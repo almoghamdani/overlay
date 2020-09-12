@@ -73,14 +73,14 @@ int main(int argc, char** argv) {
       client.ConnectToOverlay(process_info.dwProcessId != 0
                                   ? process_info.dwProcessId
                                   : args["pid"].as<DWORD>());
-      std::cout << "Connected to dest process' overlay!" << std::endl;
+      std::cout << "Connected to dest process' overlay!" << std::endl << std::endl;
 
       if (args["stats-log"].as<bool>()) {
         client.SubscribeToEvent(
             ovhp::EventType::ApplicationStats,
             [](std::shared_ptr<ovhp::Event> event) {
               printf(
-                  "Application stats: Frame time: %f, FPS: %f\n",
+                  "\rApplication stats: Frame time: %f, FPS: %f",
                   std::static_pointer_cast<ovhp::ApplicationStatsEvent>(event)
                       ->frame_time,
                   std::static_pointer_cast<ovhp::ApplicationStatsEvent>(event)
@@ -89,7 +89,6 @@ int main(int argc, char** argv) {
       }
 
       // Wait for process to exit
-      std::cout << "Waiting for process to exit.." << std::endl;
       WaitForSingleObject(process_info.hProcess, INFINITE);
     } catch (std::exception& ex) {
       std::cerr << "An error occurred: " << ex.what() << std::endl;
@@ -97,7 +96,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  std::cout << "Done!" << std::endl;
+  std::cout << "\33[2K\rDone!" << std::endl;
 
   return 0;
 }
