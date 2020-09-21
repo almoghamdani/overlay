@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   STARTUPINFOA info = {sizeof(info)};
   PROCESS_INFORMATION process_info = {0};
 
-  ovhp::Client client;
+  std::shared_ptr<ovhp::Client> client = nullptr;
 
   // Show help
   if (args.count("help") || !(args.count("pid") || args.count("executable"))) {
@@ -70,13 +70,15 @@ int main(int argc, char** argv) {
     try {
       // Connect to the client
       std::cout << "Connecting to overlay.." << std::endl;
-      client.ConnectToOverlay(process_info.dwProcessId != 0
-                                  ? process_info.dwProcessId
-                                  : args["pid"].as<DWORD>());
-      std::cout << "Connected to dest process' overlay!" << std::endl << std::endl;
+      client = ovhp::CreateClient(process_info.dwProcessId != 0
+                                      ? process_info.dwProcessId
+                                      : args["pid"].as<DWORD>());
+      client->Connect();
+      std::cout << "Connected to dest process' overlay!" << std::endl
+                << std::endl;
 
       if (args["stats-log"].as<bool>()) {
-        client.SubscribeToEvent(
+        client->SubscribeToEvent(
             ovhp::EventType::ApplicationStats,
             [](std::shared_ptr<ovhp::Event> event) {
               printf(
@@ -91,7 +93,7 @@ int main(int argc, char** argv) {
       // Wait for process to exit
       WaitForSingleObject(process_info.hProcess, INFINITE);
     } catch (std::exception& ex) {
-      std::cerr << "An error occurred: " << ex.what() << std::endl;
+      std::cerr << "\33[2K\rAn error occurred: " << ex.what() << std::endl;
       return -1;
     }
   }

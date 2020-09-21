@@ -3,13 +3,13 @@ syntax = "proto3";
 package overlay;
 
 service Authentication {
-	rpc AuthenticateWithToken (TokenAuthenticationRequest) returns (TokenAuthenticationReply) {}
+	rpc AuthenticateWithToken (TokenAuthenticationRequest) returns (TokenAuthenticationResponse) {}
 }
 
 message TokenAuthenticationRequest {
 	bytes token = 1;
 }
 
-message TokenAuthenticationReply {
+message TokenAuthenticationResponse {
 
 }

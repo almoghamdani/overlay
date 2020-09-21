@@ -2,6 +2,7 @@
 #define OVERLAY_CLIENT_H
 #include <overlay/events.h>
 #include <overlay/export.h>
+#include <overlay/window.h>
 #include <windows.h>
 
 #include <functional>
@@ -12,19 +13,20 @@ namespace helper {
 
 class HELPER_EXPORT Client {
  public:
-  Client();
-  ~Client();
+  virtual ~Client();
 
-  void ConnectToOverlay(DWORD pid);
+  virtual void Connect() = 0;
 
-  void SubscribeToEvent(EventType event_type,
-                        std::function<void(std::shared_ptr<Event>)> callback);
-  void UnsubscribeEvent(EventType event_type);
+  virtual void SubscribeToEvent(
+      EventType event_type,
+      std::function<void(std::shared_ptr<Event>)> callback) = 0;
+  virtual void UnsubscribeEvent(EventType event_type) = 0;
 
- private:
-  struct Impl;
-  Impl *pimpl_;
+  virtual std::shared_ptr<Window> CreateNewWindow(
+      const WindowProperties &properties) = 0;
 };
+
+HELPER_EXPORT std::shared_ptr<Client> CreateClient(DWORD process_id);
 
 }  // namespace helper
 }  // namespace overlay

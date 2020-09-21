@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package overlay;
+
+service Windows {
+	rpc CreateNewWindow (CreateWindowRequest) returns (CreateWindowResponse) {}
+	rpc BufferForWindow (BufferForWindowRequest) returns (BufferForWindowResponse) {}
+}
+
+message WindowRect {
+	uint64 width = 1;
+	uint64 height = 2;
+	uint64 x = 3;
+	uint64 y = 4;
+	sint32 z = 5;
+}
+
+message CreateWindowRequest {
+	WindowRect rect = 1;
+}
+
+message CreateWindowResponse {
+	bytes id = 1;
+}
+
+message BufferForWindowRequest {
+	bytes id = 1;
+	bytes buffer = 2;
+}
+
+message BufferForWindowResponse {
+
+}

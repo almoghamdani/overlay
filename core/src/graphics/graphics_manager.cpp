@@ -44,9 +44,9 @@ bool GraphicsManager::Hook() {
 }
 
 void GraphicsManager::BroadcastApplicationStats(double frame_time, double fps) {
-  EventReply event;
-  EventReply::ApplicationStatsEvent *stats_event =
-      new EventReply::ApplicationStatsEvent();
+  EventResponse event;
+  EventResponse::ApplicationStatsEvent *stats_event =
+      new EventResponse::ApplicationStatsEvent();
 
   stats_event->set_frametime(frame_time);
   stats_event->set_fps(fps);
@@ -58,11 +58,13 @@ void GraphicsManager::BroadcastApplicationStats(double frame_time, double fps) {
 }
 
 void GraphicsManager::Render() {
-  std::vector<Sprite> sprites;
-
   if (renderer_) {
-    renderer_->RenderSprites(sprites);
+    window_mananger_.RenderWindows(renderer_);
   }
+}
+
+WindowManager *GraphicsManager::get_window_manager() {
+  return &window_mananger_;
 }
 
 Dx9Hook *GraphicsManager::get_dx9_hook() { return &dx9_hook_; }

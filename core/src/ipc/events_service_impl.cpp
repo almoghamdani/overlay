@@ -11,8 +11,8 @@ namespace ipc {
 grpc::Status EventsServiceImpl::UnsubscribeEvent(
     grpc::ServerContext *context, const EventUnsubscribeRequest *request,
     EventUnsubscribeResponse *response) {
-  if ((EventReply::EventCase)request->type() <=
-      EventReply::EventCase::EVENT_NOT_SET) {
+  if ((EventResponse::EventCase)request->type() <=
+      EventResponse::EventCase::EVENT_NOT_SET) {
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                         "Invalid event type");
   }
@@ -20,7 +20,7 @@ grpc::Status EventsServiceImpl::UnsubscribeEvent(
   std::lock_guard workers_lk(event_workers_mutex_);
 
   try {
-    event_workers_.at((EventReply::EventCase)request->type())
+    event_workers_.at((EventResponse::EventCase)request->type())
         .at(context->peer())
         ->Finish(grpc::Status::OK);
   } catch (...) {
@@ -57,17 +57,17 @@ void EventsServiceImpl::StartHandlingAsyncRpcs() {
   });
 }
 
-void EventsServiceImpl::RegisterEventWorker(EventReply::EventCase event_type,
+void EventsServiceImpl::RegisterEventWorker(EventResponse::EventCase event_type,
                                             AsyncEventsServiceWorker *worker) {
-  CHECK_F(event_type > EventReply::EventCase::EVENT_NOT_SET);
+  CHECK_F(event_type > EventResponse::EventCase::EVENT_NOT_SET);
   std::lock_guard workers_lk(event_workers_mutex_);
 
   event_workers_[event_type][worker->GetClientId()] = worker;
 }
 
-void EventsServiceImpl::RemoveEventWorker(EventReply::EventCase event_type,
+void EventsServiceImpl::RemoveEventWorker(EventResponse::EventCase event_type,
                                           AsyncEventsServiceWorker *worker) {
-  CHECK_F(event_type > EventReply::EventCase::EVENT_NOT_SET);
+  CHECK_F(event_type > EventResponse::EventCase::EVENT_NOT_SET);
   std::lock_guard workers_lk(event_workers_mutex_);
 
   try {
@@ -77,8 +77,8 @@ void EventsServiceImpl::RemoveEventWorker(EventReply::EventCase event_type,
 }
 
 bool EventsServiceImpl::SendEventToClient(std::string client_id,
-                                          EventReply event) {
-  CHECK_F(event.event_case() > EventReply::EventCase::EVENT_NOT_SET);
+                                          EventResponse event) {
+  CHECK_F(event.event_case() > EventResponse::EventCase::EVENT_NOT_SET);
   std::lock_guard workers_lk(event_workers_mutex_);
 
   try {
@@ -89,8 +89,8 @@ bool EventsServiceImpl::SendEventToClient(std::string client_id,
   }
 }
 
-void EventsServiceImpl::BroadcastEvent(EventReply event) {
-  CHECK_F(event.event_case() > EventReply::EventCase::EVENT_NOT_SET);
+void EventsServiceImpl::BroadcastEvent(EventResponse event) {
+  CHECK_F(event.event_case() > EventResponse::EventCase::EVENT_NOT_SET);
   std::lock_guard workers_lk(event_workers_mutex_);
 
   if (!event_workers_.count(event.event_case())) {
@@ -123,20 +123,20 @@ void AsyncEventsServiceWorker::Handle() {
     new AsyncEventsServiceWorker(service_, completion_queue_);
 
     // If the event type is invalid
-    if ((EventReply::EventCase)request_.type() <=
-        EventReply::EventCase::EVENT_NOT_SET) {
+    if ((EventResponse::EventCase)request_.type() <=
+        EventResponse::EventCase::EVENT_NOT_SET) {
       Finish(grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                           "Invalid event type"));
     } else {
       registered_ = true;
-      service_->RegisterEventWorker((EventReply::EventCase)request_.type(),
+      service_->RegisterEventWorker((EventResponse::EventCase)request_.type(),
                                     this);
     }
   }
 }
 
 void overlay::core::ipc::AsyncEventsServiceWorker::SendEvent(
-    overlay::EventReply &event) {
+    overlay::EventResponse &event) {
   writer_.Write(event, this);
 }
 
@@ -147,7 +147,8 @@ void AsyncEventsServiceWorker::Finish(grpc::Status status) {
 
 void AsyncEventsServiceWorker::ForceFinish() {
   if (registered_) {
-    service_->RemoveEventWorker((EventReply::EventCase)request_.type(), this);
+    service_->RemoveEventWorker((EventResponse::EventCase)request_.type(),
+                                this);
   }
 
   delete this;

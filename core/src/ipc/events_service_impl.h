@@ -25,20 +25,20 @@ class EventsServiceImpl final
   void AsyncInitialize(grpc::ServerBuilder &server_builder);
   void StartHandlingAsyncRpcs();
 
-  void RegisterEventWorker(EventReply::EventCase event_type,
+  void RegisterEventWorker(EventResponse::EventCase event_type,
                            AsyncEventsServiceWorker *worker);
-  void RemoveEventWorker(EventReply::EventCase event_type,
+  void RemoveEventWorker(EventResponse::EventCase event_type,
                          AsyncEventsServiceWorker *worker);
 
-  bool SendEventToClient(std::string client_id, EventReply event);
-  void BroadcastEvent(EventReply event);
+  bool SendEventToClient(std::string client_id, EventResponse event);
+  void BroadcastEvent(EventResponse event);
 
  private:
   std::unique_ptr<grpc::ServerCompletionQueue> completion_queue_;
   std::thread async_rpcs_thread_;
 
   std::unordered_map<
-      EventReply::EventCase,
+      EventResponse::EventCase,
       std::unordered_map<std::string, AsyncEventsServiceWorker *>>
       event_workers_;
   std::mutex event_workers_mutex_;
@@ -50,7 +50,7 @@ class AsyncEventsServiceWorker {
                            grpc::ServerCompletionQueue *completion_queue);
 
   void Handle();
-  void SendEvent(EventReply &event);
+  void SendEvent(EventResponse &event);
 
   void Finish(grpc::Status status);
   void ForceFinish();
@@ -64,7 +64,7 @@ class AsyncEventsServiceWorker {
   grpc::ServerContext context_;
 
   EventSubscribeRequest request_;
-  grpc::ServerAsyncWriter<EventReply> writer_;
+  grpc::ServerAsyncWriter<EventResponse> writer_;
 
   bool finished_, registered_;
 };

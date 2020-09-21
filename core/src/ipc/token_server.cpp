@@ -98,7 +98,7 @@ GUID TokenServer::GenerateTokenForProcess(DWORD pid) {
   }
 
   // Generate random guid
-  CoCreateGuid(&token);
+  token = utils::Guid::GenerateGuid();
 
   // Save token
   tokens_[token] = pid;

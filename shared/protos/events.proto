@@ -3,11 +3,11 @@ syntax = "proto3";
 package overlay;
 
 service Events {
-	rpc SubscribeToEvent (EventSubscribeRequest) returns (stream EventReply) {}
+	rpc SubscribeToEvent (EventSubscribeRequest) returns (stream EventResponse) {}
 	rpc UnsubscribeEvent (EventUnsubscribeRequest) returns (EventUnsubscribeResponse) {}
 }
 
-message EventReply {
+message EventResponse {
 	message ApplicationStatsEvent {
 		double frameTime = 1;
 		double fps = 2;

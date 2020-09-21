@@ -10,7 +10,7 @@ namespace ipc {
 
 grpc::Status AuthServiceImpl::AuthenticateWithToken(
     grpc::ServerContext *context, const TokenAuthenticationRequest *request,
-    TokenAuthenticationReply *response) {
+    TokenAuthenticationResponse *response) {
   GUID token;
   DWORD process_id;
 

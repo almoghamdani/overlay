@@ -1,16 +1,13 @@
 #pragma once
 #include <cstdint>
-#include <vector>
-
-#include "rect.h"
 
 namespace overlay {
 namespace core {
 namespace graphics {
 
-struct Sprite {
-  Rect rect;
-  std::vector<uint8_t> buffer;
+struct Rect {
+  size_t height, width;
+  size_t x, y;
 };
 
 }  // namespace graphics

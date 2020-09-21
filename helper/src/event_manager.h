@@ -21,11 +21,11 @@ class EventManager {
 
   void StartHandlingAsyncRpcs();
 
-  void HandleEvent(EventReply &response);
+  void HandleEvent(EventResponse &response);
 
-  void SubscribeToEvent(EventReply::EventCase event_type,
-                        std::function<void(EventReply &)> handler);
-  void UnsubscribeEvent(EventReply::EventCase event_type);
+  void SubscribeToEvent(EventResponse::EventCase event_type,
+                        std::function<void(EventResponse &)> handler);
+  void UnsubscribeEvent(EventResponse::EventCase event_type);
 
  private:
   std::unique_ptr<Events::Stub> events_stub_;
@@ -34,7 +34,8 @@ class EventManager {
   grpc::CompletionQueue completion_queue_;
   std::thread async_rpcs_thread_;
 
-  std::unordered_map<EventReply::EventCase, std::function<void(EventReply &)>>
+  std::unordered_map<EventResponse::EventCase,
+                     std::function<void(EventResponse &)>>
       event_handlers_;
   std::mutex event_handlers_mutex_;
 };
@@ -51,9 +52,9 @@ class AsyncEventListenerWorker {
   EventManager *event_manager_;
 
   grpc::ClientContext context_;
-  std::unique_ptr<grpc::ClientAsyncReader<EventReply>> reader_;
+  std::unique_ptr<grpc::ClientAsyncReader<EventResponse>> reader_;
 
-  EventReply response_;
+  EventResponse response_;
 
   bool started_;
 };

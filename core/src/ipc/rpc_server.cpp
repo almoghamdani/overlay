@@ -41,6 +41,7 @@ void RpcServer::Start() {
   // Register servicesS
   server_builder.RegisterService(&auth_service_);
   server_builder.RegisterService(&events_service_);
+  server_builder.RegisterService(&windows_service_);
 
   // Add token interceptor factory to interceptors
   interceptor_creators.push_back(

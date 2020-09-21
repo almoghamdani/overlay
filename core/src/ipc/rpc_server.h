@@ -11,6 +11,7 @@
 #include "client.h"
 #include "events_service_impl.h"
 #include "token_server.h"
+#include "windows_service_impl.h"
 
 namespace overlay {
 namespace core {
@@ -41,6 +42,7 @@ class RpcServer {
   TokenServer token_server_;
   EventsServiceImpl events_service_;
   AuthServiceImpl auth_service_;
+  WindowsServiceImpl windows_service_;
 
   grpc::SslServerCredentialsOptions::PemKeyCertPair GenerateKeyCertPair() const;
 };

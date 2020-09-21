@@ -5,6 +5,7 @@
 #include "dxgi_hook.h"
 #include "graphics_renderer.h"
 #include "stats_calculator.h"
+#include "window_manager.h"
 
 namespace overlay {
 namespace core {
@@ -20,6 +21,8 @@ class GraphicsManager {
 
   void Render();
 
+  WindowManager *get_window_manager();
+
   Dx9Hook *get_dx9_hook();
   DxgiHook *get_dxgi_hook();
 
@@ -28,6 +31,8 @@ class GraphicsManager {
   void set_renderer(std::unique_ptr<IGraphicsRenderer> &&renderer);
 
  private:
+  WindowManager window_mananger_;
+
   Dx9Hook dx9_hook_;
   DxgiHook dxgi_hook_;
 

@@ -32,10 +32,10 @@ void EventManager::StartHandlingAsyncRpcs() {
   });
 }
 
-void EventManager::HandleEvent(EventReply &response) {
+void EventManager::HandleEvent(EventResponse &response) {
   std::unique_lock handlers_lk(event_handlers_mutex_);
 
-  std::function<void(EventReply &)> handler = nullptr;
+  std::function<void(EventResponse &)> handler = nullptr;
 
   if (event_handlers_.count(response.event_case())) {
     handler = event_handlers_[response.event_case()];
@@ -47,8 +47,9 @@ void EventManager::HandleEvent(EventReply &response) {
   handler(response);
 }
 
-void EventManager::SubscribeToEvent(EventReply::EventCase event_type,
-                                    std::function<void(EventReply &)> handler) {
+void EventManager::SubscribeToEvent(
+    EventResponse::EventCase event_type,
+    std::function<void(EventResponse &)> handler) {
   EventSubscribeRequest request;
 
   std::lock_guard handlers_lk(event_handlers_mutex_);
@@ -64,7 +65,7 @@ void EventManager::SubscribeToEvent(EventReply::EventCase event_type,
   event_handlers_[event_type] = handler;
 }
 
-void EventManager::UnsubscribeEvent(EventReply::EventCase event_type) {
+void EventManager::UnsubscribeEvent(EventResponse::EventCase event_type) {
   grpc::ClientContext context;
   EventUnsubscribeRequest request;
   EventUnsubscribeResponse response;

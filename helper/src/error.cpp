@@ -26,6 +26,13 @@ std::string GetErrorCodeDescription(ErrorCode code) {
     case ErrorCode::NotConnected:
       return "The client isn't connected to an overlay server";
 
+    case ErrorCode::ClientObjectDeallocated:
+      return "The client object has been deallocated";
+
+    case ErrorCode::InvalidBitmapBufferSize:
+      return "The bitmap buffer size is invalid (should be height * width * "
+             "4(RGBA per pixel))";
+
     default:
     case ErrorCode::UnknownError:
       return "Unknown Error";

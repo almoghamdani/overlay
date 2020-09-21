@@ -5,6 +5,7 @@
 #include <overlay/error.h>
 #include <overlay/events.h>
 #include <overlay/injection.h>
+#include <overlay/window.h>
 
 namespace ovhp = overlay::helper;
 

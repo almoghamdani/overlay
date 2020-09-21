@@ -9,7 +9,7 @@ class AuthServiceImpl final : public Authentication::Service {
  public:
   grpc::Status AuthenticateWithToken(grpc::ServerContext *context,
                                      const TokenAuthenticationRequest *request,
-                                     TokenAuthenticationReply *response);
+                                     TokenAuthenticationResponse *response);
 };
 
 }  // namespace ipc

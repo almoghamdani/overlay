@@ -17,7 +17,9 @@ enum class ErrorCode {
   ProcessNotFound,
   AlreadyConnected,
   AuthFailed,
-  NotConnected
+  NotConnected,
+  ClientObjectDeallocated,
+  InvalidBitmapBufferSize
 };
 
 HELPER_EXPORT std::string GetErrorCodeDescription(ErrorCode code);

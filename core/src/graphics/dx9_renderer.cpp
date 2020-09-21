@@ -58,16 +58,17 @@ void Dx9Renderer::DrawSprite(const Sprite &sprite) {
   IDirect3DTexture9 *sprite_texture = nullptr;
   D3DLOCKED_RECT texture_rect;
 
-  D3DXVECTOR3 sprite_pos((FLOAT)sprite.x, (FLOAT)sprite.y, 0);
-  RECT sprite_rect = {0, 0, (LONG)sprite.width, (LONG)sprite.height};
+  D3DXVECTOR3 sprite_pos((FLOAT)sprite.rect.x, (FLOAT)sprite.rect.y, 0);
+  RECT sprite_rect = {0, 0, (LONG)sprite.rect.width, (LONG)sprite.rect.height};
 
   // Verify buffer size
-  if (sprite.buffer.size() != (sprite.width * sprite.height * 4)) {
+  if (sprite.buffer.size() != (sprite.rect.width * sprite.rect.height * 4)) {
     return;
   }
 
   // Create the texture
-  if (FAILED(device_->CreateTexture((UINT)sprite.width, (UINT)sprite.height, 1,
+  if (FAILED(device_->CreateTexture((UINT)sprite.rect.width,
+                                    (UINT)sprite.rect.height, 1,
                                     D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8,
                                     D3DPOOL_DEFAULT, &sprite_texture, 0))) {
     return;
@@ -79,10 +80,10 @@ void Dx9Renderer::DrawSprite(const Sprite &sprite) {
   }
 
   // Copy the buffer data to the rect data
-  for (uint64_t line = 0; line < sprite.height; line++) {
+  for (uint64_t line = 0; line < sprite.rect.height; line++) {
     memcpy((uint8_t *)texture_rect.pBits + line * texture_rect.Pitch,
-           (uint32_t *)sprite.buffer.data() + line * sprite.width,
-           sprite.width * sizeof(uint32_t));
+           (uint32_t *)sprite.buffer.data() + line * sprite.rect.width,
+           sprite.rect.width * sizeof(uint32_t));
   }
 
   // Unlock the texture data

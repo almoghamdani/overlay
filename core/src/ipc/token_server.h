@@ -1,5 +1,4 @@
 #pragma once
-#include <rpc.h>
 #include <windows.h>
 
 #include <mutex>
@@ -7,18 +6,7 @@
 #include <thread>
 #include <unordered_map>
 
-// Simple hash for GUID
-namespace std {
-
-template <>
-struct hash<GUID> {
-  size_t operator()(const GUID &Value) const {
-    RPC_STATUS status = RPC_S_OK;
-    return UuidHash(&const_cast<GUID &>(Value), &status);
-  }
-};
-
-}  // namespace std
+#include "utils/guid.h"
 
 namespace overlay {
 namespace core {
