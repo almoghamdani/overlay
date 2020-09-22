@@ -83,13 +83,23 @@ jobs:
         buildWithCMake: true
 
     # Save built overlay
-    - name: Save x86 build
+    - name: Save x86 debug build
       uses: actions/upload-artifact@v2
       with:
-        name: overlay-x86
-        path: ${{ github.workspace }}/bin/x86
-    - name: Save x64 build
+        name: overlay-x86-debug
+        path: ${{ github.workspace }}/bin/x86/debug
+    - name: Save x86 release build
       uses: actions/upload-artifact@v2
       with:
-        name: overlay-x64
-        path: ${{ github.workspace }}/bin/x64
+        name: overlay-x86-release
+        path: ${{ github.workspace }}/bin/x86/release
+    - name: Save x64 debug build
+      uses: actions/upload-artifact@v2
+      with:
+        name: overlay-x64-debug
+        path: ${{ github.workspace }}/bin/x64/debug
+    - name: Save x64 release build
+      uses: actions/upload-artifact@v2
+      with:
+        name: overlay-x64-release
+        path: ${{ github.workspace }}/bin/x64/release
