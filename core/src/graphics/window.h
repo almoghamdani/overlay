@@ -1,10 +1,11 @@
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <string>
-#include <vector>
 
 #include "rect.h"
+#include "sprite.h"
 
 namespace overlay {
 namespace core {
@@ -16,7 +17,7 @@ struct Window {
   Rect rect;
   int32_t z;
 
-  std::vector<uint8_t> buffer;
+  std::shared_ptr<Sprite> sprite;
 
   std::mutex mutex;
 };

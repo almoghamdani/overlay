@@ -17,7 +17,8 @@ class Dx9Renderer : public IGraphicsRenderer {
   ~Dx9Renderer();
 
   virtual bool Init();
-  virtual void RenderSprites(const std::vector<Sprite> &sprites);
+  virtual void RenderSprites(
+      const std::vector<std::shared_ptr<Sprite>> &sprites);
 
  private:
   IDirect3DDevice9 *device_;
@@ -26,7 +27,8 @@ class Dx9Renderer : public IGraphicsRenderer {
 
   ID3DXSprite *sprite_drawer_;
 
-  void DrawSprite(const Sprite &sprite);
+  void DrawSprite(const std::shared_ptr<Sprite> &sprite);
+  IDirect3DTexture9 *CreateTexture(Rect rect, std::vector<uint8_t> &buffer);
 };
 
 }  // namespace graphics

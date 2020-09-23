@@ -3,6 +3,8 @@
 #include <grpcpp/grpcpp.h>
 #include <overlay/error.h>
 
+#include <cstdint>
+
 #include "windows.grpc.pb.h"
 
 namespace overlay {
@@ -25,7 +27,8 @@ void WindowImpl::UpdateBitmapBuffer(std::vector<uint8_t>& buffer) {
   }
 
   // Verify buffer size
-  if (buffer.size() != properties_.width * properties_.height * 4) {
+  if (buffer.size() !=
+      properties_.width * properties_.height * sizeof(uint32_t)) {
     throw Error(ErrorCode::InvalidBitmapBufferSize);
   }
 

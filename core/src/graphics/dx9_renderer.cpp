@@ -39,7 +39,48 @@ bool Dx9Renderer::Init() {
   return true;
 }
 
-void Dx9Renderer::RenderSprites(const std::vector<Sprite> &sprites) {
+IDirect3DTexture9 *Dx9Renderer::CreateTexture(Rect rect,
+                                              std::vector<uint8_t> &buffer) {
+  IDirect3DTexture9 *sprite_texture = nullptr;
+  D3DLOCKED_RECT texture_rect;
+
+  // Verify buffer size
+  if (buffer.size() != (rect.width * rect.height * sizeof(uint32_t))) {
+    return nullptr;
+  }
+
+  // Create the texture
+  if (FAILED(device_->CreateTexture((UINT)rect.width, (UINT)rect.height, 1,
+                                    D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8,
+                                    D3DPOOL_DEFAULT, &sprite_texture, 0))) {
+    return nullptr;
+  }
+
+  // Lock the entire texture as a rectangle
+  if (FAILED(sprite_texture->LockRect(0, &texture_rect, 0, D3DLOCK_DISCARD))) {
+    return nullptr;
+  }
+
+  // Copy the buffer data to the rect data
+  for (uint64_t line = 0; line < rect.height; line++) {
+    memcpy((uint8_t *)texture_rect.pBits + line * texture_rect.Pitch,
+           (uint32_t *)buffer.data() + line * rect.width,
+           rect.width * sizeof(uint32_t));
+  }
+
+  // Unlock the texture data
+  if (FAILED(sprite_texture->UnlockRect(0))) {
+    return nullptr;
+  }
+
+  return sprite_texture;
+}
+
+void Dx9Renderer::RenderSprites(
+    const std::vector<std::shared_ptr<Sprite>> &sprites) {
+  // Release old textures
+  ReleaseTextures();
+
   // Start rendering
   device_->BeginScene();
   sprite_drawer_->Begin(D3DXSPRITE_ALPHABLEND);
@@ -54,49 +95,25 @@ void Dx9Renderer::RenderSprites(const std::vector<Sprite> &sprites) {
   device_->EndScene();
 }
 
-void Dx9Renderer::DrawSprite(const Sprite &sprite) {
-  IDirect3DTexture9 *sprite_texture = nullptr;
-  D3DLOCKED_RECT texture_rect;
-
-  D3DXVECTOR3 sprite_pos((FLOAT)sprite.rect.x, (FLOAT)sprite.rect.y, 0);
-  RECT sprite_rect = {0, 0, (LONG)sprite.rect.width, (LONG)sprite.rect.height};
-
-  // Verify buffer size
-  if (sprite.buffer.size() != (sprite.rect.width * sprite.rect.height * 4)) {
+void Dx9Renderer::DrawSprite(const std::shared_ptr<Sprite> &sprite) {
+  if (sprite == nullptr) {
     return;
   }
 
-  // Create the texture
-  if (FAILED(device_->CreateTexture((UINT)sprite.rect.width,
-                                    (UINT)sprite.rect.height, 1,
-                                    D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8,
-                                    D3DPOOL_DEFAULT, &sprite_texture, 0))) {
-    return;
-  }
+  D3DXVECTOR3 sprite_pos((FLOAT)sprite->rect.x, (FLOAT)sprite->rect.y, 0);
+  RECT sprite_rect = {0, 0, (LONG)sprite->rect.width,
+                      (LONG)sprite->rect.height};
 
-  // Lock the entire texture as a rectangle
-  if (FAILED(sprite_texture->LockRect(0, &texture_rect, 0, D3DLOCK_DISCARD))) {
-    return;
-  }
-
-  // Copy the buffer data to the rect data
-  for (uint64_t line = 0; line < sprite.rect.height; line++) {
-    memcpy((uint8_t *)texture_rect.pBits + line * texture_rect.Pitch,
-           (uint32_t *)sprite.buffer.data() + line * sprite.rect.width,
-           sprite.rect.width * sizeof(uint32_t));
-  }
-
-  // Unlock the texture data
-  if (FAILED(sprite_texture->UnlockRect(0))) {
-    return;
+  // Create texture if needed
+  if (sprite->texture == nullptr) {
+    sprite->texture = CreateTexture(sprite->rect, sprite->buffer);
   }
 
   // Draw the sprite
-  sprite_drawer_->Draw(sprite_texture, &sprite_rect, NULL, &sprite_pos,
-                       0xffffffff);
-
-  // Release the texture
-  sprite_texture->Release();
+  if (sprite->texture != nullptr) {
+    sprite_drawer_->Draw((IDirect3DTexture9 *)sprite->texture, &sprite_rect,
+                         NULL, &sprite_pos, 0xffffffff);
+  }
 }
 
 }  // namespace graphics

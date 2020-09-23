@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <loguru.hpp>
 
+#include "core.h"
 #include "utils/token.h"
 
 namespace overlay {
@@ -19,6 +20,7 @@ GUID WindowManager::CreateWindowForClient(std::string client_id, Rect rect,
   window->client_id = client_id;
   window->rect = rect;
   window->z = z;
+  window->sprite = nullptr;
 
   // Add the new window to the list of windows
   windows_lk.lock();
@@ -52,20 +54,27 @@ std::shared_ptr<Window> WindowManager::GetWindowWithId(GUID id) {
 }
 
 void WindowManager::SwapWindowBuffer(GUID id, std::vector<uint8_t> &buffer) {
+  std::shared_ptr<Sprite> sprite = std::make_shared<Sprite>();
+
   std::shared_ptr<Window> window = GetWindowWithId(id);
-  if (!window) {
+
+  if (window == nullptr) {
     return;
   }
 
+  // Swap buffers
+  sprite->buffer.swap(buffer);
+
   std::lock_guard window_lk(window->mutex);
-  window->buffer.swap(buffer);
+  sprite->rect = window->rect;
+  window->sprite.swap(sprite);
 }
 
 void WindowManager::RenderWindows(
     std::unique_ptr<IGraphicsRenderer> &renderer) {
   std::unique_lock windows_lk(windows_mutex_);
 
-  std::vector<Sprite> sprites(windows_.size());
+  std::vector<std::shared_ptr<Sprite>> sprites(windows_.size());
   std::vector<std::shared_ptr<Window>> windows(windows_.size());
 
   // Convert all windows to sprites
@@ -74,19 +83,19 @@ void WindowManager::RenderWindows(
   windows_lk.unlock();
 
   // Sort windows list
-  std::sort(windows.begin(), windows.end(),
-            [](auto &win1, auto &win2) { return win1->z < win2->z; });
+  std::sort(windows.begin(), windows.end(), [](auto &win1, auto &win2) {
+    std::unique_lock win1_lk(win1->mutex, std::defer_lock);
+    std::unique_lock win2_lk(win2->mutex, std::defer_lock);
+    std::lock(win1_lk, win2_lk);
+
+    return win1->z < win2->z;
+  });
 
   // Convert windows list to sprites list
   std::transform(windows.begin(), windows.end(), sprites.begin(),
                  [](auto &window) {
-                   Sprite sprite;
                    std::lock_guard window_lk(window->mutex);
-
-                   sprite.rect = window->rect;
-                   sprite.buffer = window->buffer;
-
-                   return sprite;
+                   return window->sprite;
                  });
 
   // Render the windows' sprites

@@ -15,28 +15,24 @@ grpc::Status AuthServiceImpl::AuthenticateWithToken(
   DWORD process_id;
 
   // If the client is already authenticated
-  if (core::Core::Get()->get_rpc_server()->GetClient(context->peer()) !=
-      nullptr) {
+  if (Core::Get()->get_rpc_server()->GetClient(context->peer()) != nullptr) {
     return grpc::Status::CANCELLED;
   }
 
   // If the client is using invalid token, cancel the request
   if (request->token().size() != sizeof(GUID) ||
       (memcpy(&token, request->token().data(), sizeof(GUID)) &&
-       (process_id = core::Core::Get()
+       (process_id = Core::Get()
                          ->get_rpc_server()
                          ->get_token_server()
                          ->GetTokenProcessId(token)) == 0)) {
     return grpc::Status::CANCELLED;
   }
 
-  core::Core::Get()
-      ->get_rpc_server()
-      ->get_token_server()
-      ->InvalidateProcessToken(token);
+  Core::Get()->get_rpc_server()->get_token_server()->InvalidateProcessToken(
+      token);
 
-  core::Core::Get()->get_rpc_server()->RegisterClient(context->peer(),
-                                                      process_id);
+  Core::Get()->get_rpc_server()->RegisterClient(context->peer(), process_id);
 
   return grpc::Status::OK;
 }

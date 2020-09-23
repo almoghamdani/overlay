@@ -29,6 +29,7 @@ class GraphicsManager {
   StatsCalculator *get_stats_calculator();
 
   void set_renderer(std::unique_ptr<IGraphicsRenderer> &&renderer);
+  std::unique_ptr<IGraphicsRenderer> &get_renderer();
 
  private:
   WindowManager window_mananger_;

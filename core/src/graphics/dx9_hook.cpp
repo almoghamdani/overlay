@@ -15,18 +15,15 @@ HRESULT STDMETHODCALLTYPE D3D9DevicePresentHook(IDirect3DDevice9 *device,
                                                 const RECT *destRect,
                                                 HWND destWindowOverride,
                                                 const RGNDATA *dirtyRegion) {
-  return core::Core::Get()
-      ->get_graphics_manager()
-      ->get_dx9_hook()
-      ->DevicePresentHook(device, sourceRect, destRect, destWindowOverride,
-                          dirtyRegion);
+  return Core::Get()->get_graphics_manager()->get_dx9_hook()->DevicePresentHook(
+      device, sourceRect, destRect, destWindowOverride, dirtyRegion);
 }
 
 HRESULT STDMETHODCALLTYPE
 D3D9SwapChainPresentHook(IDirect3DSwapChain9 *swapChain, const RECT *sourceRect,
                          const RECT *destRect, HWND destWindowOverride,
                          const RGNDATA *dirtyRegion, DWORD flags) {
-  return core::Core::Get()
+  return Core::Get()
       ->get_graphics_manager()
       ->get_dx9_hook()
       ->SwapChainPresentHook(swapChain, sourceRect, destRect,
@@ -35,16 +32,14 @@ D3D9SwapChainPresentHook(IDirect3DSwapChain9 *swapChain, const RECT *sourceRect,
 
 HRESULT STDMETHODCALLTYPE D3D9DeviceResetHook(
     IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *presentationParameters) {
-  return core::Core::Get()
-      ->get_graphics_manager()
-      ->get_dx9_hook()
-      ->DeviceResetHook(device, presentationParameters);
+  return Core::Get()->get_graphics_manager()->get_dx9_hook()->DeviceResetHook(
+      device, presentationParameters);
 }
 
 HRESULT STDMETHODCALLTYPE D3D9ExDevicePresentExHook(
     IDirect3DDevice9Ex *device, const RECT *sourceRect, const RECT *destRect,
     HWND destWindowOverride, const RGNDATA *dirtyRegion, DWORD flags) {
-  return core::Core::Get()
+  return Core::Get()
       ->get_graphics_manager()
       ->get_dx9_hook()
       ->DevicePresentExHook(device, sourceRect, destRect, destWindowOverride,
@@ -54,11 +49,8 @@ HRESULT STDMETHODCALLTYPE D3D9ExDevicePresentExHook(
 HRESULT STDMETHODCALLTYPE D3D9ExDeviceResetExHook(
     IDirect3DDevice9Ex *device, D3DPRESENT_PARAMETERS *presentationParameters,
     D3DDISPLAYMODEEX *fullscreenDisplayMode) {
-  return core::Core::Get()
-      ->get_graphics_manager()
-      ->get_dx9_hook()
-      ->DeviceResetExHook(device, presentationParameters,
-                          fullscreenDisplayMode);
+  return Core::Get()->get_graphics_manager()->get_dx9_hook()->DeviceResetExHook(
+      device, presentationParameters, fullscreenDisplayMode);
 }
 
 Dx9Hook::Dx9Hook() : graphics_initiated_(false) {}
@@ -153,7 +145,7 @@ void Dx9Hook::Unhook() {
   reset_hook_.Remove();
   present_ex_hook_.Remove();
   reset_ex_hook_.Remove();
-  
+
   graphics_initiated_ = false;
 }
 

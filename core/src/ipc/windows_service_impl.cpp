@@ -20,7 +20,7 @@ grpc::Status WindowsServiceImpl::CreateNewWindow(
 
   // Create the new window for the client
   window_id =
-      core::Core::Get()
+      Core::Get()
           ->get_graphics_manager()
           ->get_window_manager()
           ->CreateWindowForClient(context->peer(), rect, request->rect().z());
@@ -41,13 +41,12 @@ grpc::Status WindowsServiceImpl::BufferForWindow(
 
   // Verify the size of the window id
   if (request->id().size() != sizeof(window_id)) {
-    std::cout << 1 << std::endl;
     return grpc::Status::CANCELLED;
   }
   memcpy(&window_id, request->id().data(), sizeof(window_id));
 
   // Verify the owner of the window
-  if (!(window = core::Core::Get()
+  if (!(window = Core::Get()
                      ->get_graphics_manager()
                      ->get_window_manager()
                      ->GetWindowWithId(window_id)) ||
@@ -59,10 +58,8 @@ grpc::Status WindowsServiceImpl::BufferForWindow(
   buffer.assign(request->buffer().begin(), request->buffer().end());
 
   // Set the buffer for the window
-  core::Core::Get()
-      ->get_graphics_manager()
-      ->get_window_manager()
-      ->SwapWindowBuffer(window_id, buffer);
+  Core::Get()->get_graphics_manager()->get_window_manager()->SwapWindowBuffer(
+      window_id, buffer);
 
   return grpc::Status::OK;
 }

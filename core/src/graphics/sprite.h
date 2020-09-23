@@ -1,4 +1,6 @@
 #pragma once
+#include <unknwn.h>
+
 #include <cstdint>
 #include <vector>
 
@@ -9,8 +11,13 @@ namespace core {
 namespace graphics {
 
 struct Sprite {
+  Sprite();
+  ~Sprite();
+
   Rect rect;
+
   std::vector<uint8_t> buffer;
+  IUnknown *texture;
 };
 
 }  // namespace graphics

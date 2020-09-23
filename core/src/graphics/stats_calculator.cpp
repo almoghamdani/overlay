@@ -65,7 +65,7 @@ void StatsCalculator::CalculateStats() {
     avg_fps = 1 / avg_frame_time * 1000.0;
     frame_samples_cap_ = (uint64_t)avg_fps;
 
-    core::Core::Get()->get_graphics_manager()->BroadcastApplicationStats(
+    Core::Get()->get_graphics_manager()->BroadcastApplicationStats(
         avg_frame_time, avg_fps);
   }
 }

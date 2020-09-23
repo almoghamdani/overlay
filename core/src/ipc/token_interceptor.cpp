@@ -23,8 +23,7 @@ void TokenInterceptor::Intercept(
               POST_RECV_INITIAL_METADATA) &&
       !authenticate_rpc_) {
     // If the client isn't authenticated
-    if (core::Core::Get()->get_rpc_server()->GetClient(context_->peer()) ==
-        nullptr) {
+    if (Core::Get()->get_rpc_server()->GetClient(context_->peer()) == nullptr) {
       context_->TryCancel();
       return;
     }
