@@ -62,6 +62,14 @@ void GraphicsManager::Render() {
   }
 }
 
+void GraphicsManager::OnResize() {
+  window_mananger_.OnResize();
+
+  if (renderer_) {
+    renderer_->OnResize();
+  }
+}
+
 WindowManager *GraphicsManager::get_window_manager() {
   return &window_mananger_;
 }

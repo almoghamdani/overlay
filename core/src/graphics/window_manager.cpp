@@ -102,6 +102,19 @@ void WindowManager::RenderWindows(
   renderer->RenderSprites(sprites);
 }
 
+void WindowManager::OnResize() {
+  std::lock_guard windows_lk(windows_mutex_);
+
+  // Free all sprites
+  for (auto &pair : windows_) {
+    std::lock_guard window_lk(pair.second->mutex);
+
+    if (pair.second->sprite) {
+      pair.second->sprite->FreeTexture();
+    }
+  }
+}
+
 }  // namespace graphics
 }  // namespace core
 }  // namespace overlay

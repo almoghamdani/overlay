@@ -21,6 +21,7 @@ class WindowManager {
   void SwapWindowBuffer(GUID id, std::vector<uint8_t>& buffer);
 
   void RenderWindows(std::unique_ptr<IGraphicsRenderer>& renderer);
+  void OnResize();
 
  private:
   std::unordered_map<GUID, std::shared_ptr<Window>> windows_;

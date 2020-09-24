@@ -8,7 +8,9 @@ namespace graphics {
 
 Sprite::Sprite() : texture(nullptr) {}
 
-Sprite::~Sprite() {
+Sprite::~Sprite() { FreeTexture(); }
+
+void Sprite::FreeTexture() {
   if (texture) {
     std::unique_ptr<IGraphicsRenderer> &renderer =
         Core::Get()->get_graphics_manager()->get_renderer();
@@ -19,6 +21,8 @@ Sprite::~Sprite() {
     } else {
       texture->Release();
     }
+
+    texture = nullptr;
   }
 }
 

@@ -14,6 +14,8 @@ struct Sprite {
   Sprite();
   ~Sprite();
 
+  void FreeTexture();
+
   Rect rect;
 
   std::vector<uint8_t> buffer;

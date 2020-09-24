@@ -28,8 +28,7 @@ bool Dx9Renderer::Init() {
   }
 
   // Create sprite drawer
-  if (FAILED(create_sprite_func(device_, &sprite_drawer_)) ||
-      sprite_drawer_->Begin(D3DXSPRITE_ALPHABLEND)) {
+  if (FAILED(create_sprite_func(device_, &sprite_drawer_))) {
     LOG_F(ERROR, "Unable to create D3DX sprite drawer!");
     return false;
   }
@@ -93,6 +92,15 @@ void Dx9Renderer::RenderSprites(
   // End rendering
   sprite_drawer_->End();
   device_->EndScene();
+}
+
+void Dx9Renderer::OnResize() {
+  ReleaseTextures();
+
+  if (sprite_drawer_ != nullptr) {
+    sprite_drawer_->OnLostDevice();
+    sprite_drawer_->OnResetDevice();
+  }
 }
 
 void Dx9Renderer::DrawSprite(const std::shared_ptr<Sprite> &sprite) {

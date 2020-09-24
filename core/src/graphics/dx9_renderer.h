@@ -20,6 +20,8 @@ class Dx9Renderer : public IGraphicsRenderer {
   virtual void RenderSprites(
       const std::vector<std::shared_ptr<Sprite>> &sprites);
 
+  virtual void OnResize();
+
  private:
   IDirect3DDevice9 *device_;
 

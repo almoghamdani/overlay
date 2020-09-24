@@ -213,6 +213,7 @@ bool Dx9Hook::InitGraphics(IDirect3DDevice9 *device) {
       FAILED(swap_chain->GetPresentParameters(&present_parameters))) {
     return false;
   }
+  swap_chain->Release();
 
   // If the swap-chain's output window is the inject window, set the main
   // graphics window to it
@@ -245,6 +246,12 @@ void Dx9Hook::BeforePresent(IDirect3DDevice9 *device) {
 
   Core::Get()->get_graphics_manager()->Render();
   Core::Get()->get_graphics_manager()->get_stats_calculator()->Frame();
+}
+
+void Dx9Hook::OnReset(IDirect3DDevice9 *device) {
+  if (graphics_initiated_) {
+    Core::Get()->get_graphics_manager()->OnResize();
+  }
 }
 
 bool Dx9Hook::HookD3d9ex(IDirect3DDevice9Ex *device) {
@@ -312,6 +319,8 @@ HRESULT Dx9Hook::DeviceResetHook(
     IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *presentation_parameters) {
   HRESULT ret;
 
+  OnReset(device);
+
   ret = reset_hook_.get_trampoline().CallStdMethod<HRESULT>(
       device, presentation_parameters);
 
@@ -338,6 +347,8 @@ HRESULT Dx9Hook::DeviceResetExHook(
     IDirect3DDevice9Ex *device, D3DPRESENT_PARAMETERS *presentation_parameters,
     D3DDISPLAYMODEEX *fullscreen_display_mode) {
   HRESULT ret;
+
+  OnReset(device);
 
   ret = reset_ex_hook_.get_trampoline().CallStdMethod<HRESULT>(
       device, presentation_parameters, fullscreen_display_mode);

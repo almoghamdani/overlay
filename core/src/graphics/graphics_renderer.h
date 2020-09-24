@@ -17,6 +17,8 @@ class IGraphicsRenderer {
   virtual void RenderSprites(
       const std::vector<std::shared_ptr<Sprite>>& sprites) = 0;
 
+  virtual void OnResize() = 0;
+
   inline void QueueTextureRelease(IUnknown* texture) {
     std::lock_guard lk(texture_release_queue_mutex_);
     texture_release_queue_.push_back(texture);
