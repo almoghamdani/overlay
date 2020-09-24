@@ -1,8 +1,4 @@
 #pragma once
-#include <subhook.h>
-
-#include <memory>
-
 #include "address.h"
 
 namespace overlay {
@@ -17,7 +13,8 @@ class Hook {
   Address get_trampoline() const;
 
  private:
-  subhook::Hook hook_;
+  void *src_;
+  void *trampoline_;
 };
 
 }  // namespace hook

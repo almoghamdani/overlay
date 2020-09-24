@@ -16,13 +16,9 @@ message(STATUS "Using gRPC ${gRPC_VERSION}")
 find_package(OpenSSL REQUIRED)
 message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 
-# Compile the subhook library
-set(SUBHOOK_STATIC ON)
-set(SUBHOOK_INSTALL OFF)
-set(SUBHOOK_TESTS OFF)
-add_definitions(-DSUBHOOK_STATIC)
-add_subdirectory(../vendor/subhook subhook)
-include_directories(../vendor/subhook)
+# Compile the MinHook library
+find_package(minhook CONFIG REQUIRED)
+message(STATUS "Using MinHook ${minhook_VERSION}")
 
 # Compile the loguru library
 set(LOGURU_SOURCES "../vendor/loguru/loguru.hpp" "../vendor/loguru/loguru.cpp")
@@ -35,7 +31,7 @@ include_directories(../vendor/dxsdk/Include)
 add_library(OverlayCore SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared> ${LOGURU_SOURCES})
 
 # Link the overlay core to the dependencies' libs
-target_link_libraries(OverlayCore PRIVATE rpcrt4.lib subhook gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(OverlayCore PRIVATE rpcrt4.lib gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto minhook::minhook)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_link_libraries(OverlayCore PRIVATE msvcrtd.lib)
 else ()

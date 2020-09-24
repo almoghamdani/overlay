@@ -1,5 +1,7 @@
 #include "core.h"
 
+#include <MinHook.h>
+
 #include <loguru.hpp>
 
 namespace overlay {
@@ -11,6 +13,9 @@ void Core::Start() {
 }
 
 void Core::MainThread() {
+  // Init MinHook
+  MH_Initialize();
+
   // Hook graphics
   if (!graphics_manager_.Hook()) {
     LOG_F(ERROR, "Unable to hook graphics!");

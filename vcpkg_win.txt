@@ -2,3 +2,5 @@ grpc:x64-windows-static
 grpc:x86-windows-static
 openssl:x64-windows-static
 openssl:x86-windows-static
+minhook:x64-windows-static
+minhook:x86-windows-static
