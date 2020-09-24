@@ -7,6 +7,12 @@
 typedef IDirect3D9 *(WINAPI *pFnDirect3DCreate9)(UINT SDKVersion);
 typedef HRESULT(WINAPI *pFnDirect3DCreate9Ex)(UINT, IDirect3D9Ex **);
 
+#define D3D9_DEVICE_PRESENT_VTABLE_INDEX 17
+#define D3D9_DEVICE_RESET_VTABLE_INDEX 16
+#define D3D9_SWAP_CHAIN_PRESENT_VTABLE_INDEX 3
+#define D3D9EX_DEVICE_PRESENTEX_VTABLE_INDEX 121
+#define D3D9EX_DEVICE_RESETEX_VTABLE_INDEX 132
+
 namespace overlay {
 namespace core {
 namespace graphics {

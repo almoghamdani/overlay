@@ -150,8 +150,10 @@ void Dx9Hook::Unhook() {
 }
 
 bool Dx9Hook::HookD3d9(IDirect3DDevice9 *device) {
-  void *present_func = utils::hook::Vtable::GetFunctionPointer(device, 17);
-  void *reset_func = utils::hook::Vtable::GetFunctionPointer(device, 16);
+  void *present_func = utils::hook::Vtable::GetFunctionPointer(
+      device, D3D9_DEVICE_PRESENT_VTABLE_INDEX);
+  void *reset_func = utils::hook::Vtable::GetFunctionPointer(
+      device, D3D9_DEVICE_RESET_VTABLE_INDEX);
 
   IDirect3DSwapChain9 *swap_chain = nullptr;
   void *swap_chain_present_func = nullptr;
@@ -160,8 +162,8 @@ bool Dx9Hook::HookD3d9(IDirect3DDevice9 *device) {
   if (FAILED(device->GetSwapChain(0, &swap_chain))) {
     return false;
   }
-  swap_chain_present_func =
-      utils::hook::Vtable::GetFunctionPointer(swap_chain, 3);
+  swap_chain_present_func = utils::hook::Vtable::GetFunctionPointer(
+      swap_chain, D3D9_SWAP_CHAIN_PRESENT_VTABLE_INDEX);
 
   // Hook present function
   if (!present_hook_.Install(present_func, D3D9DevicePresentHook)) {
@@ -255,8 +257,10 @@ void Dx9Hook::OnReset(IDirect3DDevice9 *device) {
 }
 
 bool Dx9Hook::HookD3d9ex(IDirect3DDevice9Ex *device) {
-  void *present_ex_func = utils::hook::Vtable::GetFunctionPointer(device, 121);
-  void *reset_ex_func = utils::hook::Vtable::GetFunctionPointer(device, 132);
+  void *present_ex_func = utils::hook::Vtable::GetFunctionPointer(
+      device, D3D9EX_DEVICE_PRESENTEX_VTABLE_INDEX);
+  void *reset_ex_func = utils::hook::Vtable::GetFunctionPointer(
+      device, D3D9EX_DEVICE_RESETEX_VTABLE_INDEX);
 
   // Hook present function
   if (!present_ex_hook_.Install(present_ex_func, D3D9ExDevicePresentExHook)) {
