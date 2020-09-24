@@ -316,6 +316,9 @@ HRESULT Dx9Hook::SwapChainPresentHook(IDirect3DSwapChain9 *swap_chain,
       swap_chain, source_rect, dest_rect, dest_window_override, dirty_region,
       flags);
 
+  // Release device
+  device->Release();
+
   return ret;
 }
 
