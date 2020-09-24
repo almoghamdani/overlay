@@ -14,3 +14,6 @@ add_library(OverlayHelper SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared>)
 
 # Link the overlay helper to the dependencies' libs
 target_link_libraries(OverlayHelper PRIVATE gRPC::grpc++)
+
+# Output the lib in the bin folder
+set_target_properties(OverlayHelper PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
