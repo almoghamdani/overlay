@@ -97,5 +97,6 @@ jobs:
         name: overlay-release
         path: |
           ${{ github.workspace }}/bin/release
+          !${{ github.workspace }}/**/*.exe.manifest
           !${{ github.workspace }}/**/*.dll.manifest
           !${{ github.workspace }}/**/*.exp
