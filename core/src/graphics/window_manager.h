@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "color.h"
 #include "graphics_renderer.h"
 #include "sprite.h"
 #include "utils/guid.h"
@@ -41,6 +42,8 @@ class WindowManager {
   std::mutex sprites_mutex_;
 
   void UpdateSprites();
+
+  std::shared_ptr<Window> CreateBufferWindow(Color color, double opacity);
 };
 
 }  // namespace graphics

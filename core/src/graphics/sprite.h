@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "color.h"
 #include "rect.h"
 
 namespace overlay {
@@ -15,11 +16,16 @@ struct Sprite {
 
   void FreeTexture();
 
+  bool fill_target;
   Rect rect;
+
   double opacity;
 
   std::string buffer;
   bool buffer_updated;
+
+  bool solid_color;
+  Color color;
 
   IUnknown *texture;
 };

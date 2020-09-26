@@ -29,6 +29,12 @@ void WindowGroupImpl::SetAttributes(const WindowGroupAttributes attributes) {
     throw Error(ErrorCode::ClientObjectDeallocated);
   }
 
+  // Verify attributes
+  if (attributes.opacity < 0 || attributes.opacity > 1 ||
+      attributes.buffer_opacity < 0 || attributes.buffer_opacity > 1) {
+    throw Error(ErrorCode::InvalidAttributes);
+  }
+
   // Try to update the window group properties
   properties = new WindowGroupProperties();  // This should be deallocated by
                                              // the request itself since we're
@@ -36,6 +42,9 @@ void WindowGroupImpl::SetAttributes(const WindowGroupAttributes attributes) {
   properties->set_z(attributes.z);
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
+  properties->set_has_buffer(attributes.has_buffer);
+  properties->set_buffer_color(attributes.buffer_color);
+  properties->set_buffer_opacity(attributes.buffer_opacity);
   request.set_allocated_properties(properties);
   request.set_group_id((const char*)&id_, sizeof(id_));
   if (!client->get_windows_stub()

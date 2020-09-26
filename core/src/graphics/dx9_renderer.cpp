@@ -62,7 +62,38 @@ bool Dx9Renderer::Init() {
   return true;
 }
 
-IDirect3DTexture9 *Dx9Renderer::CreateTexture(Rect rect, std::string &buffer) {
+IDirect3DTexture9 *Dx9Renderer::CreateTextureFromSolidColor(Rect rect,
+                                                            Color color) {
+  IDirect3DTexture9 *sprite_texture = nullptr;
+
+  uint32_t rgba_color = ((uint32_t)0xff << 24) + ((uint32_t)color.red << 16) +
+                        ((uint32_t)color.green << 8) + color.blue;
+  std::string buffer;
+
+  // Create buffer with the color
+  buffer.resize(rect.width * rect.height * sizeof(uint32_t));
+  for (size_t i = 0; i < rect.width * rect.height; i++) {
+    *((uint32_t *)buffer.data() + i) = rgba_color;
+  }
+
+  // Create the texture
+  if (FAILED(device_->CreateTexture((UINT)rect.width, (UINT)rect.height, 1,
+                                    D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8,
+                                    D3DPOOL_DEFAULT, &sprite_texture, 0))) {
+    return nullptr;
+  }
+
+  // Copy the buffer data to the texture
+  if (!CopyBufferToTexture(sprite_texture, rect, buffer)) {
+    sprite_texture->Release();
+    return nullptr;
+  }
+
+  return sprite_texture;
+}
+
+IDirect3DTexture9 *Dx9Renderer::CreateTextureFromBuffer(Rect rect,
+                                                        std::string &buffer) {
   IDirect3DTexture9 *sprite_texture = nullptr;
 
   // Verify buffer size
@@ -150,14 +181,23 @@ void Dx9Renderer::DrawSprite(const std::shared_ptr<Sprite> &sprite) {
     return;
   }
 
+  if (sprite->fill_target) {
+    sprite->rect = TargetFillRect();
+  }
+
   D3DXVECTOR3 sprite_pos((FLOAT)sprite->rect.x, (FLOAT)sprite->rect.y, 0);
   RECT sprite_rect = {0, 0, (LONG)sprite->rect.width,
                       (LONG)sprite->rect.height};
 
   // Create texture if needed
   if (sprite->texture == nullptr) {
-    sprite->texture = CreateTexture(sprite->rect, sprite->buffer);
-  } else if (sprite->buffer_updated &&
+    if (sprite->solid_color) {
+      sprite->texture =
+          CreateTextureFromSolidColor(sprite->rect, sprite->color);
+    } else {
+      sprite->texture = CreateTextureFromBuffer(sprite->rect, sprite->buffer);
+    }
+  } else if (!sprite->solid_color && sprite->buffer_updated &&
              (sprite->buffer.size() ==
               (sprite->rect.width * sprite->rect.height * sizeof(uint32_t)))) {
     CopyBufferToTexture((IDirect3DTexture9 *)sprite->texture, sprite->rect,

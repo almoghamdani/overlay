@@ -2,6 +2,7 @@
 #define OVERLAY_HELPER_H
 
 #include <overlay/client.h>
+#include <overlay/color.h>
 #include <overlay/error.h>
 #include <overlay/events.h>
 #include <overlay/injection.h>

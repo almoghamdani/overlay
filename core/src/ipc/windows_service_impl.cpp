@@ -16,9 +16,13 @@ grpc::Status WindowsServiceImpl::CreateWindowGroup(
   attributes.z = (int32_t)request->properties().z();
   attributes.opacity = request->properties().opacity();
   attributes.hidden = request->properties().hidden();
+  attributes.has_buffer = request->properties().has_buffer();
+  attributes.buffer_color = request->properties().buffer_color();
+  attributes.buffer_opacity = request->properties().buffer_opacity();
 
   // Verify attributes values
-  if (attributes.opacity < 0 || attributes.opacity > 1) {
+  if (attributes.opacity < 0 || attributes.opacity > 1 ||
+      attributes.buffer_opacity < 0 || attributes.buffer_opacity > 1) {
     return grpc::Status::CANCELLED;
   }
 
@@ -60,9 +64,13 @@ grpc::Status WindowsServiceImpl::UpdateWindowGroupProperties(
   attributes.z = (int32_t)request->properties().z();
   attributes.opacity = request->properties().opacity();
   attributes.hidden = request->properties().hidden();
+  attributes.has_buffer = request->properties().has_buffer();
+  attributes.buffer_color = request->properties().buffer_color();
+  attributes.buffer_opacity = request->properties().buffer_opacity();
 
   // Verify attributes values
-  if (attributes.opacity < 0 || attributes.opacity > 1) {
+  if (attributes.opacity < 0 || attributes.opacity > 1 ||
+      attributes.buffer_opacity < 0 || attributes.buffer_opacity > 1) {
     return grpc::Status::CANCELLED;
   }
 

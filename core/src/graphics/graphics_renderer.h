@@ -41,6 +41,17 @@ class IGraphicsRenderer {
     texture_release_queue_.clear();
   }
 
+  inline Rect TargetFillRect() const {
+    Rect rect;
+
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = get_width();
+    rect.height = get_height();
+
+    return rect;
+  }
+
   inline void set_width(size_t width) { width_ = width; }
   inline void set_height(size_t height) { height_ = height; }
   inline void set_fullscreen(bool fullscreen) { fullscreen_ = fullscreen; }

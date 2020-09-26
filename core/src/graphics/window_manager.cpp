@@ -20,6 +20,11 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
   window_group->client_id = client_id;
   window_group->attributes = attributes;
 
+  if (attributes.has_buffer) {
+    window_group->buffer_window =
+        CreateBufferWindow(attributes.buffer_color, attributes.buffer_opacity);
+  }
+
   window_groups_lk.lock();
   window_groups_[id] = window_group;
   window_groups_lk.unlock();
@@ -33,6 +38,7 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
 bool WindowManager::UpdateWindowGroupAttributes(
     GUID id, WindowGroupAttributes attributes) {
   std::unique_lock sprites_lk(sprites_mutex_, std::defer_lock);
+  std::shared_ptr<Sprite> buffer_sprite = nullptr;
   std::vector<std::pair<std::shared_ptr<Sprite>, double>> group_sprites;
 
   bool update_sprites = false;
@@ -51,7 +57,8 @@ bool WindowManager::UpdateWindowGroupAttributes(
 
   // Check if there is a need of a sprites update
   if (window_group->attributes.z != attributes.z ||
-      window_group->attributes.hidden != attributes.hidden) {
+      window_group->attributes.hidden != attributes.hidden ||
+      window_group->attributes.has_buffer != attributes.has_buffer) {
     update_sprites = true;
   }
 
@@ -65,6 +72,18 @@ bool WindowManager::UpdateWindowGroupAttributes(
     }
   }
 
+  // Create buffer window if needed
+  if (attributes.has_buffer) {
+    if (window_group->buffer_window == nullptr) {
+      window_group->buffer_window = CreateBufferWindow(
+          attributes.buffer_color, attributes.buffer_opacity);
+    } else {
+      window_group->buffer_window->attributes.opacity =
+          attributes.buffer_opacity;
+      buffer_sprite = window_group->buffer_window->sprite;
+    }
+  }
+
   // Update attributes
   window_group->attributes = attributes;
   window_group_lk.unlock();
@@ -75,6 +94,14 @@ bool WindowManager::UpdateWindowGroupAttributes(
     for (auto &sprite_pair : group_sprites) {
       sprite_pair.first->opacity = sprite_pair.second;
     }
+    sprites_lk.unlock();
+  }
+
+  // Update buffer sprite color and opacity
+  if (buffer_sprite != nullptr) {
+    sprites_lk.lock();
+    buffer_sprite->opacity = attributes.buffer_opacity;
+    buffer_sprite->color = attributes.buffer_color;
     sprites_lk.unlock();
   }
 
@@ -316,6 +343,12 @@ void WindowManager::UpdateSprites() {
   for (auto &window_group : sorted_window_groups) {
     std::lock_guard group_lk(window_group->mutex);
 
+    // Create buffer sprite
+    if (window_group->attributes.has_buffer &&
+        window_group->buffer_window != nullptr) {
+      sorted_windows.push_back(window_group->buffer_window);
+    }
+
     // Get all windows
     std::transform(window_group->windows.begin(), window_group->windows.end(),
                    std::back_inserter(sorted_windows),
@@ -352,6 +385,22 @@ void WindowManager::UpdateSprites() {
   // Swap the sprites vector
   std::lock_guard sprites_lk(sprites_mutex_);
   sprites_.swap(sprites);
+}
+
+std::shared_ptr<Window> WindowManager::CreateBufferWindow(Color color,
+                                                          double opacity) {
+  std::shared_ptr<Window> window = std::make_shared<Window>();
+
+  window->attributes.hidden = false;
+  window->attributes.opacity = opacity;
+  window->sprite = std::make_shared<Sprite>();
+
+  window->sprite->fill_target = true;
+  window->sprite->opacity = opacity;
+  window->sprite->solid_color = true;
+  window->sprite->color = color;
+
+  return window;
 }
 
 }  // namespace graphics

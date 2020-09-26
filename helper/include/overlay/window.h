@@ -1,5 +1,6 @@
 #ifndef OVERLAY_WINDOW_H
 #define OVERLAY_WINDOW_H
+#include <overlay/color.h>
 #include <overlay/export.h>
 
 #include <memory>
@@ -13,6 +14,10 @@ struct WindowGroupAttributes {
   int32_t z;
   double opacity;
   bool hidden;
+
+  bool has_buffer;
+  Color buffer_color;
+  double buffer_opacity;
 };
 
 struct WindowAttributes {

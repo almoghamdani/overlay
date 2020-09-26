@@ -70,7 +70,8 @@ std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(
   WindowGroupProperties *properties = nullptr;
 
   // Verify attributes
-  if (attributes.opacity < 0 || attributes.opacity > 1) {
+  if (attributes.opacity < 0 || attributes.opacity > 1 ||
+      attributes.buffer_opacity < 0 || attributes.buffer_opacity > 1) {
     throw Error(ErrorCode::InvalidAttributes);
   }
 
@@ -86,6 +87,9 @@ std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(
   properties->set_z(attributes.z);
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
+  properties->set_has_buffer(attributes.has_buffer);
+  properties->set_buffer_color(attributes.buffer_color);
+  properties->set_buffer_opacity(attributes.buffer_opacity);
   request.set_allocated_properties(properties);
   if (!windows_stub_->CreateWindowGroup(&context, request, &response).ok() ||
       response.id().size() != sizeof(window_group_id)) {

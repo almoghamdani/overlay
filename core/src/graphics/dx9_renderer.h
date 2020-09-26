@@ -2,6 +2,7 @@
 #include <d3d9.h>
 #include <d3dx9.h>
 
+#include "color.h"
 #include "graphics_renderer.h"
 
 typedef HRESULT(WINAPI *pFnD3DXCreateSprite)(LPDIRECT3DDEVICE9 pDevice,
@@ -30,7 +31,8 @@ class Dx9Renderer : public IGraphicsRenderer {
 
   void DrawSprite(const std::shared_ptr<Sprite> &sprite);
 
-  IDirect3DTexture9 *CreateTexture(Rect rect, std::string &buffer);
+  IDirect3DTexture9 *CreateTextureFromSolidColor(Rect rect, Color color);
+  IDirect3DTexture9 *CreateTextureFromBuffer(Rect rect, std::string &buffer);
   bool CopyBufferToTexture(IDirect3DTexture9 *texture, Rect rect,
                            std::string &buffer) const;
 };
