@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
             ovhp::EventType::ApplicationStats,
             [](std::shared_ptr<ovhp::Event> event) {
               printf(
-                  "\rApplication stats: Window Size: %dx%d, Fullscreen: %s, "
+                  "\rApplication stats: Window Size: %zdx%zd, Fullscreen: %s, "
                   "Frame time: %f, FPS: %f",
                   std::static_pointer_cast<ovhp::ApplicationStatsEvent>(event)
                       ->width,
