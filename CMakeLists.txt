@@ -9,11 +9,6 @@ endif()
 
 # Set arch and build type name
 string (TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE_NAME)
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	set (ARCH_NAME "x64")
-else()
-	set (ARCH_NAME "x86")
-endif()
 
 # Set C++17 standard
 set (CMAKE_CXX_STANDARD 17)
@@ -29,7 +24,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "/O2 /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
 
 # Set binary dir
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/${ARCH_NAME}/${BUILD_TYPE_NAME})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/${BUILD_TYPE_NAME})
 
 # Compile overlay shared object library
 add_subdirectory(shared OverlayShared)

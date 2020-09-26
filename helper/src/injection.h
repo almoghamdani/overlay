@@ -3,7 +3,12 @@
 
 #include <string>
 
+#ifdef _WIN64
+#define CORE_DLL_NAME "OverlayCore64.dll"
+#else
 #define CORE_DLL_NAME "OverlayCore.dll"
+#endif
+
 #define CORE_DLL_MSG_HOOK_FUNC "msg_hook"
 
 #define MSG_POST_TIMES 5

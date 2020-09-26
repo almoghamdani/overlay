@@ -17,7 +17,10 @@ include_directories(../helper/include)
 include_directories(../vendor/cxxopts/include)
 
 # Add the overlay demo as an executable to be compiled
-add_executable(OverlayDemo ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES})
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}64)
+endif()
 
 # Link the demo to the helper lib
-target_link_libraries(OverlayDemo OverlayHelper)
+target_link_libraries(${PROJECT_NAME} OverlayHelper)

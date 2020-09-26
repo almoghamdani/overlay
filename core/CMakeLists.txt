@@ -28,12 +28,15 @@ include_directories(../vendor/loguru)
 include_directories(../vendor/dxsdk/Include)
 
 # Add the overlay core as an shared library to be compiled
-add_library(OverlayCore SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared> ${LOGURU_SOURCES})
+add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared> ${LOGURU_SOURCES})
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}64)
+endif()
 
 # Link the overlay core to the dependencies' libs
-target_link_libraries(OverlayCore PRIVATE rpcrt4.lib gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto minhook::minhook)
+target_link_libraries(${PROJECT_NAME} PRIVATE rpcrt4.lib gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto minhook::minhook)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-	target_link_libraries(OverlayCore PRIVATE msvcrtd.lib)
+	target_link_libraries(${PROJECT_NAME} PRIVATE msvcrtd.lib)
 else ()
-	target_link_libraries(OverlayCore PRIVATE msvcrt.lib)
+	target_link_libraries(${PROJECT_NAME} PRIVATE msvcrt.lib)
 endif ()

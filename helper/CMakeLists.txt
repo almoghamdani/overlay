@@ -13,7 +13,10 @@ add_definitions(-DOVERLAY_HELPER_MAKEDLL)
 add_library(OverlayHelper SHARED ${SOURCES} $<TARGET_OBJECTS:OverlayShared>)
 
 # Link the overlay helper to the dependencies' libs
-target_link_libraries(OverlayHelper PRIVATE gRPC::grpc++)
+target_link_libraries(${PROJECT_NAME} PRIVATE gRPC::grpc++)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}64)
+endif()
 
 # Output the lib in the bin folder
-set_target_properties(OverlayHelper PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+set_target_properties(${PROJECT_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

@@ -39,7 +39,7 @@ endforeach()
 set_source_files_properties(${PROTO_SRCS} ${GRPC_SRCS} PROPERTIES COMPILE_FLAGS "/W0") # Ignore all warnings for protobuf generated files
 
 # Add the overlay shared as an object library
-add_library(OverlayShared OBJECT ${SOURCES} ${PROTO_SRCS} ${GRPC_SRCS})
+add_library(${PROJECT_NAME} OBJECT ${SOURCES} ${PROTO_SRCS} ${GRPC_SRCS})
 
 # Link it to gRPC
-target_link_libraries(OverlayShared PRIVATE gRPC::grpc++)
+target_link_libraries(${PROJECT_NAME} PRIVATE gRPC::grpc++)
