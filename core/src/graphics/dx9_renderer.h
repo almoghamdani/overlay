@@ -20,16 +20,16 @@ class Dx9Renderer : public IGraphicsRenderer {
   virtual void RenderSprites(
       const std::vector<std::shared_ptr<Sprite>> &sprites);
 
-  virtual void OnResize();
+  virtual void OnResize(size_t width, size_t height, bool fullscreen);
 
  private:
-  IDirect3DDevice9 *device_;
-
   HMODULE d3dx9_module_;
 
+  IDirect3DDevice9 *device_;
   ID3DXSprite *sprite_drawer_;
 
   void DrawSprite(const std::shared_ptr<Sprite> &sprite);
+
   IDirect3DTexture9 *CreateTexture(Rect rect, std::string &buffer);
   bool CopyBufferToTexture(IDirect3DTexture9 *texture, Rect rect,
                            std::string &buffer) const;

@@ -48,6 +48,12 @@ void GraphicsManager::BroadcastApplicationStats(double frame_time, double fps) {
   EventResponse::ApplicationStatsEvent *stats_event =
       new EventResponse::ApplicationStatsEvent();
 
+  stats_event->set_width(renderer_ != nullptr ? (uint32_t)renderer_->get_width()
+                                              : 0);
+  stats_event->set_height(
+      renderer_ != nullptr ? (uint32_t)renderer_->get_height() : 0);
+  stats_event->set_fullscreen(renderer_ != nullptr ? renderer_->is_fullscreen()
+                                                   : false);
   stats_event->set_frametime(frame_time);
   stats_event->set_fps(fps);
 
@@ -62,11 +68,11 @@ void GraphicsManager::Render() {
   }
 }
 
-void GraphicsManager::OnResize() {
+void GraphicsManager::OnResize(size_t width, size_t height, bool fullscreen) {
   window_mananger_.OnResize();
 
   if (renderer_) {
-    renderer_->OnResize();
+    renderer_->OnResize(width, height, fullscreen);
   }
 }
 

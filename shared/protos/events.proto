@@ -9,8 +9,11 @@ service Events {
 
 message EventResponse {
 	message ApplicationStatsEvent {
-		double frameTime = 1;
-		double fps = 2;
+		uint32 width = 1;
+		uint32 height = 2;
+		bool fullscreen = 3;
+		double frameTime = 4;
+		double fps = 5;
 	}
 
 	oneof event {

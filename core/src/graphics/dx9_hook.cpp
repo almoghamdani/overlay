@@ -250,9 +250,13 @@ void Dx9Hook::BeforePresent(IDirect3DDevice9 *device) {
   Core::Get()->get_graphics_manager()->get_stats_calculator()->Frame();
 }
 
-void Dx9Hook::OnReset(IDirect3DDevice9 *device) {
+void Dx9Hook::OnReset(IDirect3DDevice9 *device,
+                      D3DPRESENT_PARAMETERS *presentation_parameters) {
   if (graphics_initiated_) {
-    Core::Get()->get_graphics_manager()->OnResize();
+    Core::Get()->get_graphics_manager()->OnResize(
+        presentation_parameters->BackBufferWidth,
+        presentation_parameters->BackBufferHeight,
+        !presentation_parameters->Windowed);
   }
 }
 
@@ -326,7 +330,7 @@ HRESULT Dx9Hook::DeviceResetHook(
     IDirect3DDevice9 *device, D3DPRESENT_PARAMETERS *presentation_parameters) {
   HRESULT ret;
 
-  OnReset(device);
+  OnReset(device, presentation_parameters);
 
   ret = reset_hook_.get_trampoline().CallStdMethod<HRESULT>(
       device, presentation_parameters);
@@ -355,7 +359,7 @@ HRESULT Dx9Hook::DeviceResetExHook(
     D3DDISPLAYMODEEX *fullscreen_display_mode) {
   HRESULT ret;
 
-  OnReset(device);
+  OnReset(device, presentation_parameters);
 
   ret = reset_ex_hook_.get_trampoline().CallStdMethod<HRESULT>(
       device, presentation_parameters, fullscreen_display_mode);

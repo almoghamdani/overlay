@@ -163,7 +163,10 @@ std::shared_ptr<Event> ClientImpl::GenerateEvent(
   switch (response.event_case()) {
     case EventResponse::EventCase::kApplicationStats:
       return std::shared_ptr<Event>(
-          new ApplicationStatsEvent(response.applicationstats().frametime(),
+          new ApplicationStatsEvent(response.applicationstats().width(),
+                                    response.applicationstats().height(),
+                                    response.applicationstats().fullscreen(),
+                                    response.applicationstats().frametime(),
                                     response.applicationstats().fps()));
 
     default:

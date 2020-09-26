@@ -7,8 +7,8 @@ namespace core {
 namespace graphics {
 
 Dx9Renderer::Dx9Renderer(IDirect3DDevice9 *device)
-    : device_(device),
-      d3dx9_module_(LoadLibraryA("d3dx9_43.dll")),
+    : d3dx9_module_(LoadLibraryA("d3dx9_43.dll")),
+      device_(device),
       sprite_drawer_(nullptr) {}
 
 Dx9Renderer::~Dx9Renderer() {
@@ -19,6 +19,27 @@ Dx9Renderer::~Dx9Renderer() {
 
 bool Dx9Renderer::Init() {
   pFnD3DXCreateSprite create_sprite_func = nullptr;
+
+  D3DPRESENT_PARAMETERS present_parameters;
+  IDirect3DSwapChain9 *swap_chain = nullptr;
+
+  // Try to get the swap chain
+  if (FAILED(device_->GetSwapChain(0, &swap_chain))) {
+    return false;
+  }
+
+  // Try to get the present parameters
+  if (FAILED(swap_chain->GetPresentParameters(&present_parameters))) {
+    swap_chain->Release();
+    return false;
+  }
+
+  set_width(present_parameters.BackBufferWidth);
+  set_height(present_parameters.BackBufferHeight);
+  set_fullscreen(!present_parameters.Windowed);
+
+  // Release swap chain
+  swap_chain->Release();
 
   if (!d3dx9_module_ ||
       !(create_sprite_func = (pFnD3DXCreateSprite)GetProcAddress(
@@ -33,7 +54,10 @@ bool Dx9Renderer::Init() {
     return false;
   }
 
-  LOG_F(INFO, "DirectX 9 renderer initiated with device %p.", device_);
+  LOG_F(INFO,
+        "DirectX 9 renderer initiated with device %p. Window size: %dx%d, "
+        "Fullscreen: %s.",
+        device_, get_width(), get_height(), is_fullscreen() ? "True" : "False");
 
   return true;
 }
@@ -105,7 +129,14 @@ void Dx9Renderer::RenderSprites(
   device_->EndScene();
 }
 
-void Dx9Renderer::OnResize() {
+void Dx9Renderer::OnResize(size_t width, size_t height, bool fullscreen) {
+  set_width(width);
+  set_height(height);
+  set_fullscreen(fullscreen);
+  LOG_F(INFO, "Device Reset: Window size: %dx%d, Fullscreen: %s.", get_width(),
+        get_height(), is_fullscreen() ? "True" : "False");
+
+  // Release all textures
   ReleaseTextures();
 
   if (sprite_drawer_ != nullptr) {

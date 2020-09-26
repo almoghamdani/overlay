@@ -36,7 +36,8 @@ class Dx9Hook : public IGraphicsHook {
   bool InitGraphics(IDirect3DDevice9 *device);
 
   void BeforePresent(IDirect3DDevice9 *device);
-  void OnReset(IDirect3DDevice9 *device);
+  void OnReset(IDirect3DDevice9 *device,
+               D3DPRESENT_PARAMETERS *presentation_parameters);
 
   HRESULT DevicePresentHook(IDirect3DDevice9 *device, const RECT *source_rect,
                             const RECT *dest_rect, HWND dest_window_override,

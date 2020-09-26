@@ -12,9 +12,18 @@ struct Event {
 };
 
 struct ApplicationStatsEvent : public Event {
-  ApplicationStatsEvent(double frame_time, double fps)
-      : Event(EventType::ApplicationStats), frame_time(frame_time), fps(fps) {}
+  ApplicationStatsEvent(size_t width, size_t height, bool fullscreen,
+                        double frame_time, double fps)
+      : Event(EventType::ApplicationStats),
+        width(width),
+        height(height),
+        fullscreen(fullscreen),
+        frame_time(frame_time),
+        fps(fps) {}
 
+  size_t width;
+  size_t height;
+  bool fullscreen;
   double frame_time;
   double fps;
 };
