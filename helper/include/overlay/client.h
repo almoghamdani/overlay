@@ -22,8 +22,8 @@ class HELPER_EXPORT Client {
       std::function<void(std::shared_ptr<Event>)> callback) = 0;
   virtual void UnsubscribeEvent(EventType event_type) = 0;
 
-  virtual std::shared_ptr<Window> CreateNewWindow(
-      const WindowProperties &properties) = 0;
+  virtual std::shared_ptr<WindowGroup> CreateWindowGroup(
+      const WindowGroupAttributes &attributes) = 0;
 };
 
 HELPER_EXPORT std::shared_ptr<Client> CreateClient(DWORD process_id);

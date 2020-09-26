@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
-#include <string>
 
 #include "rect.h"
 #include "sprite.h"
@@ -11,11 +10,15 @@ namespace overlay {
 namespace core {
 namespace graphics {
 
-struct Window {
-  std::string client_id;
-
+struct WindowAttributes {
   Rect rect;
   int32_t z;
+  double opacity;
+  bool hidden;
+};
+
+struct Window {
+  WindowAttributes attributes;
 
   std::shared_ptr<Sprite> sprite;
 

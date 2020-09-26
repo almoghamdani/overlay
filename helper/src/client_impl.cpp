@@ -5,7 +5,7 @@
 
 #include "auth.grpc.pb.h"
 #include "utils/token.h"
-#include "window_impl.h"
+#include "window_group_impl.h"
 
 namespace overlay {
 namespace helper {
@@ -59,15 +59,15 @@ void ClientImpl::UnsubscribeEvent(EventType event_type) {
       static_cast<EventResponse::EventCase>(event_type));
 }
 
-std::shared_ptr<Window> ClientImpl::CreateNewWindow(
-    const WindowProperties &properties) {
-  GUID window_id;
+std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(
+    const WindowGroupAttributes &attributes) {
+  GUID window_group_id;
 
   grpc::ClientContext context;
-  CreateWindowRequest request;
-  CreateWindowResponse response;
+  CreateWindowGroupRequest request;
+  CreateWindowGroupResponse response;
 
-  WindowRect *rect = nullptr;
+  WindowGroupProperties *properties = nullptr;
 
   // If the client isn't connected
   if (windows_stub_ == nullptr) {
@@ -75,24 +75,24 @@ std::shared_ptr<Window> ClientImpl::CreateNewWindow(
   }
 
   // Try to create the new window
-  rect = new WindowRect();  // This should be deallocated by the request itself
-                            // since we're using `set_allocated_rect`
-  rect->set_width(properties.width);
-  rect->set_height(properties.height);
-  rect->set_x(properties.x);
-  rect->set_y(properties.y);
-  rect->set_z(properties.z);
-  request.set_allocated_rect(rect);
-  if (!windows_stub_->CreateNewWindow(&context, request, &response).ok() ||
-      response.id().size() != sizeof(window_id)) {
+  properties = new WindowGroupProperties();  // This should be deallocated by
+                                             // the request itself since we're
+                                             // using `set_allocated_properties`
+  properties->set_z(attributes.z);
+  properties->set_opacity(attributes.opacity);
+  properties->set_hidden(attributes.hidden);
+  request.set_allocated_properties(properties);
+  if (!windows_stub_->CreateWindowGroup(&context, request, &response).ok() ||
+      response.id().size() != sizeof(window_group_id)) {
     throw Error(ErrorCode::UnknownError);
   }
 
   // Copy the window id
-  std::memcpy(&window_id, response.id().data(), sizeof(window_id));
+  std::memcpy(&window_group_id, response.id().data(), sizeof(window_group_id));
 
-  return std::static_pointer_cast<Window>(
-      std::make_shared<WindowImpl>(weak_from_this(), window_id, properties));
+  return std::static_pointer_cast<WindowGroup>(
+      std::make_shared<WindowGroupImpl>(weak_from_this(), window_group_id,
+                                        attributes));
 }
 
 AuthenticateResponse ClientImpl::GetAuthInfo() const {

@@ -4,10 +4,12 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 #include "graphics_renderer.h"
+#include "sprite.h"
 #include "utils/guid.h"
-#include "window.h"
+#include "window_group.h"
 
 namespace overlay {
 namespace core {
@@ -15,17 +17,27 @@ namespace graphics {
 
 class WindowManager {
  public:
-  GUID CreateWindowForClient(std::string client_id, Rect rect, int32_t z);
-  void DestroyWindow(GUID id);
-  std::shared_ptr<Window> GetWindowWithId(GUID id);
-  void SwapWindowBuffer(GUID id, std::vector<uint8_t>& buffer);
+  GUID CreateWindowGroup(std::string client_id,
+                         WindowGroupAttributes attributes);
+  std::string GetWindowGroupClientId(GUID id);
+  void DestroyWindowGroup(GUID id);
+
+  GUID CreateWindowInGroup(GUID group_id, WindowAttributes attributes);
+  void DestroyWindowInGroup(GUID group_id, GUID window_id);
+  void UpdateWindowBufferInGroup(GUID group_id, GUID window_id,
+                                 std::string&& buffer);
 
   void RenderWindows(std::unique_ptr<IGraphicsRenderer>& renderer);
   void OnResize();
 
  private:
-  std::unordered_map<GUID, std::shared_ptr<Window>> windows_;
-  std::mutex windows_mutex_;
+  std::unordered_map<GUID, std::shared_ptr<WindowGroup>> window_groups_;
+  std::mutex window_groups_mutex_;
+
+  std::vector<std::shared_ptr<Sprite>> sprites_;
+  std::mutex sprites_mutex_;
+
+  void UpdateSprites();
 };
 
 }  // namespace graphics

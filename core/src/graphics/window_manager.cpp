@@ -10,109 +10,230 @@ namespace overlay {
 namespace core {
 namespace graphics {
 
-GUID WindowManager::CreateWindowForClient(std::string client_id, Rect rect,
-                                          int32_t z) {
-  std::shared_ptr<Window> window = std::make_shared<Window>();
+GUID WindowManager::CreateWindowGroup(std::string client_id,
+                                      WindowGroupAttributes attributes) {
+  std::shared_ptr<WindowGroup> window_group = std::make_shared<WindowGroup>();
   GUID id = utils::Guid::GenerateGuid();
 
-  std::unique_lock windows_lk(windows_mutex_, std::defer_lock);
+  std::unique_lock window_groups_lk(window_groups_mutex_, std::defer_lock);
 
-  window->client_id = client_id;
-  window->rect = rect;
-  window->z = z;
-  window->sprite = nullptr;
+  window_group->client_id = client_id;
+  window_group->attributes = attributes;
 
-  // Add the new window to the list of windows
-  windows_lk.lock();
-  windows_[id] = window;
-  windows_lk.unlock();
+  window_groups_lk.lock();
+  window_groups_[id] = window_group;
+  window_groups_lk.unlock();
 
-  LOG_F(INFO, "Created new window (ID: '%s') for client '%s'.",
+  LOG_F(INFO, "Created new window group (ID: '%s') for client '%s'.",
         utils::token::TokenToString(&id).c_str(), client_id.c_str());
 
   return id;
 }
 
-void WindowManager::DestroyWindow(GUID id) {
-  std::lock_guard windows_lk(windows_mutex_);
-  std::shared_ptr<Window> window;
+std::string WindowManager::GetWindowGroupClientId(GUID id) {
+  std::lock_guard window_groups_lk(window_groups_mutex_);
 
-  // If the window exists
-  if (windows_.count(id)) {
-    window = windows_[id];
-
-    // Lock the window and remove it from the list
-    std::lock_guard window_lk(window->mutex);
-    windows_.erase(id);
+  try {
+    return window_groups_[id]->client_id;
+  } catch (...) {
+    return nullptr;
   }
 }
 
-std::shared_ptr<Window> WindowManager::GetWindowWithId(GUID id) {
-  std::lock_guard lk(windows_mutex_);
+void WindowManager::DestroyWindowGroup(GUID id) {
+  {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_groups_.erase(id);
+  }
 
-  return windows_.count(id) ? windows_[id] : nullptr;
+  // Update the sprites
+  UpdateSprites();
 }
 
-void WindowManager::SwapWindowBuffer(GUID id, std::vector<uint8_t> &buffer) {
-  std::shared_ptr<Sprite> sprite = std::make_shared<Sprite>();
+GUID WindowManager::CreateWindowInGroup(GUID group_id,
+                                        WindowAttributes attributes) {
+  // * The window group must exist
 
-  std::shared_ptr<Window> window = GetWindowWithId(id);
+  std::shared_ptr<Window> window = std::make_shared<Window>();
+  GUID id = utils::Guid::GenerateGuid();
 
-  if (window == nullptr) {
+  std::shared_ptr<WindowGroup> window_group = nullptr;
+
+  // Get the window group
+  {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_group = window_groups_[group_id];
+  }
+
+  window->attributes = attributes;
+  window->sprite = std::make_shared<Sprite>();
+  window->sprite->rect = window->attributes.rect;
+  window->sprite->opacity =
+      window->attributes.opacity * window_group->attributes.opacity;
+
+  // Add the new window to the list of windows
+  {
+    std::lock_guard window_group_lk(window_group->mutex);
+    window_group->windows[id] = window;
+  }
+
+  LOG_F(INFO,
+        "Created new window (ID: '%s', Size: %dx%d) for window group '%s'.",
+        utils::token::TokenToString(&id).c_str(), attributes.rect.width,
+        attributes.rect.height, utils::token::TokenToString(&group_id).c_str());
+
+  // Update the sprites
+  UpdateSprites();
+
+  return id;
+}
+
+void WindowManager::DestroyWindowInGroup(GUID group_id, GUID window_id) {
+  // * The window group must exist
+
+  std::shared_ptr<WindowGroup> window_group = nullptr;
+
+  // Get the window group
+  {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_group = window_groups_[group_id];
+  }
+
+  try {
+    std::lock_guard window_group_lk(window_group->mutex);
+    window_group->windows.erase(window_id);
+  } catch (...) {
+  }
+}
+
+void WindowManager::UpdateWindowBufferInGroup(GUID group_id, GUID window_id,
+                                              std::string &&buffer) {
+  // * The window group must exist
+
+  std::shared_ptr<Window> window = nullptr;
+  std::shared_ptr<WindowGroup> window_group = nullptr;
+
+  std::shared_ptr<Sprite> sprite = nullptr;
+
+  // Get the window group
+  {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_group = window_groups_[group_id];
+  }
+
+  try {
+    std::lock_guard window_group_lk(window_group->mutex);
+    window = window_group->windows.at(window_id);
+  } catch (...) {
+    // Window wasn't found
     return;
   }
 
-  // Swap buffers
-  sprite->buffer.swap(buffer);
+  std::unique_lock window_lk(window->mutex);
+  sprite = window->sprite;
+  window_lk.unlock();
 
-  std::lock_guard window_lk(window->mutex);
-  sprite->rect = window->rect;
-  window->sprite.swap(sprite);
+  std::lock_guard sprites_lk(sprites_mutex_);
+  sprite->buffer = std::move(buffer);
+  sprite->buffer_updated = true;
 }
 
 void WindowManager::RenderWindows(
     std::unique_ptr<IGraphicsRenderer> &renderer) {
-  std::unique_lock windows_lk(windows_mutex_);
+  // Render the windows' sprites
+  std::lock_guard sprites_lk(sprites_mutex_);
+  renderer->RenderSprites(sprites_);
+}
 
-  std::vector<std::shared_ptr<Sprite>> sprites(windows_.size());
-  std::vector<std::shared_ptr<Window>> windows(windows_.size());
+void WindowManager::OnResize() {
+  std::unique_ptr<IGraphicsRenderer> &renderer =
+      Core::Get()->get_graphics_manager()->get_renderer();
 
-  // Convert all windows to sprites
-  std::transform(windows_.begin(), windows_.end(), windows.begin(),
-                 [](auto &pair) { return pair.second; });
-  windows_lk.unlock();
+  std::lock_guard sprites_lk(sprites_mutex_);
 
-  // Sort windows list
-  std::sort(windows.begin(), windows.end(), [](auto &win1, auto &win2) {
-    std::unique_lock win1_lk(win1->mutex, std::defer_lock);
-    std::unique_lock win2_lk(win2->mutex, std::defer_lock);
-    std::lock(win1_lk, win2_lk);
+  // Release all textures
+  for (auto &sprite : sprites_) {
+    sprite->FreeTexture();
+  }
+}
 
-    return win1->z < win2->z;
-  });
+void WindowManager::UpdateSprites() {
+  std::vector<std::shared_ptr<Sprite>> sprites;
 
-  // Convert windows list to sprites list
-  std::transform(windows.begin(), windows.end(), sprites.begin(),
-                 [](auto &window) {
+  std::vector<std::shared_ptr<WindowGroup>> window_groups;
+  std::vector<std::shared_ptr<WindowGroup>> sorted_window_groups;
+
+  std::vector<std::shared_ptr<Window>> sorted_windows;
+  std::vector<std::shared_ptr<Window>> sorted_visible_windows;
+
+  // Get all window groups
+  {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+
+    std::transform(window_groups_.begin(), window_groups_.end(),
+                   std::back_inserter(window_groups),
+                   [](auto &pair) { return pair.second; });
+  }
+
+  // Remove all hidden window groups
+  std::copy_if(window_groups.begin(), window_groups.end(),
+               std::back_inserter(sorted_window_groups),
+               [](std::shared_ptr<WindowGroup> &group) {
+                 std::lock_guard group_lk(group->mutex);
+                 return !group->attributes.hidden;
+               });
+
+  // Sort all window groups
+  std::sort(sorted_window_groups.begin(), sorted_window_groups.end(),
+            [](std::shared_ptr<WindowGroup> &group1,
+               std::shared_ptr<WindowGroup> &group2) {
+              std::unique_lock group1_lk(group1->mutex, std::defer_lock);
+              std::unique_lock group2_lk(group2->mutex, std::defer_lock);
+              std::lock(group1_lk, group2_lk);
+
+              return group1->attributes.z < group2->attributes.z;
+            });
+
+  // Sort windows for each group
+  for (auto &window_group : sorted_window_groups) {
+    std::lock_guard group_lk(window_group->mutex);
+
+    // Get all windows
+    std::transform(window_group->windows.begin(), window_group->windows.end(),
+                   std::back_inserter(sorted_windows),
+                   [](auto &pair) { return pair.second; });
+
+    // Sort windows list
+    std::sort(sorted_windows.end() - window_group->windows.size(),
+              sorted_windows.end(),
+              [](std::shared_ptr<Window> &win1, std::shared_ptr<Window> &win2) {
+                std::unique_lock win1_lk(win1->mutex, std::defer_lock);
+                std::unique_lock win2_lk(win2->mutex, std::defer_lock);
+                std::lock(win1_lk, win2_lk);
+
+                return win1->attributes.z < win2->attributes.z;
+              });
+  }
+
+  // Remove all hidden windows
+  std::copy_if(sorted_windows.begin(), sorted_windows.end(),
+               std::back_inserter(sorted_visible_windows),
+               [](std::shared_ptr<Window> &window) {
+                 std::lock_guard window_lk(window->mutex);
+                 return !window->attributes.hidden;
+               });
+
+  // Transform windows into sprites
+  std::transform(sorted_visible_windows.begin(), sorted_visible_windows.end(),
+                 std::back_inserter(sprites),
+                 [](std::shared_ptr<Window> &window) {
                    std::lock_guard window_lk(window->mutex);
                    return window->sprite;
                  });
 
-  // Render the windows' sprites
-  renderer->RenderSprites(sprites);
-}
-
-void WindowManager::OnResize() {
-  std::lock_guard windows_lk(windows_mutex_);
-
-  // Free all sprites
-  for (auto &pair : windows_) {
-    std::lock_guard window_lk(pair.second->mutex);
-
-    if (pair.second->sprite) {
-      pair.second->sprite->FreeTexture();
-    }
-  }
+  // Swap the sprites vector
+  std::lock_guard sprites_lk(sprites_mutex_);
+  sprites_.swap(sprites);
 }
 
 }  // namespace graphics

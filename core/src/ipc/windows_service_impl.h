@@ -7,9 +7,12 @@ namespace ipc {
 
 class WindowsServiceImpl final : public Windows::Service {
  public:
-  grpc::Status CreateNewWindow(grpc::ServerContext *context,
-                               const CreateWindowRequest *request,
-                               CreateWindowResponse *response);
+  grpc::Status CreateWindowGroup(grpc::ServerContext *context,
+                                 const CreateWindowGroupRequest *request,
+                                 CreateWindowGroupResponse *response);
+  grpc::Status CreateWindowInGroup(grpc::ServerContext *context,
+                                   const CreateWindowRequest *request,
+                                   CreateWindowResponse *response);
   grpc::Status BufferForWindow(grpc::ServerContext *context,
                                const BufferForWindowRequest *request,
                                BufferForWindowResponse *response);

@@ -1,8 +1,7 @@
 #pragma once
 #include <unknwn.h>
 
-#include <cstdint>
-#include <vector>
+#include <string>
 
 #include "rect.h"
 
@@ -17,8 +16,11 @@ struct Sprite {
   void FreeTexture();
 
   Rect rect;
+  double opacity;
 
-  std::vector<uint8_t> buffer;
+  std::string buffer;
+  bool buffer_updated;
+
   IUnknown *texture;
 };
 

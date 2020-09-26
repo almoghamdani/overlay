@@ -9,18 +9,24 @@
 namespace overlay {
 namespace helper {
 
+class WindowGroupImpl;
+
 class WindowImpl : public Window {
  public:
-  WindowImpl(std::weak_ptr<ClientImpl> client, GUID id,
-             const WindowProperties& properties);
+  WindowImpl(std::weak_ptr<ClientImpl> client,
+             std::shared_ptr<WindowGroupImpl> window_group, GUID id,
+             GUID group_id, const WindowAttributes& attributes);
 
-  virtual void UpdateBitmapBuffer(std::vector<uint8_t>& buffer);
+  virtual const WindowAttributes GetAttributes() const;
+
+  virtual void UpdateBitmapBuffer(const void* buffer, size_t buffer_size);
 
  private:
   std::weak_ptr<ClientImpl> client_;
-  GUID id_;
+  std::shared_ptr<WindowGroupImpl> window_group_;
+  GUID id_, group_id_;
 
-  WindowProperties properties_;
+  WindowAttributes attributes_;
 };
 
 }  // namespace helper

@@ -30,7 +30,9 @@ class Dx9Renderer : public IGraphicsRenderer {
   ID3DXSprite *sprite_drawer_;
 
   void DrawSprite(const std::shared_ptr<Sprite> &sprite);
-  IDirect3DTexture9 *CreateTexture(Rect rect, std::vector<uint8_t> &buffer);
+  IDirect3DTexture9 *CreateTexture(Rect rect, std::string &buffer);
+  bool CopyBufferToTexture(IDirect3DTexture9 *texture, Rect rect,
+                           std::string &buffer) const;
 };
 
 }  // namespace graphics

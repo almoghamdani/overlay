@@ -6,7 +6,7 @@ namespace overlay {
 namespace core {
 namespace graphics {
 
-Sprite::Sprite() : texture(nullptr) {}
+Sprite::Sprite() : texture(nullptr), buffer_updated(false) {}
 
 Sprite::~Sprite() { FreeTexture(); }
 

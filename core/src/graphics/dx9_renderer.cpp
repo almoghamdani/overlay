@@ -38,10 +38,8 @@ bool Dx9Renderer::Init() {
   return true;
 }
 
-IDirect3DTexture9 *Dx9Renderer::CreateTexture(Rect rect,
-                                              std::vector<uint8_t> &buffer) {
+IDirect3DTexture9 *Dx9Renderer::CreateTexture(Rect rect, std::string &buffer) {
   IDirect3DTexture9 *sprite_texture = nullptr;
-  D3DLOCKED_RECT texture_rect;
 
   // Verify buffer size
   if (buffer.size() != (rect.width * rect.height * sizeof(uint32_t))) {
@@ -55,9 +53,22 @@ IDirect3DTexture9 *Dx9Renderer::CreateTexture(Rect rect,
     return nullptr;
   }
 
-  // Lock the entire texture as a rectangle
-  if (FAILED(sprite_texture->LockRect(0, &texture_rect, 0, D3DLOCK_DISCARD))) {
+  // Copy the buffer data to the texture
+  if (!CopyBufferToTexture(sprite_texture, rect, buffer)) {
+    sprite_texture->Release();
     return nullptr;
+  }
+
+  return sprite_texture;
+}
+
+bool Dx9Renderer::CopyBufferToTexture(IDirect3DTexture9 *texture, Rect rect,
+                                      std::string &buffer) const {
+  D3DLOCKED_RECT texture_rect;
+
+  // Lock the entire texture as a rectangle
+  if (FAILED(texture->LockRect(0, &texture_rect, 0, D3DLOCK_DISCARD))) {
+    return false;
   }
 
   // Copy the buffer data to the rect data
@@ -68,11 +79,11 @@ IDirect3DTexture9 *Dx9Renderer::CreateTexture(Rect rect,
   }
 
   // Unlock the texture data
-  if (FAILED(sprite_texture->UnlockRect(0))) {
-    return nullptr;
+  if (FAILED(texture->UnlockRect(0))) {
+    return false;
   }
 
-  return sprite_texture;
+  return true;
 }
 
 void Dx9Renderer::RenderSprites(
@@ -104,7 +115,7 @@ void Dx9Renderer::OnResize() {
 }
 
 void Dx9Renderer::DrawSprite(const std::shared_ptr<Sprite> &sprite) {
-  if (sprite == nullptr) {
+  if (sprite == nullptr || sprite->opacity == 0) {
     return;
   }
 
@@ -115,12 +126,19 @@ void Dx9Renderer::DrawSprite(const std::shared_ptr<Sprite> &sprite) {
   // Create texture if needed
   if (sprite->texture == nullptr) {
     sprite->texture = CreateTexture(sprite->rect, sprite->buffer);
+  } else if (sprite->buffer_updated &&
+             (sprite->buffer.size() ==
+              (sprite->rect.width * sprite->rect.height * sizeof(uint32_t)))) {
+    CopyBufferToTexture((IDirect3DTexture9 *)sprite->texture, sprite->rect,
+                        sprite->buffer);
+    sprite->buffer_updated = false;
   }
 
   // Draw the sprite
   if (sprite->texture != nullptr) {
-    sprite_drawer_->Draw((IDirect3DTexture9 *)sprite->texture, &sprite_rect,
-                         NULL, &sprite_pos, 0xffffffff);
+    sprite_drawer_->Draw(
+        (IDirect3DTexture9 *)sprite->texture, &sprite_rect, NULL, &sprite_pos,
+        0x00ffffff + ((uint32_t)(sprite->opacity * 0xff) << 24));
   }
 }
 
