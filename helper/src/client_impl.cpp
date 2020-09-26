@@ -60,7 +60,7 @@ void ClientImpl::UnsubscribeEvent(EventType event_type) {
 }
 
 std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(
-    const WindowGroupAttributes &attributes) {
+    const WindowGroupAttributes attributes) {
   GUID window_group_id;
 
   grpc::ClientContext context;
@@ -68,6 +68,11 @@ std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(
   CreateWindowGroupResponse response;
 
   WindowGroupProperties *properties = nullptr;
+
+  // Verify attributes
+  if (attributes.opacity < 0 || attributes.opacity > 1) {
+    throw Error(ErrorCode::InvalidAttributes);
+  }
 
   // If the client isn't connected
   if (windows_stub_ == nullptr) {

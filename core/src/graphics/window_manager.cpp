@@ -30,6 +30,61 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
   return id;
 }
 
+bool WindowManager::UpdateWindowGroupAttributes(
+    GUID id, WindowGroupAttributes attributes) {
+  std::unique_lock sprites_lk(sprites_mutex_, std::defer_lock);
+  std::vector<std::pair<std::shared_ptr<Sprite>, double>> group_sprites;
+
+  bool update_sprites = false;
+
+  std::shared_ptr<WindowGroup> window_group = nullptr;
+
+  // Get the window group
+  try {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_group = window_groups_.at(id);
+  } catch (...) {
+    return false;
+  }
+
+  std::unique_lock window_group_lk(window_group->mutex);
+
+  // Check if there is a need of a sprites update
+  if (window_group->attributes.z != attributes.z ||
+      window_group->attributes.hidden != attributes.hidden) {
+    update_sprites = true;
+  }
+
+  // Save sprites for re-calculation of opacity
+  if (window_group->attributes.opacity != attributes.opacity) {
+    for (auto &window_pair : window_group->windows) {
+      std::lock_guard window_lk(window_pair.second->mutex);
+      group_sprites.push_back(std::make_pair(
+          window_pair.second->sprite,
+          window_pair.second->attributes.opacity * attributes.opacity));
+    }
+  }
+
+  // Update attributes
+  window_group->attributes = attributes;
+  window_group_lk.unlock();
+
+  // Update sprites' opacity
+  if (!group_sprites.empty()) {
+    sprites_lk.lock();
+    for (auto &sprite_pair : group_sprites) {
+      sprite_pair.first->opacity = sprite_pair.second;
+    }
+    sprites_lk.unlock();
+  }
+
+  if (update_sprites) {
+    UpdateSprites();
+  }
+
+  return true;
+}
+
 std::string WindowManager::GetWindowGroupClientId(GUID id) {
   std::lock_guard window_groups_lk(window_groups_mutex_);
 
@@ -88,15 +143,79 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id,
   return id;
 }
 
-void WindowManager::DestroyWindowInGroup(GUID group_id, GUID window_id) {
-  // * The window group must exist
+bool WindowManager::UpdateWindowAttributes(GUID group_id, GUID window_id,
+                                           WindowAttributes attributes) {
+  std::unique_lock sprites_lk(sprites_mutex_, std::defer_lock);
 
+  std::shared_ptr<Window> window = nullptr;
+  std::shared_ptr<WindowGroup> window_group = nullptr;
+
+  std::shared_ptr<Sprite> sprite = nullptr;
+
+  bool update_sprites = false, regenerate_texture = false;
+  double old_opacity = 0;
+
+  // Get the window group
+  try {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_group = window_groups_.at(group_id);
+  } catch (...) {
+    return false;
+  }
+
+  try {
+    std::lock_guard window_group_lk(window_group->mutex);
+    window = window_group->windows.at(window_id);
+  } catch (...) {
+    // Window wasn't found
+    return false;
+  }
+
+  std::unique_lock window_lk(window->mutex);
+
+  // Check if the texture needs to be regenerated
+  if (window->attributes.rect.height != attributes.rect.height ||
+      window->attributes.rect.width != attributes.rect.width) {
+    regenerate_texture = true;
+  }
+
+  // Check if sprites needs to be updated
+  if (window->attributes.z != attributes.z ||
+      window->attributes.hidden != attributes.hidden) {
+    update_sprites = true;
+  }
+
+  sprite = window->sprite;
+  old_opacity = window->attributes.opacity;
+  window->attributes = attributes;
+  window_lk.unlock();
+
+  sprites_lk.lock();
+
+  if (regenerate_texture) {
+    sprite->FreeTexture();
+  }
+
+  sprite->rect = attributes.rect;
+  sprite->opacity = (sprite->opacity / old_opacity) * attributes.opacity;
+  sprites_lk.unlock();
+
+  if (update_sprites) {
+    UpdateSprites();
+  }
+
+  return true;
+}
+
+void WindowManager::DestroyWindowInGroup(GUID group_id, GUID window_id) {
   std::shared_ptr<WindowGroup> window_group = nullptr;
 
   // Get the window group
-  {
+  try {
     std::lock_guard window_groups_lk(window_groups_mutex_);
-    window_group = window_groups_[group_id];
+    window_group = window_groups_.at(group_id);
+  } catch (...) {
+    return;
   }
 
   try {
@@ -108,19 +227,18 @@ void WindowManager::DestroyWindowInGroup(GUID group_id, GUID window_id) {
 
 void WindowManager::UpdateWindowBufferInGroup(GUID group_id, GUID window_id,
                                               std::string &&buffer) {
-  // * The window group must exist
-
   std::shared_ptr<Window> window = nullptr;
   std::shared_ptr<WindowGroup> window_group = nullptr;
 
   std::shared_ptr<Sprite> sprite = nullptr;
 
   // Get the window group
-  {
+  try {
     std::lock_guard window_groups_lk(window_groups_mutex_);
-    window_group = window_groups_[group_id];
+    window_group = window_groups_.at(group_id);
+  } catch (...) {
+    return;
   }
-
   try {
     std::lock_guard window_group_lk(window_group->mutex);
     window = window_group->windows.at(window_id);

@@ -14,15 +14,46 @@ namespace helper {
 WindowGroup::~WindowGroup() {}
 
 WindowGroupImpl::WindowGroupImpl(std::weak_ptr<ClientImpl> client, GUID id,
-                                 const WindowGroupAttributes& attributes)
+                                 const WindowGroupAttributes attributes)
     : client_(client), id_(id), attributes_(attributes) {}
+
+void WindowGroupImpl::SetAttributes(const WindowGroupAttributes attributes) {
+  grpc::ClientContext context;
+  UpdateWindowGroupPropertiesRequest request;
+  UpdateWindowGroupPropertiesResponse response;
+
+  WindowGroupProperties* properties = nullptr;
+
+  std::shared_ptr<ClientImpl> client = client_.lock();
+  if (!client) {
+    throw Error(ErrorCode::ClientObjectDeallocated);
+  }
+
+  // Try to update the window group properties
+  properties = new WindowGroupProperties();  // This should be deallocated by
+                                             // the request itself since we're
+                                             // using `set_allocated_properties`
+  properties->set_z(attributes.z);
+  properties->set_opacity(attributes.opacity);
+  properties->set_hidden(attributes.hidden);
+  request.set_allocated_properties(properties);
+  request.set_group_id((const char*)&id_, sizeof(id_));
+  if (!client->get_windows_stub()
+           ->UpdateWindowGroupProperties(&context, request, &response)
+           .ok()) {
+    throw Error(ErrorCode::UnknownError);
+  }
+
+  // Set the new attributes
+  attributes_ = attributes;
+}
 
 const WindowGroupAttributes WindowGroupImpl::GetAttributes() const {
   return attributes_;
 }
 
 std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
-    const WindowAttributes& attributes) {
+    const WindowAttributes attributes) {
   GUID window_id;
 
   grpc::ClientContext context;
@@ -34,6 +65,11 @@ std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
   std::shared_ptr<ClientImpl> client = client_.lock();
   if (!client) {
     throw Error(ErrorCode::ClientObjectDeallocated);
+  }
+
+  // Verify attributes
+  if (attributes.opacity < 0 || attributes.opacity > 1) {
+    throw Error(ErrorCode::InvalidAttributes);
   }
 
   // Try to create the new window

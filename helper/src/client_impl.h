@@ -27,7 +27,7 @@ class ClientImpl : public Client,
   virtual void UnsubscribeEvent(EventType event_type);
 
   virtual std::shared_ptr<WindowGroup> CreateWindowGroup(
-      const WindowGroupAttributes &attributes);
+      const WindowGroupAttributes attributes);
 
   std::unique_ptr<Windows::Stub> &get_windows_stub();
 

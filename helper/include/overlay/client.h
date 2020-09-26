@@ -23,7 +23,7 @@ class HELPER_EXPORT Client {
   virtual void UnsubscribeEvent(EventType event_type) = 0;
 
   virtual std::shared_ptr<WindowGroup> CreateWindowGroup(
-      const WindowGroupAttributes &attributes) = 0;
+      const WindowGroupAttributes attributes) = 0;
 };
 
 HELPER_EXPORT std::shared_ptr<Client> CreateClient(DWORD process_id);

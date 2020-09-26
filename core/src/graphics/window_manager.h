@@ -19,13 +19,16 @@ class WindowManager {
  public:
   GUID CreateWindowGroup(std::string client_id,
                          WindowGroupAttributes attributes);
+  bool UpdateWindowGroupAttributes(GUID id, WindowGroupAttributes attributes);
   std::string GetWindowGroupClientId(GUID id);
   void DestroyWindowGroup(GUID id);
 
   GUID CreateWindowInGroup(GUID group_id, WindowAttributes attributes);
-  void DestroyWindowInGroup(GUID group_id, GUID window_id);
+  bool UpdateWindowAttributes(GUID group_id, GUID window_id,
+                              WindowAttributes attributes);
   void UpdateWindowBufferInGroup(GUID group_id, GUID window_id,
                                  std::string&& buffer);
+  void DestroyWindowInGroup(GUID group_id, GUID window_id);
 
   void RenderWindows(std::unique_ptr<IGraphicsRenderer>& renderer);
   void OnResize();

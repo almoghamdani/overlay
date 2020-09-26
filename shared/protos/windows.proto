@@ -4,7 +4,9 @@ package overlay;
 
 service Windows {
 	rpc CreateWindowGroup (CreateWindowGroupRequest) returns (CreateWindowGroupResponse) {}
+	rpc UpdateWindowGroupProperties (UpdateWindowGroupPropertiesRequest) returns (UpdateWindowGroupPropertiesResponse) {}
 	rpc CreateWindowInGroup (CreateWindowRequest) returns (CreateWindowResponse) {}
+	rpc UpdateWindowProperties (UpdateWindowPropertiesRequest) returns (UpdateWindowPropertiesResponse) {}
 	rpc BufferForWindow (BufferForWindowRequest) returns (BufferForWindowResponse) {}
 }
 
@@ -48,5 +50,24 @@ message BufferForWindowRequest {
 }
 
 message BufferForWindowResponse {
+
+}
+
+message UpdateWindowGroupPropertiesRequest {
+	bytes group_id = 1;
+	WindowGroupProperties properties = 2;
+}
+
+message UpdateWindowGroupPropertiesResponse {
+
+}
+
+message UpdateWindowPropertiesRequest {
+	bytes group_id = 1;
+	bytes window_id = 2;
+	WindowProperties properties = 3;
+}
+
+message UpdateWindowPropertiesResponse {
 
 }

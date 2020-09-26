@@ -33,6 +33,9 @@ std::string GetErrorCodeDescription(ErrorCode code) {
       return "The bitmap buffer size is invalid (should be height * width * "
              "4(RGBA per pixel))";
 
+    case ErrorCode::InvalidAttributes:
+      return "One or more of the entered attributes contains invalid value";
+
     default:
     case ErrorCode::UnknownError:
       return "Unknown Error";

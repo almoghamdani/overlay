@@ -15,8 +15,9 @@ class WindowImpl : public Window {
  public:
   WindowImpl(std::weak_ptr<ClientImpl> client,
              std::shared_ptr<WindowGroupImpl> window_group, GUID id,
-             GUID group_id, const WindowAttributes& attributes);
+             GUID group_id, const WindowAttributes attributes);
 
+  virtual void SetAttributes(const WindowAttributes attributes);
   virtual const WindowAttributes GetAttributes() const;
 
   virtual void UpdateBitmapBuffer(const void* buffer, size_t buffer_size);

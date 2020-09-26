@@ -27,6 +27,7 @@ class HELPER_EXPORT Window {
  public:
   virtual ~Window();
 
+  virtual void SetAttributes(const WindowAttributes attributes) = 0;
   virtual const WindowAttributes GetAttributes() const = 0;
 
   virtual void UpdateBitmapBuffer(const void* buffer, size_t buffer_size) = 0;
@@ -45,10 +46,11 @@ class HELPER_EXPORT WindowGroup {
  public:
   virtual ~WindowGroup();
 
+  virtual void SetAttributes(const WindowGroupAttributes attributes) = 0;
   virtual const WindowGroupAttributes GetAttributes() const = 0;
 
   virtual std::shared_ptr<Window> CreateNewWindow(
-      const WindowAttributes& attributes) = 0;
+      const WindowAttributes attributes) = 0;
 };
 
 }  // namespace helper

@@ -19,7 +19,8 @@ enum class ErrorCode {
   AuthFailed,
   NotConnected,
   ClientObjectDeallocated,
-  InvalidBitmapBufferSize
+  InvalidBitmapBufferSize,
+  InvalidAttributes
 };
 
 HELPER_EXPORT std::string GetErrorCodeDescription(ErrorCode code);
