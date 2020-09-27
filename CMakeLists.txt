@@ -32,5 +32,6 @@ get_target_property(OVERLAY_SHARED_BINARY_DIR OverlayShared BINARY_DIR)
 include_directories(${OVERLAY_SHARED_BINARY_DIR}/gens shared/src)
 
 add_subdirectory(core OverlayCore)
+add_subdirectory(injector OverlayInjector)
 add_subdirectory(helper OverlayHelper)
 add_subdirectory(demo OverlayDemo)

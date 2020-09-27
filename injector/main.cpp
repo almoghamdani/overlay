@@ -1,11 +1,24 @@
-#include "utils.h"
-
+#include <windows.h>  // Keep this here
 #include <Shellapi.h>
 #include <TlHelp32.h>
 
-namespace overlay {
-namespace helper {
-namespace utils {
+#include <string>
+
+#define PROCESS_NOT_FOUND_ERROR_CODE -1
+#define DLL_NOT_FOUND_ERROR_CODE -2
+#define INVALID_DLL_ERROR_CODE -3
+#define UNKNOWN_ERROR_CODE -4
+
+#ifdef _WIN64
+#define CORE_DLL_NAME "OverlayCore64.dll"
+#else
+#define CORE_DLL_NAME "OverlayCore.dll"
+#endif
+
+#define CORE_DLL_MSG_HOOK_FUNC "msg_hook"
+
+#define MSG_POST_TIMES 5
+#define MSG_POST_SLEEP 300
 
 DWORD GetMainThreadIdForProcess(DWORD pid) {
   THREADENTRY32 thread_entry;
@@ -59,6 +72,57 @@ DWORD GetMainThreadIdForProcess(DWORD pid) {
   return tid;
 }
 
-}  // namespace utils
-}  // namespace helper
-}  // namespace overlay
+int InjectDllToThread(std::string dll, DWORD tid) {
+  // Load the core library DLL and get the proc address of the msg hook
+  HMODULE lib = LoadLibraryA(dll.c_str());
+  HOOKPROC proc = (HOOKPROC)GetProcAddress(lib, CORE_DLL_MSG_HOOK_FUNC);
+
+  if (!lib) {
+    return DLL_NOT_FOUND_ERROR_CODE;
+  } else if (!proc) {
+    return INVALID_DLL_ERROR_CODE;
+  }
+
+  // Set the msg hook function in the dest process (thread)
+  if (!SetWindowsHookExA(WH_GETMESSAGE, proc, lib, tid)) {
+    return UNKNOWN_ERROR_CODE;
+  }
+
+  // Post message for the dest thread to trigger loading the library in the dest
+  // process
+  for (unsigned int i = 0; i < MSG_POST_TIMES; i++) {
+    if (!PostThreadMessage(tid, WM_USER + 432, 0, 0)) {
+      return UNKNOWN_ERROR_CODE;
+    }
+
+    // Sleep to not spam process
+    Sleep(MSG_POST_SLEEP);
+  }
+
+  return 0;
+}
+
+int main(int argc, char **argv) {
+  DWORD pid = 0;
+  DWORD tid = 0;
+
+  // Verify process id was entered
+  if (argc < 2) {
+    return PROCESS_NOT_FOUND_ERROR_CODE;
+  }
+
+  try {
+    // Try to convert the pid argument
+    pid = std::stoi(argv[1]);
+  } catch (...) {
+    return PROCESS_NOT_FOUND_ERROR_CODE;
+  }
+
+  // Get the thread id for the process
+  tid = GetMainThreadIdForProcess(pid);
+  if (tid == 0) {
+    return PROCESS_NOT_FOUND_ERROR_CODE;
+  }
+
+  return InjectDllToThread(CORE_DLL_NAME, tid);
+}

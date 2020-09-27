@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(OverlayDemo)
 
-# Debug
-add_definitions (-DDEBUG)
-
-# Set C++17 standard
-set (CMAKE_CXX_STANDARD 17)
-
 # Get all the cpp and h files for the demo
 file(GLOB_RECURSE SOURCES "*.cpp" "*.h")
 

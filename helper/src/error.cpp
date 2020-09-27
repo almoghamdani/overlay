@@ -36,6 +36,9 @@ std::string GetErrorCodeDescription(ErrorCode code) {
     case ErrorCode::InvalidAttributes:
       return "One or more of the entered attributes contains invalid value";
 
+    case ErrorCode::InjectorNotFound:
+      return "The overlay injector executable wasn't found";
+
     default:
     case ErrorCode::UnknownError:
       return "Unknown Error";

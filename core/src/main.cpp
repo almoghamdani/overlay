@@ -7,36 +7,24 @@
 
 #include "core.h"
 
-#define HELPER_EXE_NAME "OverlayHelper"
+#define INJECTOR_EXE_NAME "OverlayInjector.exe"
+#define INJECTOR64_EXE_NAME "OverlayInjector64.exe"
 
-bool IsLoadedByHelper() {
-  HMODULE modules[1024];
-  DWORD size;
+bool IsLoadedByInjector() {
+  CHAR executable_name[MAX_PATH];
 
-  // Get a list of all the modules in this process.
-  if (EnumProcessModules(GetCurrentProcess(), modules, sizeof(modules),
-                         &size)) {
-    for (unsigned int i = 0; i < (size / sizeof(HMODULE)); i++) {
-      TCHAR moduleName[MAX_PATH];
+  // Get the executable name
+  GetModuleFileNameA(NULL, executable_name, MAX_PATH);
 
-      // Get the full path to the module's file.
-      if (GetModuleFileNameEx(GetCurrentProcess(), modules[i], moduleName,
-                              sizeof(moduleName) / sizeof(TCHAR))) {
-        // Check if the module name contains helper name
-        if (std::string((const char *)moduleName).find(HELPER_EXE_NAME) !=
-            std::string::npos) {
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
+  return std::string(executable_name).find(INJECTOR_EXE_NAME) !=
+             std::string::npos ||
+         std::string(executable_name).find(INJECTOR64_EXE_NAME) !=
+             std::string::npos;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
-  // If the library was loaded by the helper, do nothing
-  if (IsLoadedByHelper()) {
+  // If the library was loaded by the injector, do nothing
+  if (IsLoadedByInjector()) {
     return true;
   }
 
