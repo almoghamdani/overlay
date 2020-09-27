@@ -76,8 +76,15 @@ void InjectCoreToProcess(DWORD pid) {
   // Wait for the injector to exit
   WaitForSingleObject(injector_process_info.hProcess, INFINITE);
 
-  // Check for errors
+  // Get the exit code of the injector
   GetExitCodeProcess(injector_process_info.hProcess, &injector_exit_code);
+
+  // Close all handles
+  CloseHandle(process_handle);
+  CloseHandle(injector_process_info.hProcess);
+  CloseHandle(injector_process_info.hThread);
+
+  // Check for errors
   switch ((int)injector_exit_code) {
     case 0:
       return;
