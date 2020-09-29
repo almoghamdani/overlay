@@ -296,7 +296,7 @@ HRESULT Dx9Hook::DevicePresentHook(IDirect3DDevice9 *device,
 
   BeforePresent(device);
 
-  ret = present_hook_.get_trampoline().Call<HRESULT>(
+  ret = present_hook_.get_trampoline().CallStdMethod<HRESULT>(
       device, source_rect, dest_rect, dest_window_override, dirty_region);
 
   return ret;
