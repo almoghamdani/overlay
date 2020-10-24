@@ -1,22 +1,71 @@
 #include <Windows.h>
 #include <overlay/helper.h>
+#include <tlhelp32.h>
 
 #include <cxxopts.hpp>
 #include <iostream>
 #include <string>
+
+DWORD FindProcessByName(std::string name) {
+  DWORD pid = 0;
+
+  HANDLE hProcSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+  if (INVALID_HANDLE_VALUE != hProcSnapshot) {
+    PROCESSENTRY32 procEntry = {0};
+    procEntry.dwSize = sizeof(PROCESSENTRY32);
+
+    if (Process32First(hProcSnapshot, &procEntry)) {
+      do {
+        HANDLE hModSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE,
+                                                       procEntry.th32ProcessID);
+
+        if (INVALID_HANDLE_VALUE != hModSnapshot) {
+          MODULEENTRY32 modEntry = {0};
+          modEntry.dwSize = sizeof(MODULEENTRY32);
+
+          if (Module32First(hModSnapshot, &modEntry)) {
+            std::string path((const char*)modEntry.szExePath);
+
+            if (name == path.substr(path.rfind("\\") + 1)) {
+              pid = procEntry.th32ProcessID;
+
+              CloseHandle(hModSnapshot);
+              break;
+            }
+          }
+
+          CloseHandle(hModSnapshot);
+        }
+      } while (Process32Next(hProcSnapshot, &procEntry));
+    }
+    CloseHandle(hProcSnapshot);
+  }
+
+  return pid;
+}
 
 int main(int argc, char** argv) {
   cxxopts::Options options("Overlay Demo",
                            "This program is used to demonstrate the overlay");
 
   options.add_options()("p,pid", "The pid of the process to inject the overlay",
-                        cxxopts::value<DWORD>())(
-      "e,executable",
-      "The name of the executable of the process to inject the overlay",
-      cxxopts::value<std::string>())("c,connect",
-                                     "Connect to the target process")(
-      "stats-log", "Log target process's stats (FPS and Frame time)")(
-      "h,help", "Show this help");
+                        cxxopts::value<DWORD>())  // -p
+      ("e,executable",
+       "The name of the executable of the process to inject the overlay",
+       cxxopts::value<std::string>())  // -e
+      ("f,find-executable-instance",
+       "Use an open instance of the executable if exists")  // -f
+      ("c,connect", "Connect to the target process")        // -c
+      ("r,retry-connect", "Retry to connect if connection fails",
+       cxxopts::value<bool>()->default_value("true"))  // -r
+      ("max-connect-retries", "Maximum connection retries",
+       cxxopts::value<unsigned int>()->default_value(
+           "5"))  // --max-connect-retries 5
+      ("stats-log",
+       "Log target process's stats (FPS and Frame time)")  // --stats-log
+      ("h,help", "Show this help")                         // -h
+      ;
 
   auto args = options.parse(argc, argv);
 
@@ -24,6 +73,7 @@ int main(int argc, char** argv) {
   PROCESS_INFORMATION process_info = {0};
 
   std::shared_ptr<ovhp::Client> client = nullptr;
+  unsigned int retries = 0;
 
   // Show help
   if (args.count("help") || !(args.count("pid") || args.count("executable"))) {
@@ -32,27 +82,40 @@ int main(int argc, char** argv) {
   }
 
   if (args.count("executable")) {
-    // Try to create the dest process
-    std::cout << "Starting dest process.." << std::endl;
-    if (!CreateProcessA(args["executable"].as<std::string>().c_str(), "", NULL,
-                        NULL, TRUE, 0, NULL, NULL, &info, &process_info)) {
-      std::cerr << "Unable to start dest program!" << std::endl;
-      return -1;
+    if (args["find-executable-instance"].as<bool>() &&
+        (process_info.dwProcessId =
+             FindProcessByName(args["executable"].as<std::string>())) != 0) {
+      process_info.hProcess =
+          OpenProcess(SYNCHRONIZE, false, process_info.dwProcessId);
     }
 
-    // Wait for process to load
-    Sleep(300);
+    if (process_info.hProcess == 0) {
+      // Try to create the dest process
+      std::cout << "Starting dest process.." << std::endl;
+      if (!CreateProcessA(args["executable"].as<std::string>().c_str(), "",
+                          NULL, NULL, TRUE, 0, NULL, NULL, &info,
+                          &process_info)) {
+        std::cerr << "Unable to start dest program!" << std::endl;
+        return -1;
+      }
+
+      // Wait for process to load
+      Sleep(300);
+    }
   } else {
+    process_info.dwProcessId = args["pid"].as<DWORD>();
     process_info.hProcess =
         OpenProcess(SYNCHRONIZE, false, args["pid"].as<DWORD>());
+    if (!process_info.hProcess) {
+      std::cerr << "The wanted process wasn't found!" << std::endl;
+      return -1;
+    }
   }
 
   // Try to inject the overlay to the process
   std::cout << "Injecting to dest process.." << std::endl;
   try {
-    ovhp::InjectCoreToProcess(process_info.dwProcessId != 0
-                                  ? process_info.dwProcessId
-                                  : args["pid"].as<DWORD>());
+    ovhp::InjectCoreToProcess(process_info.dwProcessId);
   } catch (std::exception& ex) {
     std::cerr << ex.what() << std::endl;
     std::cerr << "Unable to inject overlay to process!" << std::endl;
@@ -60,20 +123,34 @@ int main(int argc, char** argv) {
   }
 
   // Wait for overlay to initiate
-#ifdef _WIN64
   Sleep(1000);
-#else
-  Sleep(2500);
-#endif
 
-  if (args.count("connect")) {
+  if (args["connect"].as<bool>()) {
     try {
       // Connect to the client
       std::cout << "Connecting to overlay.." << std::endl;
-      client = ovhp::CreateClient(process_info.dwProcessId != 0
-                                      ? process_info.dwProcessId
-                                      : args["pid"].as<DWORD>());
-      client->Connect();
+      client = ovhp::CreateClient(process_info.dwProcessId);
+
+      do {
+        if (retries > 0) {
+          std::cout << "Connecting to overlay (Retry " << retries << "/"
+                    << args["max-connect-retries"].as<unsigned int>() << ").."
+                    << std::endl;
+        }
+
+        try {
+          client->Connect();
+          break;
+        } catch (...) {
+          if (!(args["retry-connect"].as<bool>() &&
+                retries++ < args["max-connect-retries"].as<unsigned int>())) {
+            throw;
+          }
+
+          Sleep(1000);
+        }
+      } while (true);
+
       std::cout << "Connected to dest process' overlay!" << std::endl
                 << std::endl;
 
