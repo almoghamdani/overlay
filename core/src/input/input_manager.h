@@ -37,6 +37,8 @@ class InputManager {
   InputHook input_hook_;
   HHOOK window_msg_hook_;
 
+  void ReleasePressedKeys();
+  
   void SaveCursorState();
   void RestoreCursorState();
 

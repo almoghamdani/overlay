@@ -4,6 +4,8 @@
 
 #include "core.h"
 
+#define KEY_UP_PASSTHROUGH_LPARAM ((LPARAM)0xA1B3C5D7)
+
 namespace overlay {
 namespace core {
 namespace input {
@@ -26,6 +28,17 @@ bool InputManager::Hook() {
   }
 
   return true;
+}
+
+void InputManager::ReleasePressedKeys() {
+  for (int virtual_key = 0; virtual_key < 256; virtual_key++) {
+    if (input_hook_.get_async_key_state_hook_.get_trampoline()
+            .CallStdMethod<SHORT>(virtual_key) &
+        (1 << 15)) {
+      PostMessageA(Core::Get()->get_graphics_window(), WM_KEYUP,
+                   (WPARAM)virtual_key, KEY_UP_PASSTHROUGH_LPARAM);
+    }
+  }
 }
 
 void InputManager::SaveCursorState() {
@@ -93,15 +106,30 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
     if (message->hwnd == Core::Get()->get_graphics_window() &&
         word_param == PM_REMOVE) {
       if (message->message >= WM_KEYFIRST && message->message <= WM_KEYLAST) {
+        // Pass-throguh key-up for application
+        if (message->message == WM_KEYUP &&
+            message->lParam == KEY_UP_PASSTHROUGH_LPARAM) {
+          message->lParam = (LPARAM)(
+              (1 << 31) + (1 << 30) +
+              (MapVirtualKeyA((UINT)message->wParam, MAPVK_VK_TO_VSC) << 16) +
+              1);
+        }
+        // Block application input
+        else if (block_app_input_) {
+          message->message = WM_NULL;
+        }
+      }
+
+      if (message->message >= WM_MOUSEFIRST &&
+          message->message <= WM_MOUSELAST) {
         if (block_app_input_) {
           message->message = WM_NULL;
         }
       }
 
-      if (message->message >= WM_MOUSEFIRST && message->message <= WM_MOUSELAST) {
-        if (block_app_input_) {
-          message->message = WM_NULL;
-        }
+      // Block raw input (mouse and keyboard)
+      if (message->message == WM_INPUT && block_app_input_) {
+        message->message = WM_NULL;
       }
     }
   }
@@ -114,6 +142,7 @@ bool InputManager::get_block_app_input() const { return block_app_input_; }
 void InputManager::set_block_app_input(bool block_app_input) {
   if (block_app_input_ != block_app_input) {
     if (block_app_input) {
+      ReleasePressedKeys();
       SaveCursorState();
     } else {
       RestoreCursorState();
