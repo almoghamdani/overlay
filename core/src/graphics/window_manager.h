@@ -42,6 +42,7 @@ class WindowManager {
   std::mutex sprites_mutex_;
 
   void UpdateSprites();
+  void UpdateBlockAppInput();
 
   std::shared_ptr<Window> CreateBufferWindow(Color color, double opacity);
 };

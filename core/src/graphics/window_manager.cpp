@@ -29,6 +29,8 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
   window_groups_[id] = window_group;
   window_groups_lk.unlock();
 
+  UpdateBlockAppInput();
+
   LOG_F(INFO, "Created new window group (ID: '%s') for client '%s'.",
         utils::token::TokenToString(&id).c_str(), client_id.c_str());
 
@@ -104,6 +106,8 @@ bool WindowManager::UpdateWindowGroupAttributes(
     buffer_sprite->color = attributes.buffer_color;
     sprites_lk.unlock();
   }
+
+  UpdateBlockAppInput();
 
   if (update_sprites) {
     UpdateSprites();
@@ -385,6 +389,25 @@ void WindowManager::UpdateSprites() {
   // Swap the sprites vector
   std::lock_guard sprites_lk(sprites_mutex_);
   sprites_.swap(sprites);
+}
+
+void WindowManager::UpdateBlockAppInput() {
+  bool block_input = false;
+
+  std::unique_lock window_groups_lk(window_groups_mutex_);
+
+  for (auto &group_pair : window_groups_) {
+    std::lock_guard window_group_lk(group_pair.second->mutex);
+
+    if (group_pair.second->attributes.has_buffer &&
+        !group_pair.second->attributes.hidden) {
+      block_input = true;
+      break;
+    }
+  }
+
+  window_groups_lk.unlock();
+  Core::Get()->get_input_manager()->set_block_app_input(block_input);
 }
 
 std::shared_ptr<Window> WindowManager::CreateBufferWindow(Color color,
