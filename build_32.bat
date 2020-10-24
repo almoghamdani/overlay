@@ -1,3 +1,3 @@
 @echo off
 
-call build.bat x86 %1
+call build_arch.bat x86 %1

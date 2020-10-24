@@ -1,3 +1,3 @@
 @echo off
 
-call build.bat x64 %1
+call build_arch.bat x64 %1
