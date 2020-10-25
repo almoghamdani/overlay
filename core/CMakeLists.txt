@@ -23,6 +23,9 @@ message(STATUS "Using MinHook ${minhook_VERSION}")
 # Compile the loguru library
 set(LOGURU_SOURCES "../vendor/loguru/loguru.hpp" "../vendor/loguru/loguru.cpp")
 include_directories(../vendor/loguru)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	add_definitions(-DLOGURU_DEBUG_LOGGING)
+endif()
 
 # Include DirectX SDK headers
 include_directories(../vendor/dxsdk/Include)

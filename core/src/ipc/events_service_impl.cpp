@@ -40,6 +40,10 @@ void EventsServiceImpl::StartHandlingAsyncRpcs() {
     void *tag = nullptr;
     bool ok = false;
 
+#ifdef DEBUG
+    loguru::set_thread_name("events service");
+#endif
+
     // Create the first instance of an event worker for new clients
     new AsyncEventsServiceWorker(this, completion_queue_.get());
 

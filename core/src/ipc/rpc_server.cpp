@@ -56,14 +56,14 @@ void RpcServer::Start() {
   // Start the server
   server_ = server_builder.BuildAndStart();
   events_service_.StartHandlingAsyncRpcs();
-  LOG_F(INFO, "RPC Server is running and listening on port %d.", port_);
+  DLOG_F(INFO, "RPC Server is running and listening on port %d.", port_);
 
   token_server_.StartTokenGeneratorServer(port_, key_cert_pair_.cert_chain);
 }
 
 void RpcServer::RegisterClient(std::string client_id, DWORD process_id) {
-  LOG_F(INFO, "Registered client with id '%s' to process %d.",
-        client_id.c_str(), process_id);
+  DLOG_F(INFO, "Registered client with id '%s' to process %d.",
+         client_id.c_str(), process_id);
 
   Client client;
   std::lock_guard client_lk(clients_mutex_);

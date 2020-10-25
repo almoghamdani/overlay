@@ -24,14 +24,14 @@ bool GraphicsManager::Hook() {
   }
 
   if (dx9_hook_.Hook(dummy_window)) {
-    LOG_F(INFO, "Hooked DirectX 9 successfully!");
+    DLOG_F(INFO, "Hooked DirectX 9 successfully!");
     hooked = true;
   } else {
     dx9_hook_.Unhook();
   }
 
   if (dxgi_hook_.Hook(dummy_window)) {
-    LOG_F(INFO, "Hooked DXGI successfully!");
+    DLOG_F(INFO, "Hooked DXGI successfully!");
     hooked = true;
   } else {
     dxgi_hook_.Unhook();

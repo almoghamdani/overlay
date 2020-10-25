@@ -31,8 +31,8 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
 
   UpdateBlockAppInput();
 
-  LOG_F(INFO, "Created new window group (ID: '%s') for client '%s'.",
-        utils::token::TokenToString(&id).c_str(), client_id.c_str());
+  DLOG_F(INFO, "Created new window group (ID: '%s') for client '%s'.",
+         utils::token::TokenToString(&id).c_str(), client_id.c_str());
 
   return id;
 }
@@ -163,10 +163,10 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id,
     window_group->windows[id] = window;
   }
 
-  LOG_F(INFO,
-        "Created new window (ID: '%s', Size: %dx%d) for window group '%s'.",
-        utils::token::TokenToString(&id).c_str(), attributes.rect.width,
-        attributes.rect.height, utils::token::TokenToString(&group_id).c_str());
+  DLOG_F(
+      INFO, "Created new window (ID: '%s', Size: %dx%d) for window group '%s'.",
+      utils::token::TokenToString(&id).c_str(), attributes.rect.width,
+      attributes.rect.height, utils::token::TokenToString(&group_id).c_str());
 
   // Update the sprites
   UpdateSprites();

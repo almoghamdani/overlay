@@ -21,10 +21,10 @@ InputManager::InputManager()
 
 bool InputManager::Hook() {
   if (!input_hook_.Hook()) {
-    LOG_F(ERROR, "Unable to hook input WinAPI functions!");
+    DLOG_F(ERROR, "Unable to hook input WinAPI functions!");
     return false;
   } else {
-    LOG_F(INFO, "Hooked input WinAPI functions successfully!");
+    DLOG_F(INFO, "Hooked input WinAPI functions successfully!");
   }
 
   return true;
@@ -85,10 +85,10 @@ void InputManager::SaveCursorState() {
   input_hook_.get_cursor_pos_hook_.get_trampoline().CallStdMethod<BOOL>(
       &cursor_state_.cursor_pos);
 
-  LOG_F(INFO,
-        "Saved cursor state - Count: %d, Position: (%d, %d), Handle: 0x%x.",
-        cursor_state_.cursor_count, cursor_state_.cursor_pos.x,
-        cursor_state_.cursor_pos.y, cursor_state_.cursor_handle);
+  DLOG_F(INFO,
+         "Saved cursor state - Count: %d, Position: (%d, %d), Handle: 0x%x.",
+         cursor_state_.cursor_count, cursor_state_.cursor_pos.x,
+         cursor_state_.cursor_pos.y, cursor_state_.cursor_handle);
 }
 
 void InputManager::RestoreCursorState() {
@@ -110,10 +110,10 @@ void InputManager::RestoreCursorState() {
   input_hook_.set_cursor_pos_hook_.get_trampoline().CallStdMethod<BOOL>(
       cursor_state_.cursor_pos.x, cursor_state_.cursor_pos.y);
 
-  LOG_F(INFO,
-        "Restored cursor state - Count: %d, Position: (%d, %d), Handle: 0x%x.",
-        cursor_state_.cursor_count, cursor_state_.cursor_pos.x,
-        cursor_state_.cursor_pos.y, cursor_state_.cursor_handle);
+  DLOG_F(INFO,
+         "Restored cursor state - Count: %d, Position: (%d, %d), Handle: 0x%x.",
+         cursor_state_.cursor_count, cursor_state_.cursor_pos.x,
+         cursor_state_.cursor_pos.y, cursor_state_.cursor_handle);
 }
 
 bool InputManager::HookWindow(HWND window) {

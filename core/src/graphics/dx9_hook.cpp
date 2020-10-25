@@ -167,29 +167,29 @@ bool Dx9Hook::HookD3d9(IDirect3DDevice9 *device) {
 
   // Hook present function
   if (!present_hook_.Install(present_func, D3D9DevicePresentHook)) {
-    LOG_F(ERROR,
-          "Unable to hook D3D9DevicePresent function! Device: %p, "
-          "Function: %p",
-          device, present_func);
+    DLOG_F(ERROR,
+           "Unable to hook D3D9DevicePresent function! Device: %p, "
+           "Function: %p",
+           device, present_func);
     return false;
   }
 
   // Hook swap-chain present function
   if (!swap_chain_present_hook_.Install(swap_chain_present_func,
                                         D3D9SwapChainPresentHook)) {
-    LOG_F(ERROR,
-          "Unable to hook D3D9SwapChainPresent function! Swap-chain: %p, "
-          "Function: %p",
-          swap_chain, swap_chain_present_func);
+    DLOG_F(ERROR,
+           "Unable to hook D3D9SwapChainPresent function! Swap-chain: %p, "
+           "Function: %p",
+           swap_chain, swap_chain_present_func);
     return false;
   }
 
   // Hook reset function
   if (!reset_hook_.Install(reset_func, D3D9DeviceResetHook)) {
-    LOG_F(ERROR,
-          "Unable to hook D3D9DeviceReset function! Device: %p, "
-          "Function: %p",
-          device, reset_func);
+    DLOG_F(ERROR,
+           "Unable to hook D3D9DeviceReset function! Device: %p, "
+           "Function: %p",
+           device, reset_func);
     return false;
   }
 
@@ -268,19 +268,19 @@ bool Dx9Hook::HookD3d9ex(IDirect3DDevice9Ex *device) {
 
   // Hook present function
   if (!present_ex_hook_.Install(present_ex_func, D3D9ExDevicePresentExHook)) {
-    LOG_F(ERROR,
-          "Unable to hook D3D9ExDevicePresentEx function! Device: %p, "
-          "Function: %p",
-          device, present_ex_func);
+    DLOG_F(ERROR,
+           "Unable to hook D3D9ExDevicePresentEx function! Device: %p, "
+           "Function: %p",
+           device, present_ex_func);
     return false;
   }
 
   // Hook reset function
   if (!reset_ex_hook_.Install(reset_ex_func, D3D9ExDeviceResetExHook)) {
-    LOG_F(ERROR,
-          "Unable to hook D3D9ExDeviceResetEx function! Device: %p, "
-          "Function: %p",
-          device, reset_ex_func);
+    DLOG_F(ERROR,
+           "Unable to hook D3D9ExDeviceResetEx function! Device: %p, "
+           "Function: %p",
+           device, reset_ex_func);
     return false;
   }
 

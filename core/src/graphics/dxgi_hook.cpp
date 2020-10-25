@@ -47,13 +47,13 @@ bool DxgiHook::Hook(HWND dummy_window) {
 
   // Try to hook DirectX 10
   if (HookDirectx10(dummy_window)) {
-    LOG_F(INFO, "Hooked DirectX 10 successfully!");
+    DLOG_F(INFO, "Hooked DirectX 10 successfully!");
     hooked = true;
   }
 
   // Try to hook DirectX 11
   if (HookDirectx11(dummy_window)) {
-    LOG_F(INFO, "Hooked DirectX 11 successfully!");
+    DLOG_F(INFO, "Hooked DirectX 11 successfully!");
     hooked = true;
   }
 
@@ -216,30 +216,31 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
   // Hook present function
   if (!present_hook_.Install(swap_chain_present_func,
                              DXGISwapChainPresentHook)) {
-    LOG_F(ERROR,
-          "Unable to hook DXGISwapChainPresent function! Swap-chain: %p, "
-          "Function: %p",
-          swap_chain, swap_chain_present_func);
+    DLOG_F(ERROR,
+           "Unable to hook DXGISwapChainPresent function! Swap-chain: %p, "
+           "Function: %p",
+           swap_chain, swap_chain_present_func);
     return false;
   }
 
   // Hook resize buffers function
   if (!resize_buffers_hook_.Install(swap_chain_resize_buffers_func,
                                     DXGISwapChainResizeBuffersHook)) {
-    LOG_F(ERROR,
-          "Unable to hook DXGISwapChainResizeBuffers function! Swap-chain: %p, "
-          "Function: %p",
-          swap_chain, swap_chain_resize_buffers_func);
+    DLOG_F(
+        ERROR,
+        "Unable to hook DXGISwapChainResizeBuffers function! Swap-chain: %p, "
+        "Function: %p",
+        swap_chain, swap_chain_resize_buffers_func);
     return false;
   }
 
   // Hook resize target function
   if (!resize_target_hook_.Install(swap_chain_resize_target_func,
                                    DXGISwapChainResizeTargetHook)) {
-    LOG_F(ERROR,
-          "Unable to hook DXGISwapChainResizeTarget function! Swap-chain: %p, "
-          "Function: %p",
-          swap_chain, swap_chain_resize_target_func);
+    DLOG_F(ERROR,
+           "Unable to hook DXGISwapChainResizeTarget function! Swap-chain: %p, "
+           "Function: %p",
+           swap_chain, swap_chain_resize_target_func);
     return false;
   }
 
@@ -251,10 +252,10 @@ bool DxgiHook::HookSwapChain(IDXGISwapChain *swap_chain) {
         swap_chain1, DXGI_SWAP_CHAIN1_PRESENT1_VTABLE_INDEX);
     if (!present1_hook_.Install(swap_chain1_present1_func,
                                 DXGISwapChain1Present1Hook)) {
-      LOG_F(ERROR,
-            "Unable to hook DXGISwapChain1Present1 function! Swap-chain: %p, "
-            "Function: %p",
-            swap_chain1, swap_chain1_present1_func);
+      DLOG_F(ERROR,
+             "Unable to hook DXGISwapChain1Present1 function! Swap-chain: %p, "
+             "Function: %p",
+             swap_chain1, swap_chain1_present1_func);
       return false;
     }
   }

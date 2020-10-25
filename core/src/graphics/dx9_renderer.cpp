@@ -44,20 +44,21 @@ bool Dx9Renderer::Init() {
   if (!d3dx9_module_ ||
       !(create_sprite_func = (pFnD3DXCreateSprite)GetProcAddress(
             d3dx9_module_, "D3DXCreateSprite"))) {
-    LOG_F(ERROR, "Unable to load D3DX dll!");
+    DLOG_F(ERROR, "Unable to load D3DX dll!");
     return false;
   }
 
   // Create sprite drawer
   if (FAILED(create_sprite_func(device_, &sprite_drawer_))) {
-    LOG_F(ERROR, "Unable to create D3DX sprite drawer!");
+    DLOG_F(ERROR, "Unable to create D3DX sprite drawer!");
     return false;
   }
 
-  LOG_F(INFO,
-        "DirectX 9 renderer initiated with device %p. Window size: %dx%d, "
-        "Fullscreen: %s.",
-        device_, get_width(), get_height(), is_fullscreen() ? "True" : "False");
+  DLOG_F(INFO,
+         "DirectX 9 renderer initiated with device %p. Window size: %dx%d, "
+         "Fullscreen: %s.",
+         device_, get_width(), get_height(),
+         is_fullscreen() ? "True" : "False");
 
   return true;
 }
@@ -164,8 +165,8 @@ void Dx9Renderer::OnResize(size_t width, size_t height, bool fullscreen) {
   set_width(width);
   set_height(height);
   set_fullscreen(fullscreen);
-  LOG_F(INFO, "Device Reset: Window size: %dx%d, Fullscreen: %s.", get_width(),
-        get_height(), is_fullscreen() ? "True" : "False");
+  DLOG_F(INFO, "Device Reset: Window size: %dx%d, Fullscreen: %s.", get_width(),
+         get_height(), is_fullscreen() ? "True" : "False");
 
   // Release all textures
   ReleaseTextures();

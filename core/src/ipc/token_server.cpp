@@ -26,9 +26,9 @@ void TokenServer::StartTokenGeneratorServer(uint16_t rpc_server_port,
           "Unable to create pipe for token generator server! (Error: 0x%x)",
           GetLastError());
 
-  LOG_F(INFO,
-        "Started token generator server with pipe name '%s'. (HANDLE: 0x%x)",
-        pipe_name.c_str(), pipe_);
+  DLOG_F(INFO,
+         "Started token generator server with pipe name '%s'. (HANDLE: 0x%x)",
+         pipe_name.c_str(), pipe_);
 
   // Start pipe main thread
   main_thread_ = std::thread(&TokenServer::PipeMainThread, this,
@@ -59,6 +59,10 @@ void TokenServer::PipeMainThread(uint16_t rpc_server_port,
   DWORD process_id;
 
   std::unique_lock tokens_lk(tokens_mutex_, std::defer_lock);
+
+#ifdef DEBUG
+  loguru::set_thread_name("token server");
+#endif
 
   response.rpc_server_port = rpc_server_port;
   std::memcpy(response.server_certificate, server_certificate.data(),
@@ -103,8 +107,8 @@ GUID TokenServer::GenerateTokenForProcess(DWORD pid) {
   // Save token
   tokens_[token] = pid;
 
-  LOG_F(INFO, "Generated token '%s' for process %d.",
-        utils::token::TokenToString(&token).c_str(), pid);
+  DLOG_F(INFO, "Generated token '%s' for process %d.",
+         utils::token::TokenToString(&token).c_str(), pid);
 
   return token;
 }

@@ -42,12 +42,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     freopen("conin$", "r+t", stdin);
     freopen("conout$", "w+t", stdout);
     freopen("conout$", "w+t", stderr);
+
+    loguru::set_thread_name("application main");
 #endif
 
     // Disable calling DllMain for DLL_THREAD_ATTACH and DLL_THREAD_DETACH
     DisableThreadLibraryCalls((HMODULE)hinstDLL);
 
-    LOG_F(INFO, "Overlay Core v1.0 (PID: %d)\n", GetCurrentProcessId());
+    DLOG_F(INFO, "Overlay Core v1.0 (PID: %d)\n", GetCurrentProcessId());
 
     // Start overlay core
     overlay::core::Core::Get()->Start();
