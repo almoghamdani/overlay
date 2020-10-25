@@ -38,6 +38,7 @@ class InputManager {
   HHOOK window_msg_hook_;
 
   void ReleasePressedKeys();
+  uint16_t VirtualKeyToScanCode(uint8_t virtual_key);
   
   void SaveCursorState();
   void RestoreCursorState();

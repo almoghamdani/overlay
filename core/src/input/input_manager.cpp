@@ -41,6 +41,36 @@ void InputManager::ReleasePressedKeys() {
   }
 }
 
+uint16_t InputManager::VirtualKeyToScanCode(uint8_t virtual_key) {
+  uint16_t scan_code = MapVirtualKey(virtual_key, MAPVK_VK_TO_VSC);
+
+  switch (virtual_key) {
+    case VK_LEFT:
+    case VK_UP:
+    case VK_RIGHT:
+    case VK_DOWN:
+    case VK_RCONTROL:
+    case VK_RMENU:
+    case VK_LWIN:
+    case VK_RWIN:
+    case VK_APPS:
+    case VK_PRIOR:
+    case VK_NEXT:
+    case VK_END:
+    case VK_HOME:
+    case VK_INSERT:
+    case VK_DELETE:
+    case VK_DIVIDE:
+    case VK_NUMLOCK:
+      scan_code |= KF_EXTENDED;
+
+    default:
+      break;
+  }
+
+  return scan_code;
+}
+
 void InputManager::SaveCursorState() {
   std::lock_guard cursor_state_lk(cursor_state_mutex_);
 
@@ -111,8 +141,7 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
             message->lParam == KEY_UP_PASSTHROUGH_LPARAM) {
           message->lParam = (LPARAM)(
               (1 << 31) + (1 << 30) +
-              (MapVirtualKeyA((UINT)message->wParam, MAPVK_VK_TO_VSC) << 16) +
-              1);
+              (VirtualKeyToScanCode((uint8_t)message->wParam) << 16) + 1);
         }
         // Block application input
         else if (block_app_input_) {
