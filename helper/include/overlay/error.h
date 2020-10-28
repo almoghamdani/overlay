@@ -21,7 +21,8 @@ enum class ErrorCode {
   ClientObjectDeallocated,
   InvalidBitmapBufferSize,
   InvalidAttributes,
-  InjectorNotFound
+  InjectorNotFound,
+  InvalidEventType
 };
 
 HELPER_EXPORT std::string GetErrorCodeDescription(ErrorCode code);

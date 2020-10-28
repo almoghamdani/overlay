@@ -4,6 +4,7 @@
 #include <overlay/error.h>
 
 #include <cstdint>
+#include <magic_enum.hpp>
 
 #include "client_impl.h"
 #include "window_group_impl.h"
@@ -104,11 +105,19 @@ void WindowImpl::UpdateBitmapBuffer(const void* buffer, size_t buffer_size) {
 void WindowImpl::SubscribeToEvent(
     WindowEventType event_type,
     std::function<void(std::shared_ptr<WindowEvent>)> callback) {
+  if (!magic_enum::enum_contains<WindowEventType>(event_type)) {
+    throw Error(ErrorCode::InvalidEventType);
+  }
+
   std::lock_guard event_handlers_lk(event_handlers_mutex_);
   event_handlers_[event_type] = callback;
 }
 
 void WindowImpl::UnsubscribeEvent(WindowEventType event_type) {
+  if (!magic_enum::enum_contains<WindowEventType>(event_type)) {
+    throw Error(ErrorCode::InvalidEventType);
+  }
+
   std::lock_guard event_handlers_lk(event_handlers_mutex_);
 
   try {

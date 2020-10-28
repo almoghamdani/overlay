@@ -1,6 +1,7 @@
 #include "events_service_impl.h"
 
 #include <loguru/loguru.hpp>
+#include <magic_enum.hpp>
 
 #include "core.h"
 
@@ -12,7 +13,8 @@ grpc::Status EventsServiceImpl::UnsubscribeEvent(
     grpc::ServerContext *context, const EventUnsubscribeRequest *request,
     EventUnsubscribeResponse *response) {
   if ((EventResponse::EventCase)request->type() <=
-      EventResponse::EventCase::EVENT_NOT_SET) {
+          EventResponse::EventCase::EVENT_NOT_SET ||
+      !magic_enum::enum_contains<EventResponse::EventCase>(request->type())) {
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                         "Invalid event type");
   }
@@ -128,7 +130,8 @@ void AsyncEventsServiceWorker::Handle() {
 
     // If the event type is invalid
     if ((EventResponse::EventCase)request_.type() <=
-        EventResponse::EventCase::EVENT_NOT_SET) {
+            EventResponse::EventCase::EVENT_NOT_SET ||
+        !magic_enum::enum_contains<EventResponse::EventCase>(request_.type())) {
       Finish(grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                           "Invalid event type"));
     } else {

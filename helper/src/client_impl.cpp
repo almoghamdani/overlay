@@ -50,7 +50,7 @@ void ClientImpl::SubscribeToEvent(
   EventResponse::EventCase type = ConvertEventType(event_type);
 
   if (type == EventResponse::EventCase::EVENT_NOT_SET) {
-    return;
+    throw Error(ErrorCode::InvalidEventType);
   }
 
   if (channel_ == nullptr) {
@@ -64,8 +64,13 @@ void ClientImpl::SubscribeToEvent(
 }
 
 void ClientImpl::UnsubscribeEvent(EventType event_type) {
-  event_manager_->UnsubscribeEvent(
-      static_cast<EventResponse::EventCase>(event_type));
+  EventResponse::EventCase type = ConvertEventType(event_type);
+
+  if (type == EventResponse::EventCase::EVENT_NOT_SET) {
+    throw Error(ErrorCode::InvalidEventType);
+  }
+
+  event_manager_->UnsubscribeEvent(type);
 }
 
 std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(

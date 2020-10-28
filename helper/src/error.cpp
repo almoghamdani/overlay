@@ -39,6 +39,9 @@ std::string GetErrorCodeDescription(ErrorCode code) {
     case ErrorCode::InjectorNotFound:
       return "The overlay injector executable wasn't found";
 
+    case ErrorCode::InvalidEventType:
+      return "The event type entered is invalid";
+
     default:
     case ErrorCode::UnknownError:
       return "Unknown Error";
