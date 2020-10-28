@@ -1,7 +1,7 @@
 #include "token_server.h"
 
 #include <algorithm>
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 #include <sstream>
 
 #include "authenticate_response.h"

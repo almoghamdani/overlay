@@ -4,3 +4,9 @@ openssl:x64-windows-static
 openssl:x86-windows-static
 minhook:x64-windows-static
 minhook:x86-windows-static
+loguru:x64-windows-static
+loguru:x86-windows-static
+cxxopts:x64-windows-static
+cxxopts:x86-windows-static
+magic-enum:x64-windows-static
+magic-enum:x86-windows-static

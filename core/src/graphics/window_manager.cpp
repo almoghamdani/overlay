@@ -1,7 +1,7 @@
 #include "window_manager.h"
 
 #include <algorithm>
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 
 #include "core.h"
 #include "utils/guid.h"

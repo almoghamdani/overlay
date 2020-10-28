@@ -1,6 +1,6 @@
 #include "events_service_impl.h"
 
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 
 #include "core.h"
 

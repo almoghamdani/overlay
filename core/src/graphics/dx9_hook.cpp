@@ -1,6 +1,6 @@
 #include "dx9_hook.h"
 
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 
 #include "core.h"
 #include "dx9_renderer.h"

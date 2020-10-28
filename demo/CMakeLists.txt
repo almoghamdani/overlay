@@ -7,8 +7,9 @@ file(GLOB_RECURSE SOURCES "*.cpp" "*.h")
 # Include overlay helper
 include_directories(../helper/include)
 
-# Include cxxopts
-include_directories(../vendor/cxxopts/include)
+# Find cxxopts
+find_package(cxxopts CONFIG REQUIRED)
+message(STATUS "Using cxxopts v${cxxopts_VERSION}")
 
 # Add the overlay demo as an executable to be compiled
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -17,4 +18,4 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 # Link the demo to the helper lib
-target_link_libraries(${PROJECT_NAME} OverlayHelper)
+target_link_libraries(${PROJECT_NAME} PRIVATE OverlayHelper cxxopts::cxxopts)

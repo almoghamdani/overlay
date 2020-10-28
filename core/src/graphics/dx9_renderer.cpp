@@ -1,6 +1,6 @@
 #include "dx9_renderer.h"
 
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 
 namespace overlay {
 namespace core {

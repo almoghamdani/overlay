@@ -1,6 +1,6 @@
 #include "input_manager.h"
 
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 
 #include "core.h"
 #include "events.pb.h"

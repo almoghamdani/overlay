@@ -3,7 +3,6 @@
 		{
 			"name": "Win32",
 			"includePath": [
-				"${workspaceFolder}/vendor/loguru",
 				"${workspaceFolder}/vcpkg/installed/x64-windows-static/include",
 				"${workspaceFolder}/build/**/gens"
 			],

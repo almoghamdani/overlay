@@ -2,7 +2,7 @@
 
 #include <MinHook.h>
 
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 
 namespace overlay {
 namespace core {

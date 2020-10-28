@@ -10,19 +10,22 @@ include_directories(src)
 
 # Find gRPC
 find_package(gRPC CONFIG REQUIRED)
-message(STATUS "Using gRPC ${gRPC_VERSION}")
+message(STATUS "Using gRPC v${gRPC_VERSION}")
 
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
-message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+message(STATUS "Using OpenSSL v${OPENSSL_VERSION}")
 
-# Compile the MinHook library
+# Find minhook
 find_package(minhook CONFIG REQUIRED)
-message(STATUS "Using MinHook ${minhook_VERSION}")
+message(STATUS "Using MinHook v${minhook_VERSION}")
 
-# Compile the loguru library
-set(LOGURU_SOURCES "../vendor/loguru/loguru.hpp" "../vendor/loguru/loguru.cpp")
-include_directories(../vendor/loguru)
+# Find magic_enum
+find_package(magic_enum CONFIG REQUIRED)
+message(STATUS "Using magic_enum v${magic_enum_VERSION}")
+
+# Find loguru
+find_path(LOGURU_INCLUDE_DIRS "loguru/loguru.cpp")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_definitions(-DLOGURU_DEBUG_LOGGING)
 endif()
@@ -37,7 +40,8 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 # Link the overlay core to the dependencies' libs
-target_link_libraries(${PROJECT_NAME} PRIVATE rpcrt4.lib gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto minhook::minhook)
+target_link_libraries(${PROJECT_NAME} PRIVATE rpcrt4.lib gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto minhook::minhook magic_enum::magic_enum)
+target_include_directories(${PROJECT_NAME} PRIVATE ${LOGURU_INCLUDE_DIRS})
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_link_libraries(${PROJECT_NAME} PRIVATE msvcrtd.lib)
 else ()

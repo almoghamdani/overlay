@@ -1,7 +1,8 @@
 #include <Windows.h>
 #include <psapi.h>
 
-#include <loguru.hpp>
+#include <loguru/loguru.cpp>
+#include <loguru/loguru.hpp>
 #include <string>
 #include <thread>
 

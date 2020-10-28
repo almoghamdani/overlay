@@ -6,7 +6,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 
 #include "token_interceptor.h"
 

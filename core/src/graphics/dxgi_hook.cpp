@@ -1,7 +1,7 @@
 #include "dxgi_hook.h"
 
 #include <iostream>
-#include <loguru.hpp>
+#include <loguru/loguru.hpp>
 
 #include "core.h"
 #include "utils/hook/vtable.h"
