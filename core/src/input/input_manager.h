@@ -39,12 +39,14 @@ class InputManager {
 
   void ReleasePressedKeys();
   uint16_t VirtualKeyToScanCode(uint8_t virtual_key);
-  
+
   void SaveCursorState();
   void RestoreCursorState();
 
+  void HandleInput(UINT message, uint32_t param);
+
   LRESULT WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
-                                 _In_ LPARAM long_param);
+                        _In_ LPARAM long_param);
 
   friend LRESULT CALLBACK WindowGetMsgHook(_In_ int code,
                                            _In_ WPARAM word_param,

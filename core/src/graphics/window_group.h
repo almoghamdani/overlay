@@ -24,12 +24,15 @@ struct WindowGroupAttributes {
 };
 
 struct WindowGroup {
+  GUID id;
   std::string client_id;
 
   WindowGroupAttributes attributes;
 
   std::shared_ptr<Window> buffer_window;
+
   std::unordered_map<GUID, std::shared_ptr<Window>> windows;
+  std::shared_ptr<Window> focused_window;
 
   std::mutex mutex;
 };

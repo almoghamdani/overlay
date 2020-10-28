@@ -84,7 +84,7 @@ int InjectDllToThread(std::string dll, DWORD tid) {
   }
 
   // Set the msg hook function in the dest process (thread)
-  if (!SetWindowsHookExA(WH_GETMESSAGE, proc, lib, tid)) {
+  if (!SetWindowsHookExW(WH_GETMESSAGE, proc, lib, tid)) {
     return UNKNOWN_ERROR_CODE;
   }
 

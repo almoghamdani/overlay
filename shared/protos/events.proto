@@ -16,8 +16,29 @@ message EventResponse {
 		double fps = 5;
 	}
 
+	message WindowEvent {
+		message KeyboardInputEvent {
+			enum KeyboardInputType {
+				KEY_DOWN = 0;
+				CHAR = 1;
+				KEY_UP = 2;
+			}
+	
+			KeyboardInputType type = 1;
+			uint32 code = 2;
+		}
+
+		bytes windowGroupId = 1;
+		bytes windowId = 2;
+
+		oneof event {
+			KeyboardInputEvent keyboardInput = 3;
+		}
+	}
+
 	oneof event {
-		ApplicationStatsEvent applicationStats = 1;
+		ApplicationStatsEvent applicationStatsEvent = 1;
+		WindowEvent windowEvent = 2;
 	}
 }
 

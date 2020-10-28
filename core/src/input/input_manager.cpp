@@ -3,6 +3,8 @@
 #include <loguru.hpp>
 
 #include "core.h"
+#include "events.pb.h"
+#include "graphics/window.h"
 
 #define KEY_UP_PASSTHROUGH_LPARAM ((LPARAM)0xA1B3C5D7)
 
@@ -32,9 +34,7 @@ bool InputManager::Hook() {
 
 void InputManager::ReleasePressedKeys() {
   for (int virtual_key = 0; virtual_key < 256; virtual_key++) {
-    if (input_hook_.get_async_key_state_hook_.get_trampoline()
-            .CallStdMethod<SHORT>(virtual_key) &
-        (1 << 15)) {
+    if (GetAsyncKeyState(virtual_key) & (1 << 15)) {
       PostMessageA(Core::Get()->get_graphics_window(), WM_KEYUP,
                    (WPARAM)virtual_key, KEY_UP_PASSTHROUGH_LPARAM);
     }
@@ -116,11 +116,62 @@ void InputManager::RestoreCursorState() {
          cursor_state_.cursor_pos.y, cursor_state_.cursor_handle);
 }
 
+void InputManager::HandleInput(UINT message, uint32_t param) {
+  std::shared_ptr<graphics::Window> focused_window =
+      Core::Get()
+          ->get_graphics_manager()
+          ->get_window_manager()
+          ->GetFocusedWindow();
+
+  EventResponse event;
+  EventResponse::WindowEvent *window_event = nullptr;
+  EventResponse::WindowEvent::KeyboardInputEvent *input_event = nullptr;
+
+  if (focused_window) {
+    window_event = new EventResponse::WindowEvent();
+    input_event = new EventResponse::WindowEvent::KeyboardInputEvent();
+
+    window_event->set_windowgroupid((const char *)&focused_window->group_id,
+                                    sizeof(focused_window->group_id));
+    window_event->set_windowid((const char *)&focused_window->id,
+                               sizeof(focused_window->id));
+
+    input_event->set_code(param);
+
+    switch (message) {
+      case WM_KEYDOWN:
+      case WM_SYSKEYDOWN:
+        input_event->set_type(
+            EventResponse::WindowEvent::KeyboardInputEvent::KEY_DOWN);
+        break;
+
+      case WM_CHAR:
+      case WM_SYSCHAR:
+        input_event->set_type(
+            EventResponse::WindowEvent::KeyboardInputEvent::CHAR);
+        break;
+
+      case WM_KEYUP:
+      case WM_SYSKEYUP:
+        input_event->set_type(
+            EventResponse::WindowEvent::KeyboardInputEvent::KEY_UP);
+        break;
+
+      default:
+        break;
+    }
+
+    window_event->set_allocated_keyboardinput(input_event);
+    event.set_allocated_windowevent(window_event);
+    Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(event);
+  }
+}
+
 bool InputManager::HookWindow(HWND window) {
   DWORD thread = GetWindowThreadProcessId(window, NULL);
 
   window_msg_hook_ =
-      SetWindowsHookExA(WH_GETMESSAGE, WindowGetMsgHook, NULL, thread);
+      SetWindowsHookExW(WH_GETMESSAGE, WindowGetMsgHook, NULL, thread);
 
   return window_msg_hook_ != NULL;
 }
@@ -142,9 +193,22 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
           message->lParam = (LPARAM)(
               (1 << 31) + (1 << 30) +
               (VirtualKeyToScanCode((uint8_t)message->wParam) << 16) + 1);
-        }
-        // Block application input
-        else if (block_app_input_) {
+        } else if (block_app_input_) {
+          // Translate virtual key to char
+          if (message->message == WM_KEYDOWN ||
+              message->message == WM_SYSKEYDOWN) {
+            TranslateMessage(message);
+          }
+
+          // Handle input
+          if (message->message == WM_KEYDOWN ||
+              message->message == WM_SYSKEYDOWN ||
+              message->message == WM_CHAR || message->message == WM_SYSCHAR ||
+              message->message == WM_KEYUP || message->message == WM_SYSKEYUP) {
+            HandleInput(message->message, (uint32_t)message->wParam);
+          }
+
+          // Block application input
           message->message = WM_NULL;
         }
       }

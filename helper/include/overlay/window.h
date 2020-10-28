@@ -2,7 +2,9 @@
 #define OVERLAY_WINDOW_H
 #include <overlay/color.h>
 #include <overlay/export.h>
+#include <overlay/window_events.h>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,7 +25,6 @@ struct WindowGroupAttributes {
 struct WindowAttributes {
   size_t height, width;
   size_t x, y;
-  int32_t z;
   double opacity;
   bool hidden;
 };
@@ -45,6 +46,11 @@ class HELPER_EXPORT Window {
   inline void UpdateBitmapBuffer(std::vector<T>& buffer) {
     return UpdateBitmapBuffer(buffer.data(), buffer.size() * sizeof(T));
   }
+
+  virtual void SubscribeToEvent(
+      WindowEventType event_type,
+      std::function<void(std::shared_ptr<WindowEvent>)> callback) = 0;
+  virtual void UnsubscribeEvent(WindowEventType event_type) = 0;
 };
 
 class HELPER_EXPORT WindowGroup {

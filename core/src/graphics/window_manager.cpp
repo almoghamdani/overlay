@@ -4,11 +4,13 @@
 #include <loguru.hpp>
 
 #include "core.h"
-#include "utils/token.h"
+#include "utils/guid.h"
 
 namespace overlay {
 namespace core {
 namespace graphics {
+
+WindowManager::WindowManager() : focused_window_group_(nullptr) {}
 
 GUID WindowManager::CreateWindowGroup(std::string client_id,
                                       WindowGroupAttributes attributes) {
@@ -17,8 +19,10 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
 
   std::unique_lock window_groups_lk(window_groups_mutex_, std::defer_lock);
 
+  window_group->id = id;
   window_group->client_id = client_id;
   window_group->attributes = attributes;
+  window_group->focused_window = nullptr;
 
   if (attributes.has_buffer) {
     window_group->buffer_window =
@@ -27,12 +31,21 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
 
   window_groups_lk.lock();
   window_groups_[id] = window_group;
+
+  if (focused_window_group_ == nullptr && !attributes.hidden) {
+    focused_window_group_ = window_group;
+  }
+
   window_groups_lk.unlock();
 
   UpdateBlockAppInput();
 
+  if (attributes.has_buffer) {
+    UpdateSprites();
+  }
+
   DLOG_F(INFO, "Created new window group (ID: '%s') for client '%s'.",
-         utils::token::TokenToString(&id).c_str(), client_id.c_str());
+         utils::Guid::GuidToString(&id).c_str(), client_id.c_str());
 
   return id;
 }
@@ -51,6 +64,12 @@ bool WindowManager::UpdateWindowGroupAttributes(
   try {
     std::lock_guard window_groups_lk(window_groups_mutex_);
     window_group = window_groups_.at(id);
+
+    if (focused_window_group_ == window_group && attributes.hidden) {
+      focused_window_group_ = nullptr;
+    } else if (focused_window_group_ == nullptr && !attributes.hidden) {
+      focused_window_group_ = window_group;
+    }
   } catch (...) {
     return false;
   }
@@ -151,6 +170,8 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id,
     window_group = window_groups_[group_id];
   }
 
+  window->id = id;
+  window->group_id = group_id;
   window->attributes = attributes;
   window->sprite = std::make_shared<Sprite>();
   window->sprite->rect = window->attributes.rect;
@@ -161,12 +182,16 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id,
   {
     std::lock_guard window_group_lk(window_group->mutex);
     window_group->windows[id] = window;
+
+    if (window_group->focused_window == nullptr && !attributes.hidden) {
+      window_group->focused_window = window;
+    }
   }
 
-  DLOG_F(
-      INFO, "Created new window (ID: '%s', Size: %dx%d) for window group '%s'.",
-      utils::token::TokenToString(&id).c_str(), attributes.rect.width,
-      attributes.rect.height, utils::token::TokenToString(&group_id).c_str());
+  DLOG_F(INFO,
+         "Created new window (ID: '%s', Size: %dx%d) for window group '%s'.",
+         utils::Guid::GuidToString(&id).c_str(), attributes.rect.width,
+         attributes.rect.height, utils::Guid::GuidToString(&group_id).c_str());
 
   // Update the sprites
   UpdateSprites();
@@ -197,6 +222,12 @@ bool WindowManager::UpdateWindowAttributes(GUID group_id, GUID window_id,
   try {
     std::lock_guard window_group_lk(window_group->mutex);
     window = window_group->windows.at(window_id);
+
+    if (window_group->focused_window == window && attributes.hidden) {
+      window_group->focused_window = nullptr;
+    } else if (window_group->focused_window == nullptr && !attributes.hidden) {
+      window_group->focused_window = window;
+    }
   } catch (...) {
     // Window wasn't found
     return false;
@@ -211,8 +242,7 @@ bool WindowManager::UpdateWindowAttributes(GUID group_id, GUID window_id,
   }
 
   // Check if sprites needs to be updated
-  if (window->attributes.z != attributes.z ||
-      window->attributes.hidden != attributes.hidden) {
+  if (window->attributes.hidden != attributes.hidden) {
     update_sprites = true;
   }
 
@@ -306,6 +336,17 @@ void WindowManager::OnResize() {
   }
 }
 
+std::shared_ptr<Window> WindowManager::GetFocusedWindow() {
+  std::lock_guard window_groups_lk(window_groups_mutex_);
+
+  if (focused_window_group_ != nullptr) {
+    std::lock_guard window_group_lk(focused_window_group_->mutex);
+    return focused_window_group_->focused_window;
+  }
+
+  return nullptr;
+}
+
 void WindowManager::UpdateSprites() {
   std::vector<std::shared_ptr<Sprite>> sprites;
 
@@ -366,7 +407,7 @@ void WindowManager::UpdateSprites() {
                 std::unique_lock win2_lk(win2->mutex, std::defer_lock);
                 std::lock(win1_lk, win2_lk);
 
-                return win1->attributes.z < win2->attributes.z;
+                return win1->focused < win2->focused;
               });
   }
 

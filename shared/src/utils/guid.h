@@ -2,6 +2,7 @@
 #include <guiddef.h>
 #include <rpc.h>
 
+#include <string>
 #include <utility>
 
 // Simple hash for GUID
@@ -23,6 +24,7 @@ namespace utils {
 class Guid {
  public:
   static GUID GenerateGuid();
+  static std::string GuidToString(GUID *guid);
 };
 
 }  // namespace utils

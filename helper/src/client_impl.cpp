@@ -5,7 +5,6 @@
 
 #include "auth.grpc.pb.h"
 #include "utils/token.h"
-#include "window_group_impl.h"
 
 namespace overlay {
 namespace helper {
@@ -38,20 +37,30 @@ void ClientImpl::Connect() {
   // Create event manager and start it
   event_manager_ = std::make_unique<EventManager>(channel_);
   event_manager_->StartHandlingAsyncRpcs();
+
+  // Set handler for window event
+  event_manager_->SubscribeToEvent(
+      EventResponse::EventCase::kWindowEvent,
+      [this](EventResponse &res) { HandleWindowEvent(res); });
 }
 
 void ClientImpl::SubscribeToEvent(
     EventType event_type,
     std::function<void(std::shared_ptr<Event>)> callback) {
+  EventResponse::EventCase type = ConvertEventType(event_type);
+
+  if (type == EventResponse::EventCase::EVENT_NOT_SET) {
+    return;
+  }
+
   if (channel_ == nullptr) {
     throw Error(ErrorCode::NotConnected);
   }
 
-  event_manager_->SubscribeToEvent(
-      static_cast<EventResponse::EventCase>(event_type),
-      [this, callback](EventResponse &response) {
-        callback(GenerateEvent(response));
-      });
+  event_manager_->SubscribeToEvent(type,
+                                   [this, callback](EventResponse &response) {
+                                     callback(GenerateEvent(response));
+                                   });
 }
 
 void ClientImpl::UnsubscribeEvent(EventType event_type) {
@@ -61,6 +70,8 @@ void ClientImpl::UnsubscribeEvent(EventType event_type) {
 
 std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(
     const WindowGroupAttributes attributes) {
+  std::shared_ptr<WindowGroupImpl> window_group = nullptr;
+
   GUID window_group_id;
 
   grpc::ClientContext context;
@@ -99,9 +110,15 @@ std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(
   // Copy the window id
   std::memcpy(&window_group_id, response.id().data(), sizeof(window_group_id));
 
-  return std::static_pointer_cast<WindowGroup>(
-      std::make_shared<WindowGroupImpl>(weak_from_this(), window_group_id,
-                                        attributes));
+  window_group = std::make_shared<WindowGroupImpl>(weak_from_this(),
+                                                   window_group_id, attributes);
+
+  {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_groups_[window_group_id] = window_group;
+  }
+
+  return std::static_pointer_cast<WindowGroup>(window_group);
 }
 
 AuthenticateResponse ClientImpl::GetAuthInfo() const {
@@ -167,20 +184,68 @@ std::string ClientImpl::FormatServerUrl(uint16_t port) const {
   return ss.str();
 }
 
+EventResponse::EventCase ClientImpl::ConvertEventType(EventType type) const {
+  switch (type) {
+    case EventType::ApplicationStats:
+      return EventResponse::EventCase::kApplicationStatsEvent;
+
+    default:
+      return EventResponse::EventCase::EVENT_NOT_SET;
+  }
+}
+
 std::shared_ptr<Event> ClientImpl::GenerateEvent(
     EventResponse &response) const {
   switch (response.event_case()) {
-    case EventResponse::EventCase::kApplicationStats:
-      return std::shared_ptr<Event>(
-          new ApplicationStatsEvent(response.applicationstats().width(),
-                                    response.applicationstats().height(),
-                                    response.applicationstats().fullscreen(),
-                                    response.applicationstats().frametime(),
-                                    response.applicationstats().fps()));
+    case EventResponse::EventCase::kApplicationStatsEvent:
+      return std::shared_ptr<Event>(new ApplicationStatsEvent(
+          response.applicationstatsevent().width(),
+          response.applicationstatsevent().height(),
+          response.applicationstatsevent().fullscreen(),
+          response.applicationstatsevent().frametime(),
+          response.applicationstatsevent().fps()));
 
     default:
-      return std::shared_ptr<Event>(nullptr);
+      return nullptr;
   }
+}
+
+void ClientImpl::HandleWindowEvent(EventResponse &response) {
+  const EventResponse::WindowEvent &window_event = response.windowevent();
+
+  GUID window_group_id, window_id;
+
+  std::shared_ptr<WindowGroupImpl> window_group = nullptr;
+  std::shared_ptr<WindowImpl> window = nullptr;
+
+  // Verify GUID sizes
+  if (window_event.windowgroupid().size() != sizeof(window_group_id) ||
+      window_event.windowid().size() != sizeof(window_id)) {
+    return;
+  }
+
+  // Copy window group id and window id
+  memcpy(&window_group_id, window_event.windowgroupid().data(),
+         sizeof(window_group_id));
+  memcpy(&window_id, window_event.windowid().data(), sizeof(window_id));
+
+  try {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+
+    window_group = window_groups_.at(window_group_id).lock();
+    if (!window_group) {
+      window_groups_.erase(window_group_id);
+    }
+  } catch (...) {
+    return;
+  }
+
+  // Try get the window object
+  if (!(window = window_group->GetWindowWithId(window_id))) {
+    return;
+  }
+
+  window->HandleWindowEvent(window_event);
 }
 
 std::unique_ptr<Windows::Stub> &ClientImpl::get_windows_stub() {

@@ -57,7 +57,7 @@ void GraphicsManager::BroadcastApplicationStats(double frame_time, double fps) {
   stats_event->set_frametime(frame_time);
   stats_event->set_fps(fps);
 
-  event.set_allocated_applicationstats(stats_event);
+  event.set_allocated_applicationstatsevent(stats_event);
 
   Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(event);
 }

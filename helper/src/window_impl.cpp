@@ -5,6 +5,7 @@
 
 #include <cstdint>
 
+#include "client_impl.h"
 #include "window_group_impl.h"
 #include "windows.grpc.pb.h"
 
@@ -47,7 +48,6 @@ void WindowImpl::SetAttributes(const WindowAttributes attributes) {
   properties->set_height(attributes.height);
   properties->set_x(attributes.x);
   properties->set_y(attributes.y);
-  properties->set_z(attributes.z);
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
   request.set_allocated_properties(properties);
@@ -98,6 +98,64 @@ void WindowImpl::UpdateBitmapBuffer(const void* buffer, size_t buffer_size) {
            ->BufferForWindow(&context, request, &response)
            .ok()) {
     throw Error(ErrorCode::UnknownError);
+  }
+}
+
+void WindowImpl::SubscribeToEvent(
+    WindowEventType event_type,
+    std::function<void(std::shared_ptr<WindowEvent>)> callback) {
+  std::lock_guard event_handlers_lk(event_handlers_mutex_);
+  event_handlers_[event_type] = callback;
+}
+
+void WindowImpl::UnsubscribeEvent(WindowEventType event_type) {
+  std::lock_guard event_handlers_lk(event_handlers_mutex_);
+
+  try {
+    event_handlers_.erase(event_type);
+  } catch (...) {
+  }
+}
+
+void WindowImpl::HandleWindowEvent(const EventResponse::WindowEvent& event) {
+  std::shared_ptr<WindowEvent> window_event = GenerateEvent(event);
+
+  std::function<void(std::shared_ptr<WindowEvent>)> handler = nullptr;
+
+  if (window_event) {
+    std::lock_guard event_handlers_lk(event_handlers_mutex_);
+
+    try {
+      handler = event_handlers_.at(window_event->type);
+    } catch (...) {
+      return;
+    }
+  }
+
+  if (handler) {
+    handler(window_event);
+  }
+}
+
+std::shared_ptr<WindowEvent> WindowImpl::GenerateEvent(
+    const EventResponse::WindowEvent& event) const {
+  switch (event.event_case()) {
+    case EventResponse::WindowEvent::EventCase::kKeyboardInput:
+      return std::shared_ptr<WindowEvent>(
+          event.keyboardinput().type() ==
+                  EventResponse::WindowEvent::KeyboardInputEvent::CHAR
+              ? new WindowKeyboardInputEvent(
+                    (WindowKeyboardInputEvent::InputType)event.keyboardinput()
+                        .type(),
+                    (wchar_t)event.keyboardinput().code())
+              : new WindowKeyboardInputEvent(
+                    (WindowKeyboardInputEvent::InputType)event.keyboardinput()
+                        .type(),
+                    (WindowKeyboardInputEvent::KeyCode)event.keyboardinput()
+                        .code()));
+
+    default:
+      return nullptr;
   }
 }
 

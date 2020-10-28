@@ -10,7 +10,6 @@ namespace utils {
 namespace token {
 
 std::string GeneratePipeName(DWORD pid);
-std::string TokenToString(GUID *token);
 
 }  // namespace token
 }  // namespace utils

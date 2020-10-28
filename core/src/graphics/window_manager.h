@@ -18,6 +18,8 @@ namespace graphics {
 
 class WindowManager {
  public:
+  WindowManager();
+
   GUID CreateWindowGroup(std::string client_id,
                          WindowGroupAttributes attributes);
   bool UpdateWindowGroupAttributes(GUID id, WindowGroupAttributes attributes);
@@ -34,8 +36,11 @@ class WindowManager {
   void RenderWindows(std::unique_ptr<IGraphicsRenderer>& renderer);
   void OnResize();
 
+  std::shared_ptr<Window> GetFocusedWindow();
+
  private:
   std::unordered_map<GUID, std::shared_ptr<WindowGroup>> window_groups_;
+  std::shared_ptr<WindowGroup> focused_window_group_;
   std::mutex window_groups_mutex_;
 
   std::vector<std::shared_ptr<Sprite>> sprites_;

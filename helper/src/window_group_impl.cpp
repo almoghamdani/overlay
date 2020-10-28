@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-#include "window_impl.h"
+#include "client_impl.h"
 #include "windows.grpc.pb.h"
 
 namespace overlay {
@@ -63,6 +63,8 @@ const WindowGroupAttributes WindowGroupImpl::GetAttributes() const {
 
 std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
     const WindowAttributes attributes) {
+  std::shared_ptr<WindowImpl> window = nullptr;
+
   GUID window_id;
 
   grpc::ClientContext context;
@@ -89,7 +91,6 @@ std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
   properties->set_height(attributes.height);
   properties->set_x(attributes.x);
   properties->set_y(attributes.y);
-  properties->set_z(attributes.z);
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
   request.set_allocated_properties(properties);
@@ -104,8 +105,31 @@ std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
   // Copy the window id
   std::memcpy(&window_id, response.id().data(), sizeof(window_id));
 
-  return std::static_pointer_cast<Window>(std::make_shared<WindowImpl>(
-      client_, shared_from_this(), window_id, id_, attributes));
+  window = std::make_shared<WindowImpl>(client_, shared_from_this(), window_id,
+                                        id_, attributes);
+
+  {
+    std::lock_guard windows_lk(windows_mutex_);
+    windows_[window_id] = window;
+  }
+
+  return std::static_pointer_cast<Window>(window);
+}
+
+std::shared_ptr<WindowImpl> WindowGroupImpl::GetWindowWithId(GUID id) {
+  std::shared_ptr<WindowImpl> window = nullptr;
+
+  std::lock_guard windows_lk(windows_mutex_);
+
+  try {
+    window = windows_.at(id).lock();
+    if (!window) {
+      windows_.erase(id);
+    }
+  } catch (...) {
+  }
+
+  return window;
 }
 
 }  // namespace helper

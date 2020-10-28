@@ -24,9 +24,8 @@ message WindowProperties {
 	uint64 height = 2;
 	uint64 x = 3;
 	uint64 y = 4;
-	sint32 z = 5;
-	double opacity = 6;
-	bool hidden = 7;
+	double opacity = 5;
+	bool hidden = 6;
 }
 
 message CreateWindowGroupRequest {

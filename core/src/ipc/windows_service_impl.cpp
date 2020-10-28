@@ -111,7 +111,6 @@ grpc::Status WindowsServiceImpl::CreateWindowInGroup(
   attributes.rect.height = (size_t)request->properties().height();
   attributes.rect.x = (size_t)request->properties().x();
   attributes.rect.y = (size_t)request->properties().y();
-  attributes.z = (int32_t)request->properties().z();
   attributes.opacity = request->properties().opacity();
   attributes.hidden = request->properties().hidden();
 
@@ -158,7 +157,6 @@ grpc::Status WindowsServiceImpl::UpdateWindowProperties(
   attributes.rect.height = (size_t)request->properties().height();
   attributes.rect.x = (size_t)request->properties().x();
   attributes.rect.y = (size_t)request->properties().y();
-  attributes.z = (int32_t)request->properties().z();
   attributes.opacity = request->properties().opacity();
   attributes.hidden = request->properties().hidden();
 

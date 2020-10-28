@@ -1,4 +1,6 @@
 #pragma once
+#include <guiddef.h>
+
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -12,13 +14,15 @@ namespace graphics {
 
 struct WindowAttributes {
   Rect rect;
-  int32_t z;
   double opacity;
   bool hidden;
 };
 
 struct Window {
+  GUID id, group_id;
+
   WindowAttributes attributes;
+  bool focused;
 
   std::shared_ptr<Sprite> sprite;
 

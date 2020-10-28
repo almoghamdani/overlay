@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "authenticate_response.h"
+#include "utils/guid.h"
 #include "utils/token.h"
 
 namespace overlay {
@@ -108,7 +109,7 @@ GUID TokenServer::GenerateTokenForProcess(DWORD pid) {
   tokens_[token] = pid;
 
   DLOG_F(INFO, "Generated token '%s' for process %d.",
-         utils::token::TokenToString(&token).c_str(), pid);
+         utils::Guid::GuidToString(&token).c_str(), pid);
 
   return token;
 }

@@ -3,7 +3,7 @@
 namespace overlay {
 namespace helper {
 
-enum class EventType { ApplicationStats = 1 };
+enum class EventType { ApplicationStats };
 
 struct Event {
   Event(EventType type) : type(type) {}
