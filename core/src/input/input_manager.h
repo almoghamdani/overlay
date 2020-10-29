@@ -47,6 +47,7 @@ class InputManager {
   void RestoreCursorState();
 
   void HandleKeyboardInput(UINT message, uint32_t param);
+  void HandleMouseInput(UINT message, POINT point, WPARAM word_param);
 
   LRESULT WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
                         _In_ LPARAM long_param);

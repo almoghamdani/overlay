@@ -28,11 +28,36 @@ message EventResponse {
 			uint32 code = 2;
 		}
 
+		message MouseInputEvent {
+			enum MouseInputType {
+				MOUSE_BUTTON_DOWN = 0;
+				MOUSE_BUTTON_UP = 1;
+				MOUSE_MOVE = 2;
+				MOUSE_VERTICAL_WHEEL = 3;
+				MOUSE_HORIZONTAL_WHEEL = 4;
+			}
+
+			enum MouseButton {
+				LEFT_BUTTON = 0;
+				MIDDLE_BUTTON = 1;
+				RIGHT_BUTTON = 2;
+				X_BUTTON_1 = 3;
+				X_BUTTON_2 = 4;
+			}
+
+			MouseInputType type = 1;
+			uint64 x = 2;
+			uint64 y = 3;
+			MouseButton button = 4;
+			uint64 wheelDelta = 5;
+		}
+
 		bytes windowGroupId = 1;
 		bytes windowId = 2;
 
 		oneof event {
-			KeyboardInputEvent keyboardInput = 3;
+			KeyboardInputEvent keyboardInputEvent = 3;
+			MouseInputEvent mouseInputEvent = 4;
 		}
 	}
 

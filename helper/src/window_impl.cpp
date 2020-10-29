@@ -174,24 +174,66 @@ void WindowImpl::HandleWindowEvent(const EventResponse::WindowEvent& event) {
 
 std::shared_ptr<WindowEvent> WindowImpl::GenerateEvent(
     const EventResponse::WindowEvent& event) const {
+  WindowEvent* window_event = nullptr;
+
   switch (event.event_case()) {
-    case EventResponse::WindowEvent::EventCase::kKeyboardInput:
-      return std::shared_ptr<WindowEvent>(
-          event.keyboardinput().type() ==
+    case EventResponse::WindowEvent::EventCase::kKeyboardInputEvent:
+      window_event =
+          event.keyboardinputevent().type() ==
                   EventResponse::WindowEvent::KeyboardInputEvent::CHAR
               ? new WindowKeyboardInputEvent(
-                    (WindowKeyboardInputEvent::InputType)event.keyboardinput()
+                    (WindowKeyboardInputEvent::InputType)event
+                        .keyboardinputevent()
                         .type(),
-                    (wchar_t)event.keyboardinput().code())
+                    (wchar_t)event.keyboardinputevent().code())
               : new WindowKeyboardInputEvent(
-                    (WindowKeyboardInputEvent::InputType)event.keyboardinput()
+                    (WindowKeyboardInputEvent::InputType)event
+                        .keyboardinputevent()
                         .type(),
-                    (WindowKeyboardInputEvent::KeyCode)event.keyboardinput()
-                        .code()));
+                    (WindowKeyboardInputEvent::KeyCode)event
+                        .keyboardinputevent()
+                        .code());
+      break;
+
+    case EventResponse::WindowEvent::EventCase::kMouseInputEvent:
+      switch (event.mouseinputevent().type()) {
+        case EventResponse::WindowEvent::MouseInputEvent::MOUSE_MOVE:
+          window_event = new WindowMouseInputEvent(
+              (WindowMouseInputEvent::InputType)event.mouseinputevent().type(),
+              (size_t)event.mouseinputevent().x(),
+              (size_t)event.mouseinputevent().y());
+          break;
+
+        case EventResponse::WindowEvent::MouseInputEvent::MOUSE_VERTICAL_WHEEL:
+        case EventResponse::WindowEvent::MouseInputEvent::
+            MOUSE_HORIZONTAL_WHEEL:
+          window_event = new WindowMouseInputEvent(
+              (WindowMouseInputEvent::InputType)event.mouseinputevent().type(),
+              (size_t)event.mouseinputevent().x(),
+              (size_t)event.mouseinputevent().y(),
+              (size_t)event.mouseinputevent().wheeldelta());
+          break;
+
+        case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN:
+        case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP:
+          window_event = new WindowMouseInputEvent(
+              (WindowMouseInputEvent::InputType)event.mouseinputevent().type(),
+              (size_t)event.mouseinputevent().x(),
+              (size_t)event.mouseinputevent().y(),
+              (WindowMouseInputEvent::Button)event.mouseinputevent().button());
+          break;
+
+        default:
+          break;
+      }
+
+      break;
 
     default:
-      return nullptr;
+      break;
   }
+
+  return std::shared_ptr<WindowEvent>(window_event);
 }
 
 }  // namespace helper

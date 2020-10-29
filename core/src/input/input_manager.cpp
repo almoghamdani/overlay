@@ -135,7 +135,8 @@ void InputManager::HandleKeyboardInput(UINT message, uint32_t param) {
 
   EventResponse event;
   EventResponse::WindowEvent *window_event = event.mutable_windowevent();
-  EventResponse::WindowEvent::KeyboardInputEvent *input_event = window_event->mutable_keyboardinput();
+  EventResponse::WindowEvent::KeyboardInputEvent *input_event =
+      window_event->mutable_keyboardinputevent();
 
   if (focused_window) {
     window_event->set_windowgroupid((const char *)&focused_window->group_id,
@@ -165,7 +166,109 @@ void InputManager::HandleKeyboardInput(UINT message, uint32_t param) {
         break;
 
       default:
+        return;
+    }
+
+    Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(event);
+  }
+}
+
+void InputManager::HandleMouseInput(UINT message, POINT point,
+                                    WPARAM word_param) {
+  std::shared_ptr<graphics::Window> focused_window =
+      Core::Get()
+          ->get_graphics_manager()
+          ->get_window_manager()
+          ->GetFocusedWindow();
+
+  graphics::Rect focused_window_rect;
+
+  EventResponse event;
+  EventResponse::WindowEvent *window_event = event.mutable_windowevent();
+  EventResponse::WindowEvent::MouseInputEvent *input_event =
+      window_event->mutable_mouseinputevent();
+
+  if (focused_window) {
+    {
+      std::lock_guard window_lk(focused_window->mutex);
+      focused_window_rect = focused_window->rect;
+    }
+
+    // Check the point is inside the window
+    if (!utils::Rect::PointInRect(point, focused_window->rect)) {
+      return;
+    }
+
+    window_event->set_windowgroupid((const char *)&focused_window->group_id,
+                                    sizeof(focused_window->group_id));
+    window_event->set_windowid((const char *)&focused_window->id,
+                               sizeof(focused_window->id));
+
+    input_event->set_x(point.x - focused_window->rect.x);
+    input_event->set_y(point.y - focused_window->rect.y);
+
+    switch (message) {
+      case WM_LBUTTONDOWN:
+      case WM_LBUTTONUP:
+        input_event->set_type(
+            message == WM_LBUTTONDOWN
+                ? EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN
+                : EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP);
+        input_event->set_button(
+            EventResponse::WindowEvent::MouseInputEvent::LEFT_BUTTON);
         break;
+
+      case WM_MBUTTONDOWN:
+      case WM_MBUTTONUP:
+        input_event->set_type(
+            message == WM_MBUTTONDOWN
+                ? EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN
+                : EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP);
+        input_event->set_button(
+            EventResponse::WindowEvent::MouseInputEvent::MIDDLE_BUTTON);
+        break;
+
+      case WM_RBUTTONDOWN:
+      case WM_RBUTTONUP:
+        input_event->set_type(
+            message == WM_RBUTTONDOWN
+                ? EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN
+                : EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP);
+        input_event->set_button(
+            EventResponse::WindowEvent::MouseInputEvent::RIGHT_BUTTON);
+        break;
+
+      case WM_XBUTTONDOWN:
+      case WM_XBUTTONUP:
+        input_event->set_type(
+            message == WM_XBUTTONDOWN
+                ? EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN
+                : EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP);
+        input_event->set_button(
+            GET_XBUTTON_WPARAM(word_param) == XBUTTON1
+                ? EventResponse::WindowEvent::MouseInputEvent::X_BUTTON_1
+                : EventResponse::WindowEvent::MouseInputEvent::X_BUTTON_2);
+        break;
+
+      case WM_MOUSEMOVE:
+        input_event->set_type(
+            EventResponse::WindowEvent::MouseInputEvent::MOUSE_MOVE);
+        break;
+
+      case WM_MOUSEWHEEL:
+        input_event->set_type(
+            EventResponse::WindowEvent::MouseInputEvent::MOUSE_VERTICAL_WHEEL);
+        input_event->set_wheeldelta(GET_WHEEL_DELTA_WPARAM(word_param));
+        break;
+
+      case WM_MOUSEHWHEEL:
+        input_event->set_type(EventResponse::WindowEvent::MouseInputEvent::
+                                  MOUSE_HORIZONTAL_WHEEL);
+        input_event->set_wheeldelta(GET_WHEEL_DELTA_WPARAM(word_param));
+        break;
+
+      default:
+        return;
     }
 
     Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(event);
@@ -209,12 +312,7 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
           }
 
           // Handle input
-          if (message->message == WM_KEYDOWN ||
-              message->message == WM_SYSKEYDOWN ||
-              message->message == WM_CHAR || message->message == WM_SYSCHAR ||
-              message->message == WM_KEYUP || message->message == WM_SYSKEYUP) {
-            HandleKeyboardInput(message->message, (uint32_t)message->wParam);
-          }
+          HandleKeyboardInput(message->message, (uint32_t)message->wParam);
 
           // Block application input
           message->message = WM_NULL;
@@ -223,10 +321,22 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
 
       if (message->message >= WM_MOUSEFIRST &&
           message->message <= WM_MOUSELAST) {
-        POINTS point = MAKEPOINTS(message->lParam);
+        POINTS point_short = MAKEPOINTS(message->lParam);
+        POINT point = {point_short.x, point_short.y};
+
+        // Convert screen relative point to client area relative point when
+        // needed
+        if (message->message == WM_MOUSEWHEEL ||
+            message->message == WM_MOUSEHWHEEL) {
+          ScreenToClient(message->hwnd, &point);
+        }
 
         if (block_app_input_ && !resizing_moving_ &&
             utils::Rect::PointInRect(point, window_client_area_)) {
+          // Handle input
+          HandleMouseInput(message->message, point, message->wParam);
+
+          // Block application input
           message->message = WM_NULL;
         }
       }

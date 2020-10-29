@@ -1,12 +1,14 @@
 #ifndef OVERLAY_WINDOW_EVENTS_H
 #define OVERLAY_WINDOW_EVENTS_H
+#include <stddef.h>
+
 #include <cstdint>
 #include <cwchar>
 
 namespace overlay {
 namespace helper {
 
-enum class WindowEventType { KeyboardInput };
+enum class WindowEventType { KeyboardInput, MouseInput };
 
 struct WindowEvent {
   WindowEvent(WindowEventType type) : type(type) {}
@@ -156,6 +158,49 @@ struct WindowKeyboardInputEvent : public WindowEvent {
   union {
     KeyCode key_code;
     wchar_t character;
+  };
+};
+
+struct WindowMouseInputEvent : public WindowEvent {
+  enum InputType {
+    MouseButtonDown = 0,
+    MouseButtonUp = 1,
+    MouseMove = 2,
+    MouseVerticalWheel = 3,
+    MouseHorizontalWheel = 4
+  };
+
+  enum Button {
+    LeftButton = 1,
+    MiddleButton = 2,
+    RightButton = 3,
+    XButton1 = 4,
+    XButton2 = 5
+  };
+
+  WindowMouseInputEvent(InputType type, size_t x, size_t y)
+      : WindowEvent(WindowEventType::MouseInput), type(type), x(x), y(y) {}
+
+  WindowMouseInputEvent(InputType type, size_t x, size_t y, Button button)
+      : WindowEvent(WindowEventType::MouseInput),
+        type(type),
+        x(x),
+        y(y),
+        button(button) {}
+
+  WindowMouseInputEvent(InputType type, size_t x, size_t y, size_t wheel_delta)
+      : WindowEvent(WindowEventType::MouseInput),
+        type(type),
+        x(x),
+        y(y),
+        wheel_delta(wheel_delta) {}
+
+  InputType type;
+  size_t x;
+  size_t y;
+  union {
+    Button button;
+    size_t wheel_delta;
   };
 };
 

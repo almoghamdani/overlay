@@ -1,5 +1,7 @@
 #ifndef OVERLAY_EVENTS_H
 #define OVERLAY_EVENTS_H
+#include <stddef.h>
+
 namespace overlay {
 namespace helper {
 
