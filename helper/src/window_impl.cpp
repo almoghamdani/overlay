@@ -17,11 +17,13 @@ Window::~Window() {}
 
 WindowImpl::WindowImpl(std::weak_ptr<ClientImpl> client,
                        std::shared_ptr<WindowGroupImpl> window_group, GUID id,
-                       GUID group_id, const WindowAttributes attributes)
+                       GUID group_id, const Rect rect,
+                       const WindowAttributes attributes)
     : client_(client),
       window_group_(window_group),
       id_(id),
       group_id_(group_id),
+      rect_(rect),
       attributes_(attributes) {}
 
 void WindowImpl::SetAttributes(const WindowAttributes attributes) {
@@ -45,10 +47,6 @@ void WindowImpl::SetAttributes(const WindowAttributes attributes) {
   properties = new WindowProperties();  // This should be deallocated by the
                                         // request itself since we're using
                                         // `set_allocated_properties`
-  properties->set_width(attributes.width);
-  properties->set_height(attributes.height);
-  properties->set_x(attributes.x);
-  properties->set_y(attributes.y);
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
   request.set_allocated_properties(properties);
@@ -65,6 +63,41 @@ void WindowImpl::SetAttributes(const WindowAttributes attributes) {
 }
 
 const WindowAttributes WindowImpl::GetAttributes() const { return attributes_; }
+
+void WindowImpl::SetRect(const Rect rect) {
+  grpc::ClientContext context;
+  SetWindowRectRequest request;
+  SetWindowRectResponse response;
+
+  WindowRect* window_rect = nullptr;
+
+  std::shared_ptr<ClientImpl> client = client_.lock();
+  if (!client) {
+    throw Error(ErrorCode::ClientObjectDeallocated);
+  }
+
+  // Try to set the rect
+  window_rect = new WindowRect();  // This should be deallocated by the
+                                   // request itself since we're using
+                                   // `set_allocated_rect`
+  window_rect->set_height(rect.height);
+  window_rect->set_width(rect.width);
+  window_rect->set_x(rect.x);
+  window_rect->set_y(rect.y);
+  request.set_allocated_rect(window_rect);
+  request.set_group_id((const char*)&group_id_, sizeof(group_id_));
+  request.set_window_id((const char*)&id_, sizeof(id_));
+  if (!client->get_windows_stub()
+           ->SetWindowRect(&context, request, &response)
+           .ok()) {
+    throw Error(ErrorCode::UnknownError);
+  }
+
+  // Set the new rect
+  rect_ = rect;
+}
+
+const Rect WindowImpl::GetRect() const { return rect_; }
 
 void WindowImpl::UpdateBitmapBuffer(const void* buffer, size_t buffer_size) {
   grpc::ClientContext context;
@@ -84,8 +117,7 @@ void WindowImpl::UpdateBitmapBuffer(const void* buffer, size_t buffer_size) {
   }
 
   // Verify buffer size
-  if (buffer_size !=
-      attributes_.width * attributes_.height * sizeof(uint32_t)) {
+  if (buffer_size != rect_.width * rect_.height * sizeof(uint32_t)) {
     throw Error(ErrorCode::InvalidBitmapBufferSize);
   }
 

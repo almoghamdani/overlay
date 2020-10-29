@@ -2,6 +2,7 @@
 #define OVERLAY_WINDOW_H
 #include <overlay/color.h>
 #include <overlay/export.h>
+#include <overlay/rect.h>
 #include <overlay/window_events.h>
 
 #include <functional>
@@ -23,8 +24,6 @@ struct WindowGroupAttributes {
 };
 
 struct WindowAttributes {
-  size_t height, width;
-  size_t x, y;
   double opacity;
   bool hidden;
 };
@@ -35,6 +34,9 @@ class HELPER_EXPORT Window {
 
   virtual void SetAttributes(const WindowAttributes attributes) = 0;
   virtual const WindowAttributes GetAttributes() const = 0;
+
+  virtual void SetRect(const Rect rect) = 0;
+  virtual const Rect GetRect() const = 0;
 
   virtual void UpdateBitmapBuffer(const void* buffer, size_t buffer_size) = 0;
 
@@ -61,7 +63,7 @@ class HELPER_EXPORT WindowGroup {
   virtual const WindowGroupAttributes GetAttributes() const = 0;
 
   virtual std::shared_ptr<Window> CreateNewWindow(
-      const WindowAttributes attributes) = 0;
+      const Rect rect, const WindowAttributes attributes) = 0;
 };
 
 }  // namespace helper

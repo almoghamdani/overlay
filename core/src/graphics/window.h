@@ -13,7 +13,6 @@ namespace core {
 namespace graphics {
 
 struct WindowAttributes {
-  Rect rect;
   double opacity;
   bool hidden;
 };
@@ -21,6 +20,7 @@ struct WindowAttributes {
 struct Window {
   GUID id, group_id;
 
+  Rect rect;
   WindowAttributes attributes;
   bool focused;
 

@@ -24,7 +24,7 @@ class WindowGroupImpl : public WindowGroup,
   virtual const WindowGroupAttributes GetAttributes() const;
 
   virtual std::shared_ptr<Window> CreateNewWindow(
-      const WindowAttributes attributes);
+      const Rect rect, const WindowAttributes attributes);
 
   std::shared_ptr<WindowImpl> GetWindowWithId(GUID id);
 

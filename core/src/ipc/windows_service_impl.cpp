@@ -90,6 +90,7 @@ grpc::Status WindowsServiceImpl::CreateWindowInGroup(
     CreateWindowResponse *response) {
   GUID window_group_id, window_id;
 
+  graphics::Rect rect;
   graphics::WindowAttributes attributes;
 
   // Verify the client created the window group
@@ -107,10 +108,10 @@ grpc::Status WindowsServiceImpl::CreateWindowInGroup(
     }
   }
 
-  attributes.rect.width = (size_t)request->properties().width();
-  attributes.rect.height = (size_t)request->properties().height();
-  attributes.rect.x = (size_t)request->properties().x();
-  attributes.rect.y = (size_t)request->properties().y();
+  rect.width = (size_t)request->rect().width();
+  rect.height = (size_t)request->rect().height();
+  rect.x = (size_t)request->rect().x();
+  rect.y = (size_t)request->rect().y();
   attributes.opacity = request->properties().opacity();
   attributes.hidden = request->properties().hidden();
 
@@ -123,7 +124,7 @@ grpc::Status WindowsServiceImpl::CreateWindowInGroup(
   window_id = Core::Get()
                   ->get_graphics_manager()
                   ->get_window_manager()
-                  ->CreateWindowInGroup(window_group_id, attributes);
+                  ->CreateWindowInGroup(window_group_id, rect, attributes);
 
   // Set the window id
   response->set_id((const char *)&window_id, sizeof(window_id));
@@ -153,10 +154,6 @@ grpc::Status WindowsServiceImpl::UpdateWindowProperties(
     }
   }
 
-  attributes.rect.width = (size_t)request->properties().width();
-  attributes.rect.height = (size_t)request->properties().height();
-  attributes.rect.x = (size_t)request->properties().x();
-  attributes.rect.y = (size_t)request->properties().y();
   attributes.opacity = request->properties().opacity();
   attributes.hidden = request->properties().hidden();
 

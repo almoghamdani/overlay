@@ -62,7 +62,7 @@ const WindowGroupAttributes WindowGroupImpl::GetAttributes() const {
 }
 
 std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
-    const WindowAttributes attributes) {
+    const Rect rect, const WindowAttributes attributes) {
   std::shared_ptr<WindowImpl> window = nullptr;
 
   GUID window_id;
@@ -71,6 +71,7 @@ std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
   CreateWindowRequest request;
   CreateWindowResponse response;
 
+  WindowRect* window_rect = nullptr;
   WindowProperties* properties = nullptr;
 
   std::shared_ptr<ClientImpl> client = client_.lock();
@@ -87,13 +88,17 @@ std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
   properties = new WindowProperties();  // This should be deallocated by the
                                         // request itself since we're using
                                         // `set_allocated_properties`
-  properties->set_width(attributes.width);
-  properties->set_height(attributes.height);
-  properties->set_x(attributes.x);
-  properties->set_y(attributes.y);
+  window_rect = new WindowRect();       // This should be deallocated by the
+                                        // request itself since we're using
+                                        // `set_allocated_rect`
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
+  window_rect->set_height(rect.height);
+  window_rect->set_width(rect.width);
+  window_rect->set_x(rect.x);
+  window_rect->set_y(rect.y);
   request.set_allocated_properties(properties);
+  request.set_allocated_rect(window_rect);
   request.set_group_id((const char*)&id_, sizeof(id_));
   if (!client->get_windows_stub()
            ->CreateWindowInGroup(&context, request, &response)
@@ -106,7 +111,7 @@ std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
   std::memcpy(&window_id, response.id().data(), sizeof(window_id));
 
   window = std::make_shared<WindowImpl>(client_, shared_from_this(), window_id,
-                                        id_, attributes);
+                                        id_, rect, attributes);
 
   {
     std::lock_guard windows_lk(windows_mutex_);

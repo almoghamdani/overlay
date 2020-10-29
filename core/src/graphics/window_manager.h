@@ -10,6 +10,7 @@
 #include "graphics_renderer.h"
 #include "sprite.h"
 #include "utils/guid.h"
+#include "window.h"
 #include "window_group.h"
 
 namespace overlay {
@@ -26,9 +27,11 @@ class WindowManager {
   std::string GetWindowGroupClientId(GUID id);
   void DestroyWindowGroup(GUID id);
 
-  GUID CreateWindowInGroup(GUID group_id, WindowAttributes attributes);
+  GUID CreateWindowInGroup(GUID group_id, Rect rect,
+                           WindowAttributes attributes);
   bool UpdateWindowAttributes(GUID group_id, GUID window_id,
                               WindowAttributes attributes);
+  bool SetWindowRect(GUID group_id, GUID window_id, Rect rect);
   void UpdateWindowBufferInGroup(GUID group_id, GUID window_id,
                                  std::string&& buffer);
   void DestroyWindowInGroup(GUID group_id, GUID window_id);

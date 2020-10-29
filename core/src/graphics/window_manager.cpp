@@ -155,7 +155,7 @@ void WindowManager::DestroyWindowGroup(GUID id) {
   UpdateSprites();
 }
 
-GUID WindowManager::CreateWindowInGroup(GUID group_id,
+GUID WindowManager::CreateWindowInGroup(GUID group_id, Rect rect,
                                         WindowAttributes attributes) {
   // * The window group must exist
 
@@ -172,9 +172,10 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id,
 
   window->id = id;
   window->group_id = group_id;
+  window->rect = rect;
   window->attributes = attributes;
   window->sprite = std::make_shared<Sprite>();
-  window->sprite->rect = window->attributes.rect;
+  window->sprite->rect = rect;
   window->sprite->opacity =
       window->attributes.opacity * window_group->attributes.opacity;
 
@@ -190,8 +191,8 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id,
 
   DLOG_F(INFO,
          "Created new window (ID: '%s', Size: %dx%d) for window group '%s'.",
-         utils::Guid::GuidToString(&id).c_str(), attributes.rect.width,
-         attributes.rect.height, utils::Guid::GuidToString(&group_id).c_str());
+         utils::Guid::GuidToString(&id).c_str(), rect.width, rect.height,
+         utils::Guid::GuidToString(&group_id).c_str());
 
   // Update the sprites
   UpdateSprites();
@@ -208,7 +209,7 @@ bool WindowManager::UpdateWindowAttributes(GUID group_id, GUID window_id,
 
   std::shared_ptr<Sprite> sprite = nullptr;
 
-  bool update_sprites = false, regenerate_texture = false;
+  bool update_sprites = false;
   double old_opacity = 0;
 
   // Get the window group
@@ -235,12 +236,6 @@ bool WindowManager::UpdateWindowAttributes(GUID group_id, GUID window_id,
 
   std::unique_lock window_lk(window->mutex);
 
-  // Check if the texture needs to be regenerated
-  if (window->attributes.rect.height != attributes.rect.height ||
-      window->attributes.rect.width != attributes.rect.width) {
-    regenerate_texture = true;
-  }
-
   // Check if sprites needs to be updated
   if (window->attributes.hidden != attributes.hidden) {
     update_sprites = true;
@@ -252,18 +247,61 @@ bool WindowManager::UpdateWindowAttributes(GUID group_id, GUID window_id,
   window_lk.unlock();
 
   sprites_lk.lock();
-
-  if (regenerate_texture) {
-    sprite->FreeTexture();
-  }
-
-  sprite->rect = attributes.rect;
   sprite->opacity = (sprite->opacity / old_opacity) * attributes.opacity;
   sprites_lk.unlock();
 
   if (update_sprites) {
     UpdateSprites();
   }
+
+  return true;
+}
+
+bool WindowManager::SetWindowRect(GUID group_id, GUID window_id, Rect rect) {
+  std::unique_lock sprites_lk(sprites_mutex_, std::defer_lock);
+
+  std::shared_ptr<Window> window = nullptr;
+  std::shared_ptr<WindowGroup> window_group = nullptr;
+
+  std::shared_ptr<Sprite> sprite = nullptr;
+
+  bool regenerate_texture = false;
+  double old_opacity = 0;
+
+  // Get the window group
+  try {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_group = window_groups_.at(group_id);
+  } catch (...) {
+    return false;
+  }
+
+  try {
+    std::lock_guard window_group_lk(window_group->mutex);
+    window = window_group->windows.at(window_id);
+  } catch (...) {
+    // Window wasn't found
+    return false;
+  }
+
+  std::unique_lock window_lk(window->mutex);
+
+  // Check if the texture needs to be regenerated
+  if (window->rect.height != rect.height || window->rect.width != rect.width) {
+    regenerate_texture = true;
+  }
+
+  sprite = window->sprite;
+  window->rect = rect;
+  window_lk.unlock();
+
+  sprites_lk.lock();
+
+  if (regenerate_texture) {
+    sprite->FreeTexture();
+  }
+
+  sprite->rect = rect;
 
   return true;
 }

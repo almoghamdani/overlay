@@ -19,10 +19,13 @@ class WindowImpl : public Window {
  public:
   WindowImpl(std::weak_ptr<ClientImpl> client,
              std::shared_ptr<WindowGroupImpl> window_group, GUID id,
-             GUID group_id, const WindowAttributes attributes);
+             GUID group_id, const Rect rect, const WindowAttributes attributes);
 
   virtual void SetAttributes(const WindowAttributes attributes);
   virtual const WindowAttributes GetAttributes() const;
+
+  virtual void SetRect(const Rect rect);
+  virtual const Rect GetRect() const;
 
   virtual void UpdateBitmapBuffer(const void* buffer, size_t buffer_size);
 
@@ -38,6 +41,7 @@ class WindowImpl : public Window {
   std::shared_ptr<WindowGroupImpl> window_group_;
   GUID id_, group_id_;
 
+  Rect rect_;
   WindowAttributes attributes_;
 
   std::unordered_map<WindowEventType,

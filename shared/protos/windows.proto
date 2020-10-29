@@ -7,6 +7,7 @@ service Windows {
 	rpc UpdateWindowGroupProperties (UpdateWindowGroupPropertiesRequest) returns (UpdateWindowGroupPropertiesResponse) {}
 	rpc CreateWindowInGroup (CreateWindowRequest) returns (CreateWindowResponse) {}
 	rpc UpdateWindowProperties (UpdateWindowPropertiesRequest) returns (UpdateWindowPropertiesResponse) {}
+	rpc SetWindowRect (SetWindowRectRequest) returns (SetWindowRectResponse) {}
 	rpc BufferForWindow (BufferForWindowRequest) returns (BufferForWindowResponse) {}
 }
 
@@ -19,13 +20,16 @@ message WindowGroupProperties {
 	double buffer_opacity = 6;
 }
 
-message WindowProperties {
+message WindowRect {
 	uint64 width = 1;
 	uint64 height = 2;
 	uint64 x = 3;
 	uint64 y = 4;
-	double opacity = 5;
-	bool hidden = 6;
+}
+
+message WindowProperties {
+	double opacity = 1;
+	bool hidden = 2;
 }
 
 message CreateWindowGroupRequest {
@@ -38,7 +42,8 @@ message CreateWindowGroupResponse {
 
 message CreateWindowRequest {
 	bytes group_id = 1;
-	WindowProperties properties = 2;
+	WindowRect rect = 2;
+	WindowProperties properties = 3;
 }
 
 message CreateWindowResponse {
@@ -71,5 +76,15 @@ message UpdateWindowPropertiesRequest {
 }
 
 message UpdateWindowPropertiesResponse {
+
+}
+
+message SetWindowRectRequest {
+	bytes group_id = 1;
+	bytes window_id = 2;
+	WindowRect rect = 3;
+}
+
+message SetWindowRectResponse {
 
 }
