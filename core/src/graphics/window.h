@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 
 #include "rect.h"
 #include "sprite.h"
@@ -19,6 +20,7 @@ struct WindowAttributes {
 
 struct Window {
   GUID id, group_id;
+  std::string client_id;
 
   Rect rect;
   WindowAttributes attributes;

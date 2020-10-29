@@ -172,6 +172,7 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id, Rect rect,
 
   window->id = id;
   window->group_id = group_id;
+  window->client_id = window_group->client_id;
   window->rect = rect;
   window->attributes = attributes;
   window->sprite = std::make_shared<Sprite>();

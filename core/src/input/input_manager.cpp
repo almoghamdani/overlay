@@ -169,7 +169,8 @@ void InputManager::HandleKeyboardInput(UINT message, uint32_t param) {
         return;
     }
 
-    Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(event);
+    Core::Get()->get_rpc_server()->get_events_service()->SendEventToClient(
+        focused_window->client_id, event);
   }
 }
 
@@ -271,7 +272,8 @@ void InputManager::HandleMouseInput(UINT message, POINT point,
         return;
     }
 
-    Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(event);
+    Core::Get()->get_rpc_server()->get_events_service()->SendEventToClient(
+        focused_window->client_id, event);
   }
 }
 
