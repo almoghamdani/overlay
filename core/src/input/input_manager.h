@@ -35,7 +35,9 @@ class InputManager {
   std::mutex cursor_state_mutex_;
 
   InputHook input_hook_;
-  HHOOK window_msg_hook_;
+  HHOOK window_msg_hook_, window_proc_hook_;
+
+  RECT window_client_area_;
 
   void ReleasePressedKeys();
   uint16_t VirtualKeyToScanCode(uint8_t virtual_key);
@@ -47,10 +49,15 @@ class InputManager {
 
   LRESULT WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
                         _In_ LPARAM long_param);
+  LRESULT WindowProcHook(_In_ int code, _In_ WPARAM word_param,
+                         _In_ LPARAM long_param);
 
   friend LRESULT CALLBACK WindowGetMsgHook(_In_ int code,
                                            _In_ WPARAM word_param,
                                            _In_ LPARAM long_param);
+  friend LRESULT CALLBACK CallWindowProcHook(_In_ int code,
+                                             _In_ WPARAM word_param,
+                                             _In_ LPARAM long_param);
 
   friend class InputHook;
 };

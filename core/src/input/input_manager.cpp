@@ -5,6 +5,7 @@
 #include "core.h"
 #include "events.pb.h"
 #include "graphics/window.h"
+#include "utils/rect.h"
 
 #define KEY_UP_PASSTHROUGH_LPARAM ((LPARAM)0xA1B3C5D7)
 
@@ -18,8 +19,16 @@ LRESULT CALLBACK WindowGetMsgHook(_In_ int code, _In_ WPARAM word_param,
                                                          long_param);
 }
 
+LRESULT CALLBACK CallWindowProcHook(_In_ int code, _In_ WPARAM word_param,
+                                    _In_ LPARAM long_param) {
+  return Core::Get()->get_input_manager()->WindowProcHook(code, word_param,
+                                                          long_param);
+}
+
 InputManager::InputManager()
-    : block_app_input_(false), window_msg_hook_(NULL) {}
+    : block_app_input_(false),
+      window_msg_hook_(NULL),
+      window_proc_hook_(NULL) {}
 
 bool InputManager::Hook() {
   if (!input_hook_.Hook()) {
@@ -172,8 +181,11 @@ bool InputManager::HookWindow(HWND window) {
 
   window_msg_hook_ =
       SetWindowsHookExW(WH_GETMESSAGE, WindowGetMsgHook, NULL, thread);
+  window_proc_hook_ =
+      SetWindowsHookExW(WH_CALLWNDPROC, CallWindowProcHook, NULL, thread);
 
-  return window_msg_hook_ != NULL;
+  return GetClientRect(window, &window_client_area_) &&
+         window_msg_hook_ != NULL && window_proc_hook_ != NULL;
 }
 
 LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
@@ -215,7 +227,10 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
 
       if (message->message >= WM_MOUSEFIRST &&
           message->message <= WM_MOUSELAST) {
-        if (block_app_input_) {
+        POINTS point = MAKEPOINTS(message->lParam);
+
+        if (block_app_input_ &&
+            utils::Rect::PointInRect(point, window_client_area_)) {
           message->message = WM_NULL;
         }
       }
@@ -228,6 +243,26 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
   }
 
   return CallNextHookEx(window_msg_hook_, code, word_param, long_param);
+}
+
+LRESULT InputManager::WindowProcHook(_In_ int code, _In_ WPARAM word_param,
+                                     _In_ LPARAM long_param) {
+  CWPSTRUCT *message = NULL;
+
+  if (code >= 0) {
+    message = (CWPSTRUCT *)long_param;
+
+    switch (message->message) {
+      case WM_SIZE:
+        GetClientRect(message->hwnd, &window_client_area_);
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  return CallNextHookEx(window_proc_hook_, code, word_param, long_param);
 }
 
 bool InputManager::get_block_app_input() const { return block_app_input_; }
