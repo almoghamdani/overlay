@@ -37,6 +37,7 @@ class InputManager {
   InputHook input_hook_;
   HHOOK window_msg_hook_, window_proc_hook_;
 
+  bool resizing_moving_;
   RECT window_client_area_;
 
   void ReleasePressedKeys();

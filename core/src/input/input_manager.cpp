@@ -28,7 +28,8 @@ LRESULT CALLBACK CallWindowProcHook(_In_ int code, _In_ WPARAM word_param,
 InputManager::InputManager()
     : block_app_input_(false),
       window_msg_hook_(NULL),
-      window_proc_hook_(NULL) {}
+      window_proc_hook_(NULL),
+      resizing_moving_(false) {}
 
 bool InputManager::Hook() {
   if (!input_hook_.Hook()) {
@@ -229,7 +230,7 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
           message->message <= WM_MOUSELAST) {
         POINTS point = MAKEPOINTS(message->lParam);
 
-        if (block_app_input_ &&
+        if (block_app_input_ && !resizing_moving_ &&
             utils::Rect::PointInRect(point, window_client_area_)) {
           message->message = WM_NULL;
         }
@@ -253,6 +254,14 @@ LRESULT InputManager::WindowProcHook(_In_ int code, _In_ WPARAM word_param,
     message = (CWPSTRUCT *)long_param;
 
     switch (message->message) {
+      case WM_ENTERSIZEMOVE:
+        resizing_moving_ = true;
+        break;
+
+      case WM_EXITSIZEMOVE:
+        resizing_moving_ = false;
+        break;
+
       case WM_SIZE:
         GetClientRect(message->hwnd, &window_client_area_);
         break;
