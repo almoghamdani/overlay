@@ -15,7 +15,7 @@ class TokenInterceptor : public grpc::experimental::Interceptor {
   void Intercept(grpc::experimental::InterceptorBatchMethods* methods);
 
  private:
-  grpc_impl::ServerContextBase* context_;
+  grpc::ServerContextBase* context_;
   bool authenticate_rpc_;
 };
 

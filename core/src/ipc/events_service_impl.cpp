@@ -14,7 +14,8 @@ grpc::Status EventsServiceImpl::UnsubscribeEvent(
     EventUnsubscribeResponse *response) {
   if ((EventResponse::EventCase)request->type() <=
           EventResponse::EventCase::EVENT_NOT_SET ||
-      !magic_enum::enum_contains<EventResponse::EventCase>(request->type())) {
+      !magic_enum::enum_contains<EventResponse::EventCase>(
+          (int)request->type())) {
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                         "Invalid event type");
   }
@@ -131,7 +132,8 @@ void AsyncEventsServiceWorker::Handle() {
     // If the event type is invalid
     if ((EventResponse::EventCase)request_.type() <=
             EventResponse::EventCase::EVENT_NOT_SET ||
-        !magic_enum::enum_contains<EventResponse::EventCase>(request_.type())) {
+        !magic_enum::enum_contains<EventResponse::EventCase>(
+            (int)request_.type())) {
       Finish(grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                           "Invalid event type"));
     } else {
