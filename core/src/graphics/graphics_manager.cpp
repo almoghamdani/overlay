@@ -46,7 +46,7 @@ bool GraphicsManager::Hook() {
 void GraphicsManager::BroadcastApplicationStats(double frame_time, double fps) {
   EventResponse event;
   EventResponse::ApplicationStatsEvent *stats_event =
-      new EventResponse::ApplicationStatsEvent();
+      event.mutable_applicationstatsevent();
 
   stats_event->set_width(renderer_ != nullptr ? (uint32_t)renderer_->get_width()
                                               : 0);
@@ -56,8 +56,6 @@ void GraphicsManager::BroadcastApplicationStats(double frame_time, double fps) {
                                                    : false);
   stats_event->set_frametime(frame_time);
   stats_event->set_fps(fps);
-
-  event.set_allocated_applicationstatsevent(stats_event);
 
   Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(event);
 }

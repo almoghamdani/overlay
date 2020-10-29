@@ -44,12 +44,9 @@ void WindowImpl::SetAttributes(const WindowAttributes attributes) {
   }
 
   // Try to update the attributes
-  properties = new WindowProperties();  // This should be deallocated by the
-                                        // request itself since we're using
-                                        // `set_allocated_properties`
+  properties = request.mutable_properties();
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
-  request.set_allocated_properties(properties);
   request.set_group_id((const char*)&group_id_, sizeof(group_id_));
   request.set_window_id((const char*)&id_, sizeof(id_));
   if (!client->get_windows_stub()
@@ -77,14 +74,11 @@ void WindowImpl::SetRect(const Rect rect) {
   }
 
   // Try to set the rect
-  window_rect = new WindowRect();  // This should be deallocated by the
-                                   // request itself since we're using
-                                   // `set_allocated_rect`
+  window_rect = request.mutable_rect();
   window_rect->set_height(rect.height);
   window_rect->set_width(rect.width);
   window_rect->set_x(rect.x);
   window_rect->set_y(rect.y);
-  request.set_allocated_rect(window_rect);
   request.set_group_id((const char*)&group_id_, sizeof(group_id_));
   request.set_window_id((const char*)&id_, sizeof(id_));
   if (!client->get_windows_stub()

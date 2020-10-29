@@ -97,16 +97,13 @@ std::shared_ptr<WindowGroup> ClientImpl::CreateWindowGroup(
   }
 
   // Try to create the new window
-  properties = new WindowGroupProperties();  // This should be deallocated by
-                                             // the request itself since we're
-                                             // using `set_allocated_properties`
+  properties = request.mutable_properties();
   properties->set_z(attributes.z);
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
   properties->set_has_buffer(attributes.has_buffer);
   properties->set_buffer_color(attributes.buffer_color);
   properties->set_buffer_opacity(attributes.buffer_opacity);
-  request.set_allocated_properties(properties);
   if (!windows_stub_->CreateWindowGroup(&context, request, &response).ok() ||
       response.id().size() != sizeof(window_group_id)) {
     throw Error(ErrorCode::UnknownError);

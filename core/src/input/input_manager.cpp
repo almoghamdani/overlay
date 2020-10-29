@@ -126,7 +126,7 @@ void InputManager::RestoreCursorState() {
          cursor_state_.cursor_pos.y, cursor_state_.cursor_handle);
 }
 
-void InputManager::HandleInput(UINT message, uint32_t param) {
+void InputManager::HandleKeyboardInput(UINT message, uint32_t param) {
   std::shared_ptr<graphics::Window> focused_window =
       Core::Get()
           ->get_graphics_manager()
@@ -134,13 +134,10 @@ void InputManager::HandleInput(UINT message, uint32_t param) {
           ->GetFocusedWindow();
 
   EventResponse event;
-  EventResponse::WindowEvent *window_event = nullptr;
-  EventResponse::WindowEvent::KeyboardInputEvent *input_event = nullptr;
+  EventResponse::WindowEvent *window_event = event.mutable_windowevent();
+  EventResponse::WindowEvent::KeyboardInputEvent *input_event = window_event->mutable_keyboardinput();
 
   if (focused_window) {
-    window_event = new EventResponse::WindowEvent();
-    input_event = new EventResponse::WindowEvent::KeyboardInputEvent();
-
     window_event->set_windowgroupid((const char *)&focused_window->group_id,
                                     sizeof(focused_window->group_id));
     window_event->set_windowid((const char *)&focused_window->id,
@@ -171,8 +168,6 @@ void InputManager::HandleInput(UINT message, uint32_t param) {
         break;
     }
 
-    window_event->set_allocated_keyboardinput(input_event);
-    event.set_allocated_windowevent(window_event);
     Core::Get()->get_rpc_server()->get_events_service()->BroadcastEvent(event);
   }
 }
@@ -218,7 +213,7 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
               message->message == WM_SYSKEYDOWN ||
               message->message == WM_CHAR || message->message == WM_SYSCHAR ||
               message->message == WM_KEYUP || message->message == WM_SYSKEYUP) {
-            HandleInput(message->message, (uint32_t)message->wParam);
+            HandleKeyboardInput(message->message, (uint32_t)message->wParam);
           }
 
           // Block application input

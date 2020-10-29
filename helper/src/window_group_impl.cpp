@@ -36,16 +36,13 @@ void WindowGroupImpl::SetAttributes(const WindowGroupAttributes attributes) {
   }
 
   // Try to update the window group properties
-  properties = new WindowGroupProperties();  // This should be deallocated by
-                                             // the request itself since we're
-                                             // using `set_allocated_properties`
+  properties = request.mutable_properties();
   properties->set_z(attributes.z);
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
   properties->set_has_buffer(attributes.has_buffer);
   properties->set_buffer_color(attributes.buffer_color);
   properties->set_buffer_opacity(attributes.buffer_opacity);
-  request.set_allocated_properties(properties);
   request.set_group_id((const char*)&id_, sizeof(id_));
   if (!client->get_windows_stub()
            ->UpdateWindowGroupProperties(&context, request, &response)
@@ -85,20 +82,14 @@ std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
   }
 
   // Try to create the new window
-  properties = new WindowProperties();  // This should be deallocated by the
-                                        // request itself since we're using
-                                        // `set_allocated_properties`
-  window_rect = new WindowRect();       // This should be deallocated by the
-                                        // request itself since we're using
-                                        // `set_allocated_rect`
+  properties = request.mutable_properties();
+  window_rect = request.mutable_rect();
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
   window_rect->set_height(rect.height);
   window_rect->set_width(rect.width);
   window_rect->set_x(rect.x);
   window_rect->set_y(rect.y);
-  request.set_allocated_properties(properties);
-  request.set_allocated_rect(window_rect);
   request.set_group_id((const char*)&id_, sizeof(id_));
   if (!client->get_windows_stub()
            ->CreateWindowInGroup(&context, request, &response)
