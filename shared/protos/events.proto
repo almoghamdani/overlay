@@ -49,7 +49,7 @@ message EventResponse {
 			uint64 x = 2;
 			uint64 y = 3;
 			MouseButton button = 4;
-			uint64 wheelDelta = 5;
+			sint32 wheelDelta = 5;
 		}
 
 		bytes windowGroupId = 1;

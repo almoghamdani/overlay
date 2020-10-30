@@ -171,11 +171,11 @@ struct WindowMouseInputEvent : public WindowEvent {
   };
 
   enum Button {
-    LeftButton = 1,
-    MiddleButton = 2,
-    RightButton = 3,
-    XButton1 = 4,
-    XButton2 = 5
+    LeftButton = 0,
+    MiddleButton = 1,
+    RightButton = 2,
+    XButton1 = 3,
+    XButton2 = 4
   };
 
   WindowMouseInputEvent(InputType type, size_t x, size_t y)
@@ -188,7 +188,7 @@ struct WindowMouseInputEvent : public WindowEvent {
         y(y),
         button(button) {}
 
-  WindowMouseInputEvent(InputType type, size_t x, size_t y, size_t wheel_delta)
+  WindowMouseInputEvent(InputType type, size_t x, size_t y, int wheel_delta)
       : WindowEvent(WindowEventType::MouseInput),
         type(type),
         x(x),
@@ -200,7 +200,7 @@ struct WindowMouseInputEvent : public WindowEvent {
   size_t y;
   union {
     Button button;
-    size_t wheel_delta;
+    int wheel_delta;
   };
 };
 

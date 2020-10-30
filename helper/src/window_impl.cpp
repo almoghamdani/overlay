@@ -211,7 +211,7 @@ std::shared_ptr<WindowEvent> WindowImpl::GenerateEvent(
               (WindowMouseInputEvent::InputType)event.mouseinputevent().type(),
               (size_t)event.mouseinputevent().x(),
               (size_t)event.mouseinputevent().y(),
-              (size_t)event.mouseinputevent().wheeldelta());
+              (int)event.mouseinputevent().wheeldelta());
           break;
 
         case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN:
