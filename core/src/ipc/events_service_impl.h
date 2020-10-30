@@ -1,7 +1,9 @@
 #pragma once
 #include <grpcpp/grpcpp.h>
 
+#include <atomic>
 #include <mutex>
+#include <queue>
 #include <thread>
 #include <unordered_map>
 
@@ -66,7 +68,11 @@ class AsyncEventsServiceWorker {
   EventSubscribeRequest request_;
   grpc::ServerAsyncWriter<EventResponse> writer_;
 
-  bool finished_, registered_;
+  bool writing_;
+  std::queue<EventResponse> event_queue_;
+  std::mutex event_queue_mutex_;
+
+  std::atomic<bool> finished_, registered_;
 };
 
 }  // namespace ipc

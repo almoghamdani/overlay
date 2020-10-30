@@ -38,7 +38,7 @@ void RpcServer::Start() {
   server_builder.AddListeningPort(
       "localhost:0", grpc::SslServerCredentials(ssl_options), &port_);
 
-  // Register servicesS
+  // Register services
   server_builder.RegisterService(&auth_service_);
   server_builder.RegisterService(&events_service_);
   server_builder.RegisterService(&windows_service_);

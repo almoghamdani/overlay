@@ -117,7 +117,8 @@ AsyncEventsServiceWorker::AsyncEventsServiceWorker(
       completion_queue_(completion_queue),
       writer_(&context_),
       finished_(false),
-      registered_(false) {
+      registered_(false),
+      writing_(false) {
   service_->RequestSubscribeToEvent(&context_, &request_, &writer_,
                                     completion_queue_, completion_queue_, this);
 }
@@ -141,12 +142,37 @@ void AsyncEventsServiceWorker::Handle() {
       service_->RegisterEventWorker((EventResponse::EventCase)request_.type(),
                                     this);
     }
+  } else {
+    EventResponse event;
+
+    std::unique_lock event_queue_lk(event_queue_mutex_);
+
+    if (writing_) {
+      if (!event_queue_.empty()) {
+        event = event_queue_.front();
+        event_queue_.pop();
+
+        event_queue_lk.unlock();
+        writer_.Write(event, this);
+      } else {
+        writing_ = false;
+      }
+    }
   }
 }
 
 void overlay::core::ipc::AsyncEventsServiceWorker::SendEvent(
     overlay::EventResponse &event) {
-  writer_.Write(event, this);
+  std::unique_lock event_queue_lk(event_queue_mutex_);
+
+  if (writing_) {
+    event_queue_.push(event);
+  } else {
+    writing_ = true;
+    event_queue_lk.unlock();
+
+    writer_.Write(event, this);
+  }
 }
 
 void AsyncEventsServiceWorker::Finish(grpc::Status status) {
