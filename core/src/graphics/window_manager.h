@@ -53,6 +53,8 @@ class WindowManager {
   void UpdateSprites();
   void UpdateBlockAppInput();
 
+  void FocusWindow(std::shared_ptr<Window> window);
+
   std::shared_ptr<Window> CreateBufferWindow(Color color, double opacity);
 };
 

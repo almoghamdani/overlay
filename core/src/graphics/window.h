@@ -24,7 +24,6 @@ struct Window {
 
   Rect rect;
   WindowAttributes attributes;
-  bool focused;
 
   HCURSOR cursor;
 

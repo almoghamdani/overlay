@@ -67,8 +67,10 @@ bool WindowManager::UpdateWindowGroupAttributes(
 
     if (focused_window_group_ == window_group && attributes.hidden) {
       focused_window_group_ = nullptr;
+      FocusWindow(nullptr);
     } else if (focused_window_group_ == nullptr && !attributes.hidden) {
       focused_window_group_ = window_group;
+      FocusWindow(focused_window_group_->focused_window);
     }
   } catch (...) {
     return false;
@@ -175,7 +177,6 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id, Rect rect,
   window->client_id = window_group->client_id;
   window->rect = rect;
   window->attributes = attributes;
-  window->focused = false;
   window->cursor = LoadCursor(NULL, IDC_ARROW);
   window->sprite = std::make_shared<Sprite>();
   window->sprite->rect = rect;
@@ -189,7 +190,6 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id, Rect rect,
 
     if (window_group->focused_window == nullptr && !attributes.hidden) {
       window_group->focused_window = window;
-      window->focused = true;
     }
   }
 
@@ -230,8 +230,16 @@ bool WindowManager::UpdateWindowAttributes(GUID group_id, GUID window_id,
 
     if (window_group->focused_window == window && attributes.hidden) {
       window_group->focused_window = nullptr;
+
+      if (window_group == focused_window_group_) {
+        FocusWindow(nullptr);
+      }
     } else if (window_group->focused_window == nullptr && !attributes.hidden) {
       window_group->focused_window = window;
+
+      if (window_group == focused_window_group_) {
+        FocusWindow(window);
+      }
     }
   } catch (...) {
     // Window wasn't found
@@ -459,7 +467,7 @@ void WindowManager::UpdateSprites() {
               return group1->attributes.z < group2->attributes.z;
             });
 
-  // Sort windows for each group
+  // Add each group's windows
   for (auto &window_group : sorted_window_groups) {
     std::lock_guard group_lk(window_group->mutex);
 
@@ -474,16 +482,13 @@ void WindowManager::UpdateSprites() {
                    std::back_inserter(sorted_windows),
                    [](auto &pair) { return pair.second; });
 
-    // Sort windows list
-    std::sort(sorted_windows.end() - window_group->windows.size(),
-              sorted_windows.end(),
-              [](std::shared_ptr<Window> &win1, std::shared_ptr<Window> &win2) {
-                std::unique_lock win1_lk(win1->mutex, std::defer_lock);
-                std::unique_lock win2_lk(win2->mutex, std::defer_lock);
-                std::lock(win1_lk, win2_lk);
-
-                return win1->focused < win2->focused;
-              });
+    // Move the focused window to the end
+    if (window_group->focused_window) {
+      sorted_windows.erase(
+          std::remove(sorted_windows.end() - window_group->windows.size(),
+                      sorted_windows.end(), window_group->focused_window));
+      sorted_windows.push_back(window_group->focused_window);
+    }
   }
 
   // Remove all hidden windows
@@ -536,6 +541,17 @@ void WindowManager::UpdateBlockAppInput() {
 
     Core::Get()->get_input_manager()->set_block_app_input_cursor(
         focused_window_cursor_name);
+  }
+}
+
+void WindowManager::FocusWindow(std::shared_ptr<Window> window) {
+  if (window == nullptr) {
+    Core::Get()->get_input_manager()->set_block_app_input_cursor(
+        LoadCursor(NULL, IDC_ARROW));
+  } else {
+    std::lock_guard window_lk(window->mutex);
+    Core::Get()->get_input_manager()->set_block_app_input_cursor(
+        window->cursor);
   }
 }
 
