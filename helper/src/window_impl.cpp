@@ -24,7 +24,8 @@ WindowImpl::WindowImpl(std::weak_ptr<ClientImpl> client,
       id_(id),
       group_id_(group_id),
       rect_(rect),
-      attributes_(attributes) {}
+      attributes_(attributes),
+      cursor_(Cursor::Arrow) {}
 
 void WindowImpl::SetAttributes(const WindowAttributes attributes) {
   grpc::ClientContext context;
@@ -92,6 +93,36 @@ void WindowImpl::SetRect(const Rect rect) {
 }
 
 const Rect WindowImpl::GetRect() const { return rect_; }
+
+void WindowImpl::SetCursor(const Cursor cursor) {
+  grpc::ClientContext context;
+  SetWindowCursorRequest request;
+  SetWindowCursorResponse response;
+
+  std::shared_ptr<ClientImpl> client = client_.lock();
+  if (!client) {
+    throw Error(ErrorCode::ClientObjectDeallocated);
+  }
+
+  if (!magic_enum::enum_contains<Cursor>(cursor)) {
+    throw Error(ErrorCode::InvalidCursor);
+  }
+
+  // Try to set the cursor
+  request.set_cursor((overlay::Cursor)cursor);
+  request.set_group_id((const char*)&group_id_, sizeof(group_id_));
+  request.set_window_id((const char*)&id_, sizeof(id_));
+  if (!client->get_windows_stub()
+           ->SetWindowCursor(&context, request, &response)
+           .ok()) {
+    throw Error(ErrorCode::UnknownError);
+  }
+
+  // Set the new rect
+  cursor_ = cursor;
+}
+
+const Cursor WindowImpl::GetCursor() const { return cursor_; }
 
 void WindowImpl::UpdateBitmapBuffer(const void* buffer, size_t buffer_size) {
   grpc::ClientContext context;

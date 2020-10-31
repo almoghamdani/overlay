@@ -53,7 +53,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     DLOG_F(INFO, "Overlay Core v1.0 (PID: %d)\n", GetCurrentProcessId());
 
     // Start overlay core
-    overlay::core::Core::Get()->Start();
+    overlay::core::Core::Get()->Start(hinstDLL);
   }
 
   return true;

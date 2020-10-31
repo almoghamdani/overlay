@@ -175,6 +175,8 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id, Rect rect,
   window->client_id = window_group->client_id;
   window->rect = rect;
   window->attributes = attributes;
+  window->focused = false;
+  window->cursor = LoadCursor(NULL, IDC_ARROW);
   window->sprite = std::make_shared<Sprite>();
   window->sprite->rect = rect;
   window->sprite->opacity =
@@ -187,6 +189,7 @@ GUID WindowManager::CreateWindowInGroup(GUID group_id, Rect rect,
 
     if (window_group->focused_window == nullptr && !attributes.hidden) {
       window_group->focused_window = window;
+      window->focused = true;
     }
   }
 
@@ -303,6 +306,39 @@ bool WindowManager::SetWindowRect(GUID group_id, GUID window_id, Rect rect) {
   }
 
   sprite->rect = rect;
+
+  return true;
+}
+
+bool WindowManager::SetWindowCursor(GUID group_id, GUID window_id,
+                                    HCURSOR cursor) {
+  std::shared_ptr<Window> window = nullptr;
+  std::shared_ptr<WindowGroup> window_group = nullptr;
+
+  // Get the window group
+  try {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_group = window_groups_.at(group_id);
+  } catch (...) {
+    return false;
+  }
+
+  try {
+    std::lock_guard window_group_lk(window_group->mutex);
+    window = window_group->windows.at(window_id);
+  } catch (...) {
+    // Window wasn't found
+    return false;
+  }
+
+  std::unique_lock window_lk(window->mutex);
+  window->cursor = cursor;
+  window_lk.unlock();
+
+  // If the window is the focused window, then set the
+  if (window == GetFocusedWindow()) {
+    Core::Get()->get_input_manager()->set_block_app_input_cursor(cursor);
+  }
 
   return true;
 }
@@ -474,6 +510,9 @@ void WindowManager::UpdateSprites() {
 void WindowManager::UpdateBlockAppInput() {
   bool block_input = false;
 
+  std::shared_ptr<Window> focused_window = GetFocusedWindow();
+  HCURSOR focused_window_cursor_name = NULL;
+
   std::unique_lock window_groups_lk(window_groups_mutex_);
 
   for (auto &group_pair : window_groups_) {
@@ -488,6 +527,16 @@ void WindowManager::UpdateBlockAppInput() {
 
   window_groups_lk.unlock();
   Core::Get()->get_input_manager()->set_block_app_input(block_input);
+
+  // Set focused window's cursor
+  if (focused_window) {
+    std::unique_lock focused_window_lk(focused_window->mutex);
+    focused_window_cursor_name = focused_window->cursor;
+    focused_window_lk.unlock();
+
+    Core::Get()->get_input_manager()->set_block_app_input_cursor(
+        focused_window_cursor_name);
+  }
 }
 
 std::shared_ptr<Window> WindowManager::CreateBufferWindow(Color color,

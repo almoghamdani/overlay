@@ -8,6 +8,7 @@ service Windows {
 	rpc CreateWindowInGroup (CreateWindowRequest) returns (CreateWindowResponse) {}
 	rpc UpdateWindowProperties (UpdateWindowPropertiesRequest) returns (UpdateWindowPropertiesResponse) {}
 	rpc SetWindowRect (SetWindowRectRequest) returns (SetWindowRectResponse) {}
+	rpc SetWindowCursor (SetWindowCursorRequest) returns (SetWindowCursorResponse) {}
 	rpc BufferForWindow (BufferForWindowRequest) returns (BufferForWindowResponse) {}
 }
 
@@ -30,6 +31,44 @@ message WindowRect {
 message WindowProperties {
 	double opacity = 1;
 	bool hidden = 2;
+}
+
+enum Cursor {
+	NONE = 0;
+	ARROW = 1;
+	ARROW_PROGRESS = 2;
+	WAIT = 3;
+	TEXT = 4;
+	POINTER = 5;
+	HELP = 6;
+	CROSSHAIR = 7;
+	MOVE = 8;
+	RESIZE_NESW = 9;
+	RESIZE_NS = 10;
+	RESIZE_NWSE = 11;
+	RESIZE_WE = 12;
+	NO = 13;
+	ALIAS = 14;
+	CELL = 15;
+	COL_RESIZE = 16;
+	GRAB = 17;
+	GRABBING = 18;
+	PAN_E = 19;
+	PAN_M = 20;
+	PAN_MH = 21;
+	PAN_MV = 22;
+	PAN_N = 23;
+	PAN_NE = 24;
+	PAN_NW = 25;
+	PAN_S = 26;
+	PAN_SE = 27;
+	PAN_SW = 28;
+	PAN_W = 29;
+	ROW_RESIZE = 30;
+	VERTICAL_TEXT = 31;
+	ZOOM_IN = 32;
+	ZOOM_OUT = 33;
+	COPY = 34;
 }
 
 message CreateWindowGroupRequest {
@@ -86,5 +125,15 @@ message SetWindowRectRequest {
 }
 
 message SetWindowRectResponse {
+
+}
+
+message SetWindowCursorRequest {
+	bytes group_id = 1;
+	bytes window_id = 2;
+	Cursor cursor = 3;
+}
+
+message SetWindowCursorResponse {
 
 }

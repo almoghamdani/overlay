@@ -21,6 +21,12 @@ class WindowsServiceImpl final : public Windows::Service {
       grpc::ServerContext *context,
       const UpdateWindowPropertiesRequest *request,
       UpdateWindowPropertiesResponse *response);
+  grpc::Status SetWindowRect(grpc::ServerContext *context,
+                             const SetWindowRectRequest *request,
+                             SetWindowRectResponse *response);
+  grpc::Status SetWindowCursor(grpc::ServerContext *context,
+                               const SetWindowCursorRequest *request,
+                               SetWindowCursorResponse *response);
   grpc::Status BufferForWindow(grpc::ServerContext *context,
                                const BufferForWindowRequest *request,
                                BufferForWindowResponse *response);

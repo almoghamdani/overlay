@@ -42,6 +42,9 @@ std::string GetErrorCodeDescription(ErrorCode code) {
     case ErrorCode::InvalidEventType:
       return "The event type entered is invalid";
 
+    case ErrorCode::InvalidCursor:
+      return "The cursor type entered is invalid";
+
     default:
     case ErrorCode::UnknownError:
       return "Unknown Error";

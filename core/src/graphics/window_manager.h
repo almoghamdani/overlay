@@ -32,6 +32,7 @@ class WindowManager {
   bool UpdateWindowAttributes(GUID group_id, GUID window_id,
                               WindowAttributes attributes);
   bool SetWindowRect(GUID group_id, GUID window_id, Rect rect);
+  bool SetWindowCursor(GUID group_id, GUID window_id, HCURSOR cursor);
   void UpdateWindowBufferInGroup(GUID group_id, GUID window_id,
                                  std::string&& buffer);
   void DestroyWindowInGroup(GUID group_id, GUID window_id);

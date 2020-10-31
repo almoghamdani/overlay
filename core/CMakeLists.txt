@@ -5,8 +5,8 @@ project(OverlayCore)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4098 /ignore:4217")
 
 # Get all the cpp and h files for the library
-file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
-include_directories(src)
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h" "resources/*.rc" "resources/*.h")
+include_directories(src resources)
 
 # Find gRPC
 find_package(gRPC CONFIG REQUIRED)
@@ -40,7 +40,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 # Link the overlay core to the dependencies' libs
-target_link_libraries(${PROJECT_NAME} PRIVATE rpcrt4.lib gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto minhook::minhook magic_enum::magic_enum)
+target_link_libraries(${PROJECT_NAME} PRIVATE rpcrt4.lib Comctl32.lib gRPC::grpc++ OpenSSL::SSL OpenSSL::Crypto minhook::minhook magic_enum::magic_enum)
 target_include_directories(${PROJECT_NAME} PRIVATE ${LOGURU_INCLUDE_DIRS})
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_link_libraries(${PROJECT_NAME} PRIVATE msvcrtd.lib)

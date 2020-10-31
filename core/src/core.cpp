@@ -7,9 +7,11 @@
 namespace overlay {
 namespace core {
 
-Core::Core() : inject_window_(NULL), graphics_window_(NULL) {}
+Core::Core() : instance_(NULL), inject_window_(NULL), graphics_window_(NULL) {}
 
-void Core::Start() {
+void Core::Start(HINSTANCE instance) {
+  instance_ = instance;
+
   // Start core main thread
   main_thread_ = std::thread(&Core::MainThread, this);
 }
@@ -38,6 +40,8 @@ void Core::MainThread() {
 }
 
 bool Core::HookWindow(HWND window) { return input_manager_.HookWindow(window); }
+
+HINSTANCE Core::get_instance() const { return instance_; }
 
 void Core::set_inject_window(HWND window) {
   DLOG_F(INFO, "Application's main thread window is 0x%x.", window);

@@ -1,0 +1,71 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "cursors.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Neutral (Default) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEUD)
+LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_ALIAS               CURSOR                  "cursors\\aliasb.cur"
+
+IDC_CELL                CURSOR                  "cursors\\cell.cur"
+
+IDC_COLRESIZE           CURSOR                  "cursors\\col_resize.cur"
+
+IDC_COPYCUR             CURSOR                  "cursors\\copy.cur"
+
+IDC_HAND_GRAB           CURSOR                  "cursors\\hand_grab.cur"
+
+IDC_HAND_GRABBING       CURSOR                  "cursors\\hand_grabbing.cur"
+
+IDC_PAN_EAST            CURSOR                  "cursors\\pan_east.cur"
+
+IDC_PAN_MIDDLE          CURSOR                  "cursors\\pan_middle.cur"
+
+IDC_PAN_MIDDLE_HORIZONTAL CURSOR                  "cursors\\pan_middle_horizontal.cur"
+
+IDC_PAN_MIDDLE_VERTICAL CURSOR                  "cursors\\pan_middle_vertical.cur"
+
+IDC_PAN_NORTH           CURSOR                  "cursors\\pan_north.cur"
+
+IDC_PAN_NORTH_EAST      CURSOR                  "cursors\\pan_north_east.cur"
+
+IDC_PAN_NORTH_WEST      CURSOR                  "cursors\\pan_north_west.cur"
+
+IDC_PAN_SOUTH           CURSOR                  "cursors\\pan_south.cur"
+
+IDC_PAN_SOUTH_EAST      CURSOR                  "cursors\\pan_south_east.cur"
+
+IDC_PAN_SOUTH_WEST      CURSOR                  "cursors\\pan_south_west.cur"
+
+IDC_PAN_WEST            CURSOR                  "cursors\\pan_west.cur"
+
+IDC_ROWRESIZE           CURSOR                  "cursors\\row_resize.cur"
+
+IDC_VERTICALTEXT        CURSOR                  "cursors\\vertical_text.cur"
+
+IDC_ZOOMIN              CURSOR                  "cursors\\zoom_in.cur"
+
+IDC_ZOOMOUT             CURSOR                  "cursors\\zoom_out.cur"
+
+#endif    // Neutral (Default) resources
+/////////////////////////////////////////////////////////////////////////////
+

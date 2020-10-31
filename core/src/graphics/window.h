@@ -26,6 +26,8 @@ struct Window {
   WindowAttributes attributes;
   bool focused;
 
+  HCURSOR cursor;
+
   std::shared_ptr<Sprite> sprite;
 
   std::mutex mutex;

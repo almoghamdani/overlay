@@ -75,13 +75,13 @@ bool InputHook::Hook() {
 
 int InputHook::ShowCursorHook(BOOL show) {
   if (Core::Get()->get_input_manager()->get_block_app_input()) {
-    std::lock_guard cursor_state_lk(
-        Core::Get()->get_input_manager()->cursor_state_mutex_);
+    std::lock_guard app_cursor_state_lk(
+        Core::Get()->get_input_manager()->app_cursor_state_mutex_);
 
-    Core::Get()->get_input_manager()->cursor_state_.cursor_count +=
+    Core::Get()->get_input_manager()->app_cursor_state_.cursor_count +=
         show ? 1 : -1;
 
-    return Core::Get()->get_input_manager()->cursor_state_.cursor_count;
+    return Core::Get()->get_input_manager()->app_cursor_state_.cursor_count;
   }
 
   return show_cursor_hook_.get_trampoline().CallStdMethod<int>(show);
@@ -89,11 +89,12 @@ int InputHook::ShowCursorHook(BOOL show) {
 
 BOOL InputHook::GetCursorPosHook(LPPOINT point_ptr) {
   if (Core::Get()->get_input_manager()->get_block_app_input()) {
-    std::lock_guard cursor_state_lk(
-        Core::Get()->get_input_manager()->cursor_state_mutex_);
+    std::lock_guard app_cursor_state_lk(
+        Core::Get()->get_input_manager()->app_cursor_state_mutex_);
 
     if (point_ptr) {
-      *point_ptr = Core::Get()->get_input_manager()->cursor_state_.cursor_pos;
+      *point_ptr =
+          Core::Get()->get_input_manager()->app_cursor_state_.cursor_pos;
     }
 
     return true;
@@ -104,10 +105,11 @@ BOOL InputHook::GetCursorPosHook(LPPOINT point_ptr) {
 
 BOOL InputHook::SetCursorPosHook(int x, int y) {
   if (Core::Get()->get_input_manager()->get_block_app_input()) {
-    std::lock_guard cursor_state_lk(
-        Core::Get()->get_input_manager()->cursor_state_mutex_);
+    std::lock_guard app_cursor_state_lk(
+        Core::Get()->get_input_manager()->app_cursor_state_mutex_);
 
-    Core::Get()->get_input_manager()->cursor_state_.cursor_pos = POINT{x, y};
+    Core::Get()->get_input_manager()->app_cursor_state_.cursor_pos =
+        POINT{x, y};
 
     return true;
   }
@@ -117,10 +119,10 @@ BOOL InputHook::SetCursorPosHook(int x, int y) {
 
 HCURSOR InputHook::GetCursorHook() {
   if (Core::Get()->get_input_manager()->get_block_app_input()) {
-    std::lock_guard cursor_state_lk(
-        Core::Get()->get_input_manager()->cursor_state_mutex_);
+    std::lock_guard app_cursor_state_lk(
+        Core::Get()->get_input_manager()->app_cursor_state_mutex_);
 
-    return Core::Get()->get_input_manager()->cursor_state_.cursor_handle;
+    return Core::Get()->get_input_manager()->app_cursor_state_.cursor_handle;
   }
 
   return get_cursor_hook_.get_trampoline().CallStdMethod<HCURSOR>();
@@ -128,13 +130,13 @@ HCURSOR InputHook::GetCursorHook() {
 
 HCURSOR InputHook::SetCursorHook(HCURSOR cursor_handle) {
   if (Core::Get()->get_input_manager()->get_block_app_input()) {
-    std::lock_guard cursor_state_lk(
-        Core::Get()->get_input_manager()->cursor_state_mutex_);
+    std::lock_guard app_cursor_state_lk(
+        Core::Get()->get_input_manager()->app_cursor_state_mutex_);
 
     HCURSOR old_cursor =
-        Core::Get()->get_input_manager()->cursor_state_.cursor_handle;
+        Core::Get()->get_input_manager()->app_cursor_state_.cursor_handle;
 
-    Core::Get()->get_input_manager()->cursor_state_.cursor_handle =
+    Core::Get()->get_input_manager()->app_cursor_state_.cursor_handle =
         cursor_handle;
 
     return old_cursor;

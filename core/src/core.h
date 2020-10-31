@@ -14,7 +14,9 @@ class Core : public utils::Singleton<Core> {
  public:
   Core();
 
-  void Start();
+  void Start(HINSTANCE instance);
+
+  HINSTANCE get_instance() const;
 
   void set_inject_window(HWND window);
   HWND get_inject_window() const;
@@ -27,6 +29,8 @@ class Core : public utils::Singleton<Core> {
   ipc::RpcServer *get_rpc_server();
 
  private:
+  HINSTANCE instance_;
+
   std::thread main_thread_;
 
   HWND inject_window_;

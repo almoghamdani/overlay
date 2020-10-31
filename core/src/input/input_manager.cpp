@@ -1,5 +1,7 @@
 #include "input_manager.h"
 
+#include <commctrl.h>
+
 #include <loguru/loguru.hpp>
 
 #include "core.h"
@@ -19,16 +21,19 @@ LRESULT CALLBACK WindowGetMsgHook(_In_ int code, _In_ WPARAM word_param,
                                                          long_param);
 }
 
-LRESULT CALLBACK CallWindowProcHook(_In_ int code, _In_ WPARAM word_param,
-                                    _In_ LPARAM long_param) {
-  return Core::Get()->get_input_manager()->WindowProcHook(code, word_param,
-                                                          long_param);
+LRESULT CALLBACK WindowSubclassProc(_In_ HWND window, _In_ UINT message,
+                                    _In_ WPARAM word_param,
+                                    _In_ LPARAM long_param,
+                                    _In_ UINT_PTR subclass_id,
+                                    _In_ InputManager *input_manager) {
+  return input_manager->WindowSubclassProc(window, message, word_param,
+                                           long_param);
 }
 
 InputManager::InputManager()
     : block_app_input_(false),
+      block_app_input_cursor_(LoadCursor(NULL, IDC_ARROW)),
       window_msg_hook_(NULL),
-      window_proc_hook_(NULL),
       resizing_moving_(false) {}
 
 bool InputManager::Hook() {
@@ -82,48 +87,48 @@ uint16_t InputManager::VirtualKeyToScanCode(uint8_t virtual_key) {
 }
 
 void InputManager::SaveCursorState() {
-  std::lock_guard cursor_state_lk(cursor_state_mutex_);
+  std::lock_guard app_cursor_state_lk(app_cursor_state_mutex_);
 
-  cursor_state_.cursor_count =
+  app_cursor_state_.cursor_count =
       input_hook_.show_cursor_hook_.get_trampoline().CallStdMethod<int>(true) -
       1;
   input_hook_.show_cursor_hook_.get_trampoline().CallStdMethod<int>(false);
 
-  cursor_state_.cursor_handle =
+  app_cursor_state_.cursor_handle =
       input_hook_.get_cursor_hook_.get_trampoline().CallStdMethod<HCURSOR>();
 
   input_hook_.get_cursor_pos_hook_.get_trampoline().CallStdMethod<BOOL>(
-      &cursor_state_.cursor_pos);
+      &app_cursor_state_.cursor_pos);
 
   DLOG_F(INFO,
          "Saved cursor state - Count: %d, Position: (%d, %d), Handle: 0x%x.",
-         cursor_state_.cursor_count, cursor_state_.cursor_pos.x,
-         cursor_state_.cursor_pos.y, cursor_state_.cursor_handle);
+         app_cursor_state_.cursor_count, app_cursor_state_.cursor_pos.x,
+         app_cursor_state_.cursor_pos.y, app_cursor_state_.cursor_handle);
 }
 
 void InputManager::RestoreCursorState() {
-  std::lock_guard cursor_state_lk(cursor_state_mutex_);
+  std::lock_guard app_cursor_state_lk(app_cursor_state_mutex_);
 
   int cursor_count =
       input_hook_.show_cursor_hook_.get_trampoline().CallStdMethod<int>(false);
-  bool show_cursor = cursor_count < cursor_state_.cursor_count;
+  bool show_cursor = cursor_count < app_cursor_state_.cursor_count;
 
   // Restore cursor count
-  while (cursor_count != cursor_state_.cursor_count) {
+  while (cursor_count != app_cursor_state_.cursor_count) {
     cursor_count =
         input_hook_.show_cursor_hook_.get_trampoline().CallStdMethod<int>(
             show_cursor);
   }
 
   input_hook_.set_cursor_hook_.get_trampoline().CallStdMethod<HCURSOR>(
-      cursor_state_.cursor_handle);
+      app_cursor_state_.cursor_handle);
   input_hook_.set_cursor_pos_hook_.get_trampoline().CallStdMethod<BOOL>(
-      cursor_state_.cursor_pos.x, cursor_state_.cursor_pos.y);
+      app_cursor_state_.cursor_pos.x, app_cursor_state_.cursor_pos.y);
 
   DLOG_F(INFO,
          "Restored cursor state - Count: %d, Position: (%d, %d), Handle: 0x%x.",
-         cursor_state_.cursor_count, cursor_state_.cursor_pos.x,
-         cursor_state_.cursor_pos.y, cursor_state_.cursor_handle);
+         app_cursor_state_.cursor_count, app_cursor_state_.cursor_pos.x,
+         app_cursor_state_.cursor_pos.y, app_cursor_state_.cursor_handle);
 }
 
 void InputManager::HandleKeyboardInput(UINT message, uint32_t param) {
@@ -282,11 +287,11 @@ bool InputManager::HookWindow(HWND window) {
 
   window_msg_hook_ =
       SetWindowsHookExW(WH_GETMESSAGE, WindowGetMsgHook, NULL, thread);
-  window_proc_hook_ =
-      SetWindowsHookExW(WH_CALLWNDPROC, CallWindowProcHook, NULL, thread);
 
   return GetClientRect(window, &window_client_area_) &&
-         window_msg_hook_ != NULL && window_proc_hook_ != NULL;
+         SetWindowSubclass(window, (SUBCLASSPROC)input::WindowSubclassProc,
+                           (UINT_PTR) "KEY", (DWORD_PTR)this) &&
+         window_msg_hook_ != NULL;
 }
 
 LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
@@ -353,14 +358,11 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
   return CallNextHookEx(window_msg_hook_, code, word_param, long_param);
 }
 
-LRESULT InputManager::WindowProcHook(_In_ int code, _In_ WPARAM word_param,
-                                     _In_ LPARAM long_param) {
-  CWPSTRUCT *message = NULL;
-
-  if (code >= 0) {
-    message = (CWPSTRUCT *)long_param;
-
-    switch (message->message) {
+LRESULT InputManager::WindowSubclassProc(_In_ HWND window, _In_ UINT message,
+                                         _In_ WPARAM word_param,
+                                         _In_ LPARAM long_param) {
+  if (window == Core::Get()->get_graphics_window()) {
+    switch (message) {
       case WM_ENTERSIZEMOVE:
         resizing_moving_ = true;
         break;
@@ -370,15 +372,21 @@ LRESULT InputManager::WindowProcHook(_In_ int code, _In_ WPARAM word_param,
         break;
 
       case WM_SIZE:
-        GetClientRect(message->hwnd, &window_client_area_);
+        GetClientRect(window, &window_client_area_);
         break;
 
-      default:
+      case WM_SETCURSOR:
+        // Set the cursor if app input is blocked
+        if (block_app_input_ && LOWORD(long_param) == HTCLIENT) {
+          input_hook_.set_cursor_hook_.get_trampoline().Call<HCURSOR, HCURSOR>(
+              block_app_input_cursor_);
+          return 0;
+        }
         break;
     }
   }
 
-  return CallNextHookEx(window_proc_hook_, code, word_param, long_param);
+  return DefSubclassProc(window, message, word_param, long_param);
 }
 
 bool InputManager::get_block_app_input() const { return block_app_input_; }
@@ -386,6 +394,7 @@ bool InputManager::get_block_app_input() const { return block_app_input_; }
 void InputManager::set_block_app_input(bool block_app_input) {
   if (block_app_input_ != block_app_input) {
     if (block_app_input) {
+      // Send WM_KEYUP to pressed keys and save the app's cursor state
       ReleasePressedKeys();
       SaveCursorState();
     } else {
@@ -393,6 +402,24 @@ void InputManager::set_block_app_input(bool block_app_input) {
     }
 
     block_app_input_ = block_app_input;
+
+    // Send WM_SETCURSOR to the window proc to set the cursor
+    SendMessage(Core::Get()->get_graphics_window(), WM_SETCURSOR,
+                (WPARAM)Core::Get()->get_graphics_window(),
+                MAKELPARAM(HTCLIENT, 0));
+  }
+}
+
+void InputManager::set_block_app_input_cursor(HCURSOR cursor) {
+  if (block_app_input_cursor_ != cursor) {
+    block_app_input_cursor_ = cursor;
+
+    if (block_app_input_) {
+      // Send WM_SETCURSOR to the window proc to set the cursor
+      SendMessage(Core::Get()->get_graphics_window(), WM_SETCURSOR,
+                  (WPARAM)Core::Get()->get_graphics_window(),
+                  MAKELPARAM(HTCLIENT, 0));
+    }
   }
 }
 

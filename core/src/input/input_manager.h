@@ -26,16 +26,19 @@ class InputManager {
   bool get_block_app_input() const;
   void set_block_app_input(bool block_app_input);
 
+  void set_block_app_input_cursor(HCURSOR cursor);
+
   InputHook *get_input_hook();
 
  private:
   std::atomic<bool> block_app_input_;
+  std::atomic<HCURSOR> block_app_input_cursor_;
 
-  CursorState cursor_state_;
-  std::mutex cursor_state_mutex_;
+  CursorState app_cursor_state_;
+  std::mutex app_cursor_state_mutex_;
 
   InputHook input_hook_;
-  HHOOK window_msg_hook_, window_proc_hook_;
+  HHOOK window_msg_hook_;
 
   bool resizing_moving_;
   RECT window_client_area_;
@@ -51,15 +54,18 @@ class InputManager {
 
   LRESULT WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
                         _In_ LPARAM long_param);
-  LRESULT WindowProcHook(_In_ int code, _In_ WPARAM word_param,
-                         _In_ LPARAM long_param);
+  LRESULT WindowSubclassProc(_In_ HWND window, _In_ UINT message,
+                             _In_ WPARAM word_param, _In_ LPARAM long_param);
 
   friend LRESULT CALLBACK WindowGetMsgHook(_In_ int code,
                                            _In_ WPARAM word_param,
                                            _In_ LPARAM long_param);
-  friend LRESULT CALLBACK CallWindowProcHook(_In_ int code,
+  friend LRESULT CALLBACK WindowSubclassProc(_In_ HWND window,
+                                             _In_ UINT message,
                                              _In_ WPARAM word_param,
-                                             _In_ LPARAM long_param);
+                                             _In_ LPARAM long_param,
+                                             _In_ UINT_PTR subclass_id,
+                                             _In_ InputManager *input_manager);
 
   friend class InputHook;
 };

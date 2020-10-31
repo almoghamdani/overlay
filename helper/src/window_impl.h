@@ -27,6 +27,9 @@ class WindowImpl : public Window {
   virtual void SetRect(const Rect rect);
   virtual const Rect GetRect() const;
 
+  virtual void SetCursor(const Cursor cursor);
+  virtual const Cursor GetCursor() const;
+
   virtual void UpdateBitmapBuffer(const void* buffer, size_t buffer_size);
 
   virtual void SubscribeToEvent(
@@ -43,6 +46,7 @@ class WindowImpl : public Window {
 
   Rect rect_;
   WindowAttributes attributes_;
+  Cursor cursor_;
 
   std::unordered_map<WindowEventType,
                      std::function<void(std::shared_ptr<WindowEvent>)>>

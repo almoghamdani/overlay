@@ -22,7 +22,8 @@ enum class ErrorCode {
   InvalidBitmapBufferSize,
   InvalidAttributes,
   InjectorNotFound,
-  InvalidEventType
+  InvalidEventType,
+  InvalidCursor
 };
 
 HELPER_EXPORT std::string GetErrorCodeDescription(ErrorCode code);

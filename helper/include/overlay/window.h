@@ -1,6 +1,7 @@
 #ifndef OVERLAY_WINDOW_H
 #define OVERLAY_WINDOW_H
 #include <overlay/color.h>
+#include <overlay/cursor.h>
 #include <overlay/export.h>
 #include <overlay/rect.h>
 #include <overlay/window_events.h>
@@ -37,6 +38,9 @@ class HELPER_EXPORT Window {
 
   virtual void SetRect(const Rect rect) = 0;
   virtual const Rect GetRect() const = 0;
+
+  virtual void SetCursor(const Cursor cursor) = 0;
+  virtual const Cursor GetCursor() const = 0;
 
   virtual void UpdateBitmapBuffer(const void* buffer, size_t buffer_size) = 0;
 
