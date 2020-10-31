@@ -32,9 +32,10 @@ message EventResponse {
 			enum MouseInputType {
 				MOUSE_BUTTON_DOWN = 0;
 				MOUSE_BUTTON_UP = 1;
-				MOUSE_MOVE = 2;
-				MOUSE_VERTICAL_WHEEL = 3;
-				MOUSE_HORIZONTAL_WHEEL = 4;
+				MOUSE_BUTTON_DOUBLE_CLICK = 2;
+				MOUSE_MOVE = 3;
+				MOUSE_VERTICAL_WHEEL = 4;
+				MOUSE_HORIZONTAL_WHEEL = 5;
 			}
 
 			enum MouseButton {

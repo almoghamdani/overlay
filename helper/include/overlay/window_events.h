@@ -165,9 +165,10 @@ struct WindowMouseInputEvent : public WindowEvent {
   enum InputType {
     MouseButtonDown = 0,
     MouseButtonUp = 1,
-    MouseMove = 2,
-    MouseVerticalWheel = 3,
-    MouseHorizontalWheel = 4
+    MouseButtonDoubleClick = 2,
+    MouseMove = 3,
+    MouseVerticalWheel = 4,
+    MouseHorizontalWheel = 5
   };
 
   enum Button {

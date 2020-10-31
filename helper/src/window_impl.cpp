@@ -247,6 +247,7 @@ std::shared_ptr<WindowEvent> WindowImpl::GenerateEvent(
 
         case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN:
         case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP:
+        case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOUBLE_CLICK:
           window_event = new WindowMouseInputEvent(
               (WindowMouseInputEvent::InputType)event.mouseinputevent().type(),
               (size_t)event.mouseinputevent().x(),

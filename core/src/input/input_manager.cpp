@@ -221,40 +221,64 @@ void InputManager::HandleMouseInput(UINT message, POINT point,
     switch (message) {
       case WM_LBUTTONDOWN:
       case WM_LBUTTONUP:
+      case WM_LBUTTONDBLCLK:
         input_event->set_type(
-            message == WM_LBUTTONDOWN
-                ? EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN
-                : EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP);
+            message == WM_LBUTTONDBLCLK
+                ? EventResponse::WindowEvent::MouseInputEvent::
+                      MOUSE_BUTTON_DOUBLE_CLICK
+                : message == WM_LBUTTONDOWN
+                      ? EventResponse::WindowEvent::MouseInputEvent::
+                            MOUSE_BUTTON_DOWN
+                      : EventResponse::WindowEvent::MouseInputEvent::
+                            MOUSE_BUTTON_UP);
         input_event->set_button(
             EventResponse::WindowEvent::MouseInputEvent::LEFT_BUTTON);
         break;
 
       case WM_MBUTTONDOWN:
       case WM_MBUTTONUP:
+      case WM_MBUTTONDBLCLK:
         input_event->set_type(
-            message == WM_MBUTTONDOWN
-                ? EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN
-                : EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP);
+            message == WM_MBUTTONDBLCLK
+                ? EventResponse::WindowEvent::MouseInputEvent::
+                      MOUSE_BUTTON_DOUBLE_CLICK
+                : message == WM_MBUTTONDOWN
+                      ? EventResponse::WindowEvent::MouseInputEvent::
+                            MOUSE_BUTTON_DOWN
+                      : EventResponse::WindowEvent::MouseInputEvent::
+                            MOUSE_BUTTON_UP);
         input_event->set_button(
             EventResponse::WindowEvent::MouseInputEvent::MIDDLE_BUTTON);
         break;
 
       case WM_RBUTTONDOWN:
       case WM_RBUTTONUP:
+      case WM_RBUTTONDBLCLK:
         input_event->set_type(
-            message == WM_RBUTTONDOWN
-                ? EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN
-                : EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP);
+            message == WM_RBUTTONDBLCLK
+                ? EventResponse::WindowEvent::MouseInputEvent::
+                      MOUSE_BUTTON_DOUBLE_CLICK
+                : message == WM_RBUTTONDOWN
+                      ? EventResponse::WindowEvent::MouseInputEvent::
+                            MOUSE_BUTTON_DOWN
+                      : EventResponse::WindowEvent::MouseInputEvent::
+                            MOUSE_BUTTON_UP);
         input_event->set_button(
             EventResponse::WindowEvent::MouseInputEvent::RIGHT_BUTTON);
         break;
 
       case WM_XBUTTONDOWN:
       case WM_XBUTTONUP:
+      case WM_XBUTTONDBLCLK:
         input_event->set_type(
-            message == WM_XBUTTONDOWN
-                ? EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN
-                : EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP);
+            message == WM_XBUTTONDBLCLK
+                ? EventResponse::WindowEvent::MouseInputEvent::
+                      MOUSE_BUTTON_DOUBLE_CLICK
+                : message == WM_XBUTTONDOWN
+                      ? EventResponse::WindowEvent::MouseInputEvent::
+                            MOUSE_BUTTON_DOWN
+                      : EventResponse::WindowEvent::MouseInputEvent::
+                            MOUSE_BUTTON_UP);
         input_event->set_button(
             GET_XBUTTON_WPARAM(word_param) == XBUTTON1
                 ? EventResponse::WindowEvent::MouseInputEvent::X_BUTTON_1
