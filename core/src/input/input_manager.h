@@ -46,6 +46,8 @@ class InputManager {
   void ReleasePressedKeys();
   uint16_t VirtualKeyToScanCode(uint8_t virtual_key);
 
+  void SetCursorCounter(int counter);
+
   void SaveCursorState();
   void RestoreCursorState();
 

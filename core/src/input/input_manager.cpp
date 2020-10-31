@@ -10,6 +10,7 @@
 #include "utils/rect.h"
 
 #define KEY_UP_PASSTHROUGH_LPARAM ((LPARAM)0xA1B3C5D7)
+#define SUBCLASS_WINDOW_MESSAGE (WM_USER + 0xBC)
 
 namespace overlay {
 namespace core {
@@ -86,6 +87,18 @@ uint16_t InputManager::VirtualKeyToScanCode(uint8_t virtual_key) {
   return scan_code;
 }
 
+void InputManager::SetCursorCounter(int counter) {
+  int cursor_count =
+      input_hook_.show_cursor_hook_.get_trampoline().CallStdMethod<int>(false);
+  bool show_cursor = cursor_count < counter;
+
+  while (cursor_count != counter) {
+    cursor_count =
+        input_hook_.show_cursor_hook_.get_trampoline().CallStdMethod<int>(
+            show_cursor);
+  }
+}
+
 void InputManager::SaveCursorState() {
   std::lock_guard app_cursor_state_lk(app_cursor_state_mutex_);
 
@@ -109,16 +122,8 @@ void InputManager::SaveCursorState() {
 void InputManager::RestoreCursorState() {
   std::lock_guard app_cursor_state_lk(app_cursor_state_mutex_);
 
-  int cursor_count =
-      input_hook_.show_cursor_hook_.get_trampoline().CallStdMethod<int>(false);
-  bool show_cursor = cursor_count < app_cursor_state_.cursor_count;
-
   // Restore cursor count
-  while (cursor_count != app_cursor_state_.cursor_count) {
-    cursor_count =
-        input_hook_.show_cursor_hook_.get_trampoline().CallStdMethod<int>(
-            show_cursor);
-  }
+  SetCursorCounter(app_cursor_state_.cursor_count);
 
   input_hook_.set_cursor_hook_.get_trampoline().CallStdMethod<HCURSOR>(
       app_cursor_state_.cursor_handle);
@@ -289,8 +294,7 @@ bool InputManager::HookWindow(HWND window) {
       SetWindowsHookExW(WH_GETMESSAGE, WindowGetMsgHook, NULL, thread);
 
   return GetClientRect(window, &window_client_area_) &&
-         SetWindowSubclass(window, (SUBCLASSPROC)input::WindowSubclassProc,
-                           (UINT_PTR) "KEY", (DWORD_PTR)this) &&
+         PostMessage(window, SUBCLASS_WINDOW_MESSAGE, NULL, NULL) &&
          window_msg_hook_ != NULL;
 }
 
@@ -304,6 +308,16 @@ LRESULT InputManager::WindowMsgHook(_In_ int code, _In_ WPARAM word_param,
     // Check that the message is for the correct window
     if (message->hwnd == Core::Get()->get_graphics_window() &&
         word_param == PM_REMOVE) {
+      if (message->message == SUBCLASS_WINDOW_MESSAGE) {
+        if (!SetWindowSubclass(message->hwnd,
+                               (SUBCLASSPROC)input::WindowSubclassProc,
+                               (UINT_PTR)this, (DWORD_PTR)this)) {
+          LOG_F(ERROR, "Unable to install window subclass!");
+        }
+        message->message = WM_NULL;
+        return 0;
+      }
+
       if (message->message >= WM_KEYFIRST && message->message <= WM_KEYLAST) {
         // Pass-throguh key-up for application
         if (message->message == WM_KEYUP &&
@@ -402,6 +416,9 @@ void InputManager::set_block_app_input(bool block_app_input) {
     }
 
     block_app_input_ = block_app_input;
+
+    // Show cursor
+    SetCursorCounter(0);
 
     // Send WM_SETCURSOR to the window proc to set the cursor
     SendMessage(Core::Get()->get_graphics_window(), WM_SETCURSOR,
