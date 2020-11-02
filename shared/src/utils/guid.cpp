@@ -13,7 +13,7 @@ GUID Guid::GenerateGuid() {
   return guid;
 }
 
-std::string Guid::GuidToString(GUID *guid) {
+std::string Guid::GuidToString(const GUID *guid) {
   char guid_string[37];  // 32 hex chars + 4 hyphens + null terminator
 
   snprintf(guid_string, sizeof(guid_string),

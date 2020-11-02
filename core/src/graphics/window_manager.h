@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "color.h"
+#include "events.pb.h"
 #include "graphics_renderer.h"
 #include "sprite.h"
 #include "utils/guid.h"
@@ -19,33 +20,36 @@ namespace graphics {
 
 class WindowManager {
  public:
-  WindowManager();
-
   GUID CreateWindowGroup(std::string client_id,
                          WindowGroupAttributes attributes);
-  bool UpdateWindowGroupAttributes(GUID id, WindowGroupAttributes attributes);
-  std::string GetWindowGroupClientId(GUID id);
-  void DestroyWindowGroup(GUID id);
+  bool UpdateWindowGroupAttributes(const WindowGroupUniqueId &id,
+                                   const WindowGroupAttributes &attributes);
+  void DestroyWindowGroup(const WindowGroupUniqueId &id);
 
-  GUID CreateWindowInGroup(GUID group_id, Rect rect,
-                           WindowAttributes attributes);
-  bool UpdateWindowAttributes(GUID group_id, GUID window_id,
-                              WindowAttributes attributes);
-  bool SetWindowRect(GUID group_id, GUID window_id, Rect rect);
-  bool SetWindowCursor(GUID group_id, GUID window_id, HCURSOR cursor);
-  void UpdateWindowBufferInGroup(GUID group_id, GUID window_id,
-                                 std::string&& buffer);
-  void DestroyWindowInGroup(GUID group_id, GUID window_id);
+  GUID CreateWindowInGroup(const WindowGroupUniqueId &group_id,
+                           const Rect &rect,
+                           const WindowAttributes &attributes);
+  bool UpdateWindowAttributes(const WindowUniqueId &id,
+                              const WindowAttributes &attributes);
+  bool SetWindowRect(const WindowUniqueId &id, const Rect &rect);
+  bool SetWindowCursor(const WindowUniqueId &id, const HCURSOR cursor);
+  void UpdateWindowBufferInGroup(const WindowUniqueId &id,
+                                 std::string &&buffer);
+  void DestroyWindowInGroup(const WindowUniqueId &id);
 
-  void RenderWindows(std::unique_ptr<IGraphicsRenderer>& renderer);
+  void RenderWindows(std::unique_ptr<IGraphicsRenderer> &renderer);
   void OnResize();
 
+  void SendWindowEventToFocusedWindow(EventResponse &event);
   std::shared_ptr<Window> GetFocusedWindow();
 
  private:
-  std::unordered_map<GUID, std::shared_ptr<WindowGroup>> window_groups_;
-  std::shared_ptr<WindowGroup> focused_window_group_;
+  std::unordered_map<WindowGroupUniqueId, std::shared_ptr<WindowGroup>>
+      window_groups_;
   std::mutex window_groups_mutex_;
+
+  WindowUniqueId focused_window_id_;
+  std::mutex focused_window_id_mutex_;
 
   std::vector<std::shared_ptr<Sprite>> sprites_;
   std::mutex sprites_mutex_;
@@ -56,6 +60,9 @@ class WindowManager {
   void FocusWindow(std::shared_ptr<Window> window);
 
   std::shared_ptr<Window> CreateBufferWindow(Color color, double opacity);
+
+  std::shared_ptr<Window> GetWindowWithId(const WindowUniqueId &id);
+  const WindowUniqueId GetFocusedWindowId();
 };
 
 }  // namespace graphics

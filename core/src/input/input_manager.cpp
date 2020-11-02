@@ -137,51 +137,40 @@ void InputManager::RestoreCursorState() {
 }
 
 void InputManager::HandleKeyboardInput(UINT message, uint32_t param) {
-  std::shared_ptr<graphics::Window> focused_window =
-      Core::Get()
-          ->get_graphics_manager()
-          ->get_window_manager()
-          ->GetFocusedWindow();
-
   EventResponse event;
   EventResponse::WindowEvent *window_event = event.mutable_windowevent();
   EventResponse::WindowEvent::KeyboardInputEvent *input_event =
       window_event->mutable_keyboardinputevent();
 
-  if (focused_window) {
-    window_event->set_windowgroupid((const char *)&focused_window->group_id,
-                                    sizeof(focused_window->group_id));
-    window_event->set_windowid((const char *)&focused_window->id,
-                               sizeof(focused_window->id));
+  input_event->set_code(param);
 
-    input_event->set_code(param);
+  switch (message) {
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+      input_event->set_type(
+          EventResponse::WindowEvent::KeyboardInputEvent::KEY_DOWN);
+      break;
 
-    switch (message) {
-      case WM_KEYDOWN:
-      case WM_SYSKEYDOWN:
-        input_event->set_type(
-            EventResponse::WindowEvent::KeyboardInputEvent::KEY_DOWN);
-        break;
+    case WM_CHAR:
+    case WM_SYSCHAR:
+      input_event->set_type(
+          EventResponse::WindowEvent::KeyboardInputEvent::CHAR);
+      break;
 
-      case WM_CHAR:
-      case WM_SYSCHAR:
-        input_event->set_type(
-            EventResponse::WindowEvent::KeyboardInputEvent::CHAR);
-        break;
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+      input_event->set_type(
+          EventResponse::WindowEvent::KeyboardInputEvent::KEY_UP);
+      break;
 
-      case WM_KEYUP:
-      case WM_SYSKEYUP:
-        input_event->set_type(
-            EventResponse::WindowEvent::KeyboardInputEvent::KEY_UP);
-        break;
-
-      default:
-        return;
-    }
-
-    Core::Get()->get_rpc_server()->get_events_service()->SendEventToClient(
-        focused_window->client_id, event);
+    default:
+      return;
   }
+
+  Core::Get()
+      ->get_graphics_manager()
+      ->get_window_manager()
+      ->SendWindowEventToFocusedWindow(event);
 }
 
 void InputManager::HandleMouseInput(UINT message, POINT point,
@@ -191,6 +180,9 @@ void InputManager::HandleMouseInput(UINT message, POINT point,
           ->get_graphics_manager()
           ->get_window_manager()
           ->GetFocusedWindow();
+  if (!focused_window) {
+    return;
+  }
 
   graphics::Rect focused_window_rect;
 
@@ -199,116 +191,107 @@ void InputManager::HandleMouseInput(UINT message, POINT point,
   EventResponse::WindowEvent::MouseInputEvent *input_event =
       window_event->mutable_mouseinputevent();
 
-  if (focused_window) {
-    {
-      std::lock_guard window_lk(focused_window->mutex);
-      focused_window_rect = focused_window->rect;
-    }
-
-    // Check the point is inside the window
-    if (!utils::Rect::PointInRect(point, focused_window->rect)) {
-      return;
-    }
-
-    window_event->set_windowgroupid((const char *)&focused_window->group_id,
-                                    sizeof(focused_window->group_id));
-    window_event->set_windowid((const char *)&focused_window->id,
-                               sizeof(focused_window->id));
-
-    input_event->set_x(point.x - focused_window->rect.x);
-    input_event->set_y(point.y - focused_window->rect.y);
-
-    switch (message) {
-      case WM_LBUTTONDOWN:
-      case WM_LBUTTONUP:
-      case WM_LBUTTONDBLCLK:
-        input_event->set_type(
-            message == WM_LBUTTONDBLCLK
-                ? EventResponse::WindowEvent::MouseInputEvent::
-                      MOUSE_BUTTON_DOUBLE_CLICK
-                : message == WM_LBUTTONDOWN
-                      ? EventResponse::WindowEvent::MouseInputEvent::
-                            MOUSE_BUTTON_DOWN
-                      : EventResponse::WindowEvent::MouseInputEvent::
-                            MOUSE_BUTTON_UP);
-        input_event->set_button(
-            EventResponse::WindowEvent::MouseInputEvent::LEFT_BUTTON);
-        break;
-
-      case WM_MBUTTONDOWN:
-      case WM_MBUTTONUP:
-      case WM_MBUTTONDBLCLK:
-        input_event->set_type(
-            message == WM_MBUTTONDBLCLK
-                ? EventResponse::WindowEvent::MouseInputEvent::
-                      MOUSE_BUTTON_DOUBLE_CLICK
-                : message == WM_MBUTTONDOWN
-                      ? EventResponse::WindowEvent::MouseInputEvent::
-                            MOUSE_BUTTON_DOWN
-                      : EventResponse::WindowEvent::MouseInputEvent::
-                            MOUSE_BUTTON_UP);
-        input_event->set_button(
-            EventResponse::WindowEvent::MouseInputEvent::MIDDLE_BUTTON);
-        break;
-
-      case WM_RBUTTONDOWN:
-      case WM_RBUTTONUP:
-      case WM_RBUTTONDBLCLK:
-        input_event->set_type(
-            message == WM_RBUTTONDBLCLK
-                ? EventResponse::WindowEvent::MouseInputEvent::
-                      MOUSE_BUTTON_DOUBLE_CLICK
-                : message == WM_RBUTTONDOWN
-                      ? EventResponse::WindowEvent::MouseInputEvent::
-                            MOUSE_BUTTON_DOWN
-                      : EventResponse::WindowEvent::MouseInputEvent::
-                            MOUSE_BUTTON_UP);
-        input_event->set_button(
-            EventResponse::WindowEvent::MouseInputEvent::RIGHT_BUTTON);
-        break;
-
-      case WM_XBUTTONDOWN:
-      case WM_XBUTTONUP:
-      case WM_XBUTTONDBLCLK:
-        input_event->set_type(
-            message == WM_XBUTTONDBLCLK
-                ? EventResponse::WindowEvent::MouseInputEvent::
-                      MOUSE_BUTTON_DOUBLE_CLICK
-                : message == WM_XBUTTONDOWN
-                      ? EventResponse::WindowEvent::MouseInputEvent::
-                            MOUSE_BUTTON_DOWN
-                      : EventResponse::WindowEvent::MouseInputEvent::
-                            MOUSE_BUTTON_UP);
-        input_event->set_button(
-            GET_XBUTTON_WPARAM(word_param) == XBUTTON1
-                ? EventResponse::WindowEvent::MouseInputEvent::X_BUTTON_1
-                : EventResponse::WindowEvent::MouseInputEvent::X_BUTTON_2);
-        break;
-
-      case WM_MOUSEMOVE:
-        input_event->set_type(
-            EventResponse::WindowEvent::MouseInputEvent::MOUSE_MOVE);
-        break;
-
-      case WM_MOUSEWHEEL:
-        input_event->set_type(
-            EventResponse::WindowEvent::MouseInputEvent::MOUSE_VERTICAL_WHEEL);
-        input_event->set_wheeldelta(GET_WHEEL_DELTA_WPARAM(word_param));
-        break;
-
-      case WM_MOUSEHWHEEL:
-        input_event->set_type(EventResponse::WindowEvent::MouseInputEvent::
-                                  MOUSE_HORIZONTAL_WHEEL);
-        input_event->set_wheeldelta(GET_WHEEL_DELTA_WPARAM(word_param));
-        break;
-
-      default:
-        return;
-    }
-
-    Core::Get()->get_rpc_server()->get_events_service()->SendEventToClient(
-        focused_window->client_id, event);
+  {
+    std::lock_guard window_lk(focused_window->mutex);
+    focused_window_rect = focused_window->rect;
   }
+
+  // Check the point is inside the window
+  if (!utils::Rect::PointInRect(point, focused_window->rect)) {
+    return;
+  }
+
+  input_event->set_x(point.x - focused_window->rect.x);
+  input_event->set_y(point.y - focused_window->rect.y);
+
+  switch (message) {
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_LBUTTONDBLCLK:
+      input_event->set_type(message == WM_LBUTTONDBLCLK
+                                ? EventResponse::WindowEvent::MouseInputEvent::
+                                      MOUSE_BUTTON_DOUBLE_CLICK
+                                : message == WM_LBUTTONDOWN
+                                      ? EventResponse::WindowEvent::
+                                            MouseInputEvent::MOUSE_BUTTON_DOWN
+                                      : EventResponse::WindowEvent::
+                                            MouseInputEvent::MOUSE_BUTTON_UP);
+      input_event->set_button(
+          EventResponse::WindowEvent::MouseInputEvent::LEFT_BUTTON);
+      break;
+
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MBUTTONDBLCLK:
+      input_event->set_type(message == WM_MBUTTONDBLCLK
+                                ? EventResponse::WindowEvent::MouseInputEvent::
+                                      MOUSE_BUTTON_DOUBLE_CLICK
+                                : message == WM_MBUTTONDOWN
+                                      ? EventResponse::WindowEvent::
+                                            MouseInputEvent::MOUSE_BUTTON_DOWN
+                                      : EventResponse::WindowEvent::
+                                            MouseInputEvent::MOUSE_BUTTON_UP);
+      input_event->set_button(
+          EventResponse::WindowEvent::MouseInputEvent::MIDDLE_BUTTON);
+      break;
+
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_RBUTTONDBLCLK:
+      input_event->set_type(message == WM_RBUTTONDBLCLK
+                                ? EventResponse::WindowEvent::MouseInputEvent::
+                                      MOUSE_BUTTON_DOUBLE_CLICK
+                                : message == WM_RBUTTONDOWN
+                                      ? EventResponse::WindowEvent::
+                                            MouseInputEvent::MOUSE_BUTTON_DOWN
+                                      : EventResponse::WindowEvent::
+                                            MouseInputEvent::MOUSE_BUTTON_UP);
+      input_event->set_button(
+          EventResponse::WindowEvent::MouseInputEvent::RIGHT_BUTTON);
+      break;
+
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONUP:
+    case WM_XBUTTONDBLCLK:
+      input_event->set_type(message == WM_XBUTTONDBLCLK
+                                ? EventResponse::WindowEvent::MouseInputEvent::
+                                      MOUSE_BUTTON_DOUBLE_CLICK
+                                : message == WM_XBUTTONDOWN
+                                      ? EventResponse::WindowEvent::
+                                            MouseInputEvent::MOUSE_BUTTON_DOWN
+                                      : EventResponse::WindowEvent::
+                                            MouseInputEvent::MOUSE_BUTTON_UP);
+      input_event->set_button(
+          GET_XBUTTON_WPARAM(word_param) == XBUTTON1
+              ? EventResponse::WindowEvent::MouseInputEvent::X_BUTTON_1
+              : EventResponse::WindowEvent::MouseInputEvent::X_BUTTON_2);
+      break;
+
+    case WM_MOUSEMOVE:
+      input_event->set_type(
+          EventResponse::WindowEvent::MouseInputEvent::MOUSE_MOVE);
+      break;
+
+    case WM_MOUSEWHEEL:
+      input_event->set_type(
+          EventResponse::WindowEvent::MouseInputEvent::MOUSE_VERTICAL_WHEEL);
+      input_event->set_wheeldelta(GET_WHEEL_DELTA_WPARAM(word_param));
+      break;
+
+    case WM_MOUSEHWHEEL:
+      input_event->set_type(
+          EventResponse::WindowEvent::MouseInputEvent::MOUSE_HORIZONTAL_WHEEL);
+      input_event->set_wheeldelta(GET_WHEEL_DELTA_WPARAM(word_param));
+      break;
+
+    default:
+      return;
+  }
+
+  Core::Get()
+      ->get_graphics_manager()
+      ->get_window_manager()
+      ->SendWindowEventToFocusedWindow(event);
 }
 
 bool InputManager::HookWindow(HWND window) {

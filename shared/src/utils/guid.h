@@ -24,7 +24,7 @@ namespace utils {
 class Guid {
  public:
   static GUID GenerateGuid();
-  static std::string GuidToString(GUID *guid);
+  static std::string GuidToString(const GUID *guid);
 };
 
 }  // namespace utils

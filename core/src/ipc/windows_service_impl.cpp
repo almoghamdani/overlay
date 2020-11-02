@@ -43,24 +43,15 @@ grpc::Status WindowsServiceImpl::UpdateWindowGroupProperties(
     grpc::ServerContext *context,
     const UpdateWindowGroupPropertiesRequest *request,
     UpdateWindowGroupPropertiesResponse *response) {
-  GUID window_group_id;
+  graphics::WindowGroupUniqueId id(GUID_NULL, context->peer());
 
   graphics::WindowGroupAttributes attributes;
 
-  // Verify the client created the window group
-  if (request->group_id().size() != sizeof(window_group_id)) {
+  // Verify the size of the group id
+  if (request->group_id().size() != sizeof(id.group_id)) {
     return grpc::Status::CANCELLED;
-  } else {
-    memcpy(&window_group_id, request->group_id().data(),
-           sizeof(window_group_id));
-
-    if (Core::Get()
-            ->get_graphics_manager()
-            ->get_window_manager()
-            ->GetWindowGroupClientId(window_group_id) != context->peer()) {
-      return grpc::Status::CANCELLED;
-    }
   }
+  memcpy(&id.group_id, request->group_id().data(), sizeof(id.group_id));
 
   attributes.z = (int32_t)request->properties().z();
   attributes.opacity = request->properties().opacity();
@@ -79,7 +70,7 @@ grpc::Status WindowsServiceImpl::UpdateWindowGroupProperties(
   if (!Core::Get()
            ->get_graphics_manager()
            ->get_window_manager()
-           ->UpdateWindowGroupAttributes(window_group_id, attributes)) {
+           ->UpdateWindowGroupAttributes(id, attributes)) {
     return grpc::Status::CANCELLED;
   }
 
@@ -89,25 +80,18 @@ grpc::Status WindowsServiceImpl::UpdateWindowGroupProperties(
 grpc::Status WindowsServiceImpl::CreateWindowInGroup(
     grpc::ServerContext *context, const CreateWindowRequest *request,
     CreateWindowResponse *response) {
-  GUID window_group_id, window_id;
+  GUID window_id = GUID_NULL;
+  graphics::WindowGroupUniqueId group_id(GUID_NULL, context->peer());
 
   graphics::Rect rect;
   graphics::WindowAttributes attributes;
 
-  // Verify the client created the window group
-  if (request->group_id().size() != sizeof(window_group_id)) {
+  // Verify the size of the group id
+  if (request->group_id().size() != sizeof(group_id.group_id)) {
     return grpc::Status::CANCELLED;
-  } else {
-    memcpy(&window_group_id, request->group_id().data(),
-           sizeof(window_group_id));
-
-    if (Core::Get()
-            ->get_graphics_manager()
-            ->get_window_manager()
-            ->GetWindowGroupClientId(window_group_id) != context->peer()) {
-      return grpc::Status::CANCELLED;
-    }
   }
+  memcpy(&group_id.group_id, request->group_id().data(),
+         sizeof(group_id.group_id));
 
   rect.width = (size_t)request->rect().width();
   rect.height = (size_t)request->rect().height();
@@ -122,10 +106,13 @@ grpc::Status WindowsServiceImpl::CreateWindowInGroup(
   }
 
   // Create the new window for the client
-  window_id = Core::Get()
-                  ->get_graphics_manager()
-                  ->get_window_manager()
-                  ->CreateWindowInGroup(window_group_id, rect, attributes);
+  if ((window_id = Core::Get()
+                       ->get_graphics_manager()
+                       ->get_window_manager()
+                       ->CreateWindowInGroup(group_id, rect, attributes)) ==
+      GUID_NULL) {
+    return grpc::Status::CANCELLED;
+  }
 
   // Set the window id
   response->set_id((const char *)&window_id, sizeof(window_id));
@@ -136,24 +123,21 @@ grpc::Status WindowsServiceImpl::CreateWindowInGroup(
 grpc::Status WindowsServiceImpl::UpdateWindowProperties(
     grpc::ServerContext *context, const UpdateWindowPropertiesRequest *request,
     UpdateWindowPropertiesResponse *response) {
-  GUID window_group_id, window_id;
+  graphics::WindowUniqueId id(GUID_NULL, GUID_NULL, context->peer());
 
   graphics::WindowAttributes attributes;
 
-  // Verify the client created the window group
-  if (request->group_id().size() != sizeof(window_group_id)) {
+  // Verify the size of the group id
+  if (request->group_id().size() != sizeof(id.group_id)) {
     return grpc::Status::CANCELLED;
-  } else {
-    memcpy(&window_group_id, request->group_id().data(),
-           sizeof(window_group_id));
-
-    if (Core::Get()
-            ->get_graphics_manager()
-            ->get_window_manager()
-            ->GetWindowGroupClientId(window_group_id) != context->peer()) {
-      return grpc::Status::CANCELLED;
-    }
   }
+  memcpy(&id.group_id, request->group_id().data(), sizeof(id.group_id));
+
+  // Verify the size of the window id
+  if (request->window_id().size() != sizeof(id.window_id)) {
+    return grpc::Status::CANCELLED;
+  }
+  memcpy(&id.window_id, request->window_id().data(), sizeof(id.window_id));
 
   attributes.opacity = request->properties().opacity();
   attributes.hidden = request->properties().hidden();
@@ -163,17 +147,11 @@ grpc::Status WindowsServiceImpl::UpdateWindowProperties(
     return grpc::Status::CANCELLED;
   }
 
-  // Verify the size of the window id
-  if (request->window_id().size() != sizeof(window_id)) {
-    return grpc::Status::CANCELLED;
-  }
-  memcpy(&window_id, request->window_id().data(), sizeof(window_id));
-
   // Update attributes
   if (!Core::Get()
            ->get_graphics_manager()
            ->get_window_manager()
-           ->UpdateWindowAttributes(window_group_id, window_id, attributes)) {
+           ->UpdateWindowAttributes(id, attributes)) {
     return grpc::Status::CANCELLED;
   }
 
@@ -183,39 +161,30 @@ grpc::Status WindowsServiceImpl::UpdateWindowProperties(
 grpc::Status WindowsServiceImpl::SetWindowRect(
     grpc::ServerContext *context, const SetWindowRectRequest *request,
     SetWindowRectResponse *response) {
-  GUID window_group_id, window_id;
+  graphics::WindowUniqueId id(GUID_NULL, GUID_NULL, context->peer());
 
   graphics::Rect rect;
 
-  // Verify the client created the window group
-  if (request->group_id().size() != sizeof(window_group_id)) {
+  // Verify the size of the group id
+  if (request->group_id().size() != sizeof(id.group_id)) {
     return grpc::Status::CANCELLED;
-  } else {
-    memcpy(&window_group_id, request->group_id().data(),
-           sizeof(window_group_id));
-
-    if (Core::Get()
-            ->get_graphics_manager()
-            ->get_window_manager()
-            ->GetWindowGroupClientId(window_group_id) != context->peer()) {
-      return grpc::Status::CANCELLED;
-    }
   }
+  memcpy(&id.group_id, request->group_id().data(), sizeof(id.group_id));
+
+  // Verify the size of the window id
+  if (request->window_id().size() != sizeof(id.window_id)) {
+    return grpc::Status::CANCELLED;
+  }
+  memcpy(&id.window_id, request->window_id().data(), sizeof(id.window_id));
 
   rect.height = (size_t)request->rect().height();
   rect.width = (size_t)request->rect().width();
   rect.x = (size_t)request->rect().x();
   rect.y = (size_t)request->rect().y();
 
-  // Verify the size of the window id
-  if (request->window_id().size() != sizeof(window_id)) {
-    return grpc::Status::CANCELLED;
-  }
-  memcpy(&window_id, request->window_id().data(), sizeof(window_id));
-
   // Update rect
   if (!Core::Get()->get_graphics_manager()->get_window_manager()->SetWindowRect(
-          window_group_id, window_id, rect)) {
+          id, rect)) {
     return grpc::Status::CANCELLED;
   }
 
@@ -225,25 +194,22 @@ grpc::Status WindowsServiceImpl::SetWindowRect(
 grpc::Status WindowsServiceImpl::SetWindowCursor(
     grpc::ServerContext *context, const SetWindowCursorRequest *request,
     SetWindowCursorResponse *response) {
-  GUID window_group_id, window_id;
+  graphics::WindowUniqueId id(GUID_NULL, GUID_NULL, context->peer());
 
   HINSTANCE instance = Core::Get()->get_instance();
   HCURSOR cursor = NULL;
 
-  // Verify the client created the window group
-  if (request->group_id().size() != sizeof(window_group_id)) {
+  // Verify the size of the group id
+  if (request->group_id().size() != sizeof(id.group_id)) {
     return grpc::Status::CANCELLED;
-  } else {
-    memcpy(&window_group_id, request->group_id().data(),
-           sizeof(window_group_id));
-
-    if (Core::Get()
-            ->get_graphics_manager()
-            ->get_window_manager()
-            ->GetWindowGroupClientId(window_group_id) != context->peer()) {
-      return grpc::Status::CANCELLED;
-    }
   }
+  memcpy(&id.group_id, request->group_id().data(), sizeof(id.group_id));
+
+  // Verify the size of the window id
+  if (request->window_id().size() != sizeof(id.window_id)) {
+    return grpc::Status::CANCELLED;
+  }
+  memcpy(&id.window_id, request->window_id().data(), sizeof(id.window_id));
 
   switch (request->cursor()) {
     case Cursor::NONE:
@@ -390,17 +356,11 @@ grpc::Status WindowsServiceImpl::SetWindowCursor(
       return grpc::Status::CANCELLED;
   }
 
-  // Verify the size of the window id
-  if (request->window_id().size() != sizeof(window_id)) {
-    return grpc::Status::CANCELLED;
-  }
-  memcpy(&window_id, request->window_id().data(), sizeof(window_id));
-
   // Update cursor
   if (!Core::Get()
            ->get_graphics_manager()
            ->get_window_manager()
-           ->SetWindowCursor(window_group_id, window_id, cursor)) {
+           ->SetWindowCursor(id, cursor)) {
     return grpc::Status::CANCELLED;
   }
 
@@ -410,36 +370,27 @@ grpc::Status WindowsServiceImpl::SetWindowCursor(
 grpc::Status WindowsServiceImpl::BufferForWindow(
     grpc::ServerContext *context, const BufferForWindowRequest *request,
     BufferForWindowResponse *response) {
-  GUID window_group_id, window_id;
+  graphics::WindowUniqueId id(GUID_NULL, GUID_NULL, context->peer());
 
   std::shared_ptr<graphics::Window> window;
 
-  // Verify the client created the window group
-  if (request->group_id().size() != sizeof(window_group_id)) {
+  // Verify the size of the group id
+  if (request->group_id().size() != sizeof(id.group_id)) {
     return grpc::Status::CANCELLED;
-  } else {
-    memcpy(&window_group_id, request->group_id().data(),
-           sizeof(window_group_id));
-
-    if (Core::Get()
-            ->get_graphics_manager()
-            ->get_window_manager()
-            ->GetWindowGroupClientId(window_group_id) != context->peer()) {
-      return grpc::Status::CANCELLED;
-    }
   }
+  memcpy(&id.group_id, request->group_id().data(), sizeof(id.group_id));
 
   // Verify the size of the window id
-  if (request->window_id().size() != sizeof(window_id)) {
+  if (request->window_id().size() != sizeof(id.window_id)) {
     return grpc::Status::CANCELLED;
   }
-  memcpy(&window_id, request->window_id().data(), sizeof(window_id));
+  memcpy(&id.window_id, request->window_id().data(), sizeof(id.window_id));
 
   // Set the buffer for the window
   Core::Get()
       ->get_graphics_manager()
       ->get_window_manager()
-      ->UpdateWindowBufferInGroup(window_group_id, window_id,
+      ->UpdateWindowBufferInGroup(id,
                                   std::move((std::string &)request->buffer()));
 
   return grpc::Status::OK;
