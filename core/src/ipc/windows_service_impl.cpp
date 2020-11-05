@@ -93,10 +93,10 @@ grpc::Status WindowsServiceImpl::CreateWindowInGroup(
   memcpy(&group_id.group_id, request->group_id().data(),
          sizeof(group_id.group_id));
 
-  rect.width = (size_t)request->rect().width();
-  rect.height = (size_t)request->rect().height();
-  rect.x = (size_t)request->rect().x();
-  rect.y = (size_t)request->rect().y();
+  rect.width = (uint32_t)request->rect().width();
+  rect.height = (uint32_t)request->rect().height();
+  rect.x = (int32_t)request->rect().x();
+  rect.y = (int32_t)request->rect().y();
   attributes.opacity = request->properties().opacity();
   attributes.hidden = request->properties().hidden();
 
@@ -177,10 +177,10 @@ grpc::Status WindowsServiceImpl::SetWindowRect(
   }
   memcpy(&id.window_id, request->window_id().data(), sizeof(id.window_id));
 
-  rect.height = (size_t)request->rect().height();
-  rect.width = (size_t)request->rect().width();
-  rect.x = (size_t)request->rect().x();
-  rect.y = (size_t)request->rect().y();
+  rect.height = (uint32_t)request->rect().height();
+  rect.width = (uint32_t)request->rect().width();
+  rect.x = (int32_t)request->rect().x();
+  rect.y = (int32_t)request->rect().y();
 
   // Update rect
   if (!Core::Get()->get_graphics_manager()->get_window_manager()->SetWindowRect(
