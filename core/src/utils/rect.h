@@ -16,10 +16,10 @@ class Rect {
 
   template <typename P>
   inline static bool PointInRect(P point, core::graphics::Rect rect) {
-    return (size_t)point.x >= rect.x &&
-           (size_t)point.x <= (rect.x + rect.width) &&
-           (size_t)point.y >= rect.y &&
-           (size_t)point.y <= (rect.y + rect.height);
+    return (int32_t)point.x >= rect.x &&
+           (int32_t)point.x <= (rect.x + (int32_t)rect.width) &&
+           (int32_t)point.y >= rect.y &&
+           (int32_t)point.y <= (rect.y + (int32_t)rect.height);
   }
 };
 

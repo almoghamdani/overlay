@@ -21,7 +21,7 @@ class Dx9Renderer : public IGraphicsRenderer {
   virtual void RenderSprites(
       const std::vector<std::shared_ptr<Sprite>> &sprites);
 
-  virtual void OnResize(size_t width, size_t height, bool fullscreen);
+  virtual void OnResize(uint32_t width, uint32_t height, bool fullscreen);
 
  private:
   HMODULE d3dx9_module_;

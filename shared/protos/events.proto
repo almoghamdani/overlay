@@ -47,8 +47,8 @@ message EventResponse {
 			}
 
 			MouseInputType type = 1;
-			uint64 x = 2;
-			uint64 y = 3;
+			sint64 x = 2;
+			sint64 y = 3;
 			MouseButton button = 4;
 			sint32 wheelDelta = 5;
 		}

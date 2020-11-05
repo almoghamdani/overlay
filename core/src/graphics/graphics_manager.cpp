@@ -66,7 +66,8 @@ void GraphicsManager::Render() {
   }
 }
 
-void GraphicsManager::OnResize(size_t width, size_t height, bool fullscreen) {
+void GraphicsManager::OnResize(uint32_t width, uint32_t height,
+                               bool fullscreen) {
   window_mananger_.OnResize();
 
   if (renderer_) {

@@ -175,34 +175,10 @@ void InputManager::HandleKeyboardInput(UINT message, uint32_t param) {
 
 void InputManager::HandleMouseInput(UINT message, POINT point,
                                     WPARAM word_param) {
-  std::shared_ptr<graphics::Window> focused_window =
-      Core::Get()
-          ->get_graphics_manager()
-          ->get_window_manager()
-          ->GetFocusedWindow();
-  if (!focused_window) {
-    return;
-  }
-
-  graphics::Rect focused_window_rect;
-
   EventResponse event;
   EventResponse::WindowEvent *window_event = event.mutable_windowevent();
   EventResponse::WindowEvent::MouseInputEvent *input_event =
       window_event->mutable_mouseinputevent();
-
-  {
-    std::lock_guard window_lk(focused_window->mutex);
-    focused_window_rect = focused_window->rect;
-  }
-
-  // Check the point is inside the window
-  if (!utils::Rect::PointInRect(point, focused_window->rect)) {
-    return;
-  }
-
-  input_event->set_x(point.x - focused_window->rect.x);
-  input_event->set_y(point.y - focused_window->rect.y);
 
   switch (message) {
     case WM_LBUTTONDOWN:
@@ -288,10 +264,8 @@ void InputManager::HandleMouseInput(UINT message, POINT point,
       return;
   }
 
-  Core::Get()
-      ->get_graphics_manager()
-      ->get_window_manager()
-      ->SendWindowEventToFocusedWindow(event);
+  Core::Get()->get_graphics_manager()->get_window_manager()->HandleMouseEvent(
+      event, point);
 }
 
 bool InputManager::HookWindow(HWND window) {

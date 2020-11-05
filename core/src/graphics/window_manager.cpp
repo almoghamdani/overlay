@@ -5,6 +5,7 @@
 
 #include "core.h"
 #include "utils/guid.h"
+#include "utils/rect.h"
 
 namespace overlay {
 namespace core {
@@ -33,7 +34,7 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
   UpdateBlockAppInput();
 
   if (attributes.has_buffer) {
-    UpdateSprites();
+    UpdateWindows();
   }
 
   DLOG_F(INFO, "Created new window group (ID: '%s') for client '%s'.",
@@ -115,7 +116,7 @@ bool WindowManager::UpdateWindowGroupAttributes(
   UpdateBlockAppInput();
 
   if (update_sprites) {
-    UpdateSprites();
+    UpdateWindows();
   }
 
   return true;
@@ -127,8 +128,8 @@ void WindowManager::DestroyWindowGroup(const WindowGroupUniqueId &id) {
     window_groups_.erase(id);
   }
 
-  // Update the sprites
-  UpdateSprites();
+  // Update the windows
+  UpdateWindows();
 }
 
 GUID WindowManager::CreateWindowInGroup(const WindowGroupUniqueId &group_id,
@@ -171,8 +172,8 @@ GUID WindowManager::CreateWindowInGroup(const WindowGroupUniqueId &group_id,
          utils::Guid::GuidToString(&id).c_str(), rect.width, rect.height,
          utils::Guid::GuidToString(&group_id.group_id).c_str());
 
-  // Update the sprites
-  UpdateSprites();
+  // Update the windows
+  UpdateWindows();
 
   return id;
 }
@@ -250,7 +251,7 @@ bool WindowManager::UpdateWindowAttributes(const WindowUniqueId &id,
   sprites_lk.unlock();
 
   if (update_sprites) {
-    UpdateSprites();
+    UpdateWindows();
   }
 
   return true;
@@ -304,15 +305,48 @@ bool WindowManager::SetWindowCursor(const WindowUniqueId &id,
   window->cursor = cursor;
   window_lk.unlock();
 
-  {
-    std::unique_lock focused_window_id_lk(focused_window_id_mutex_);
+  // If the window is the hovered window, then set the cursor
+  if (id == GetHoveredWindowId()) {
+    Core::Get()->get_input_manager()->set_block_app_input_cursor(cursor);
+  }
 
-    // If the window is the focused window, then set the
-    if (id == focused_window_id_) {
-      focused_window_id_lk.unlock();
-      Core::Get()->get_input_manager()->set_block_app_input_cursor(cursor);
+  return true;
+}
+
+bool WindowManager::FocusWindowInGroup(const WindowUniqueId &id) {
+  std::shared_ptr<Window> window = nullptr;
+  std::shared_ptr<WindowGroup> window_group = nullptr;
+
+  // Get the window group
+  try {
+    std::lock_guard window_groups_lk(window_groups_mutex_);
+    window_group = window_groups_.at(id.GetGroupId());
+  } catch (...) {
+    return false;
+  }
+
+  try {
+    std::lock_guard window_group_lk(window_group->mutex);
+    window = window_group->windows.at(id.window_id);
+  } catch (...) {
+    // Window wasn't found
+    return false;
+  }
+
+  {
+    // Verify that the window isn't hidden
+    std::lock_guard window_lk(window->mutex);
+    if (window->attributes.hidden) {
+      return false;
     }
   }
+
+  {
+    std::lock_guard window_group_lk(window_group->mutex);
+    window_group->focused_window_id = id.window_id;
+  }
+
+  UpdateWindows();
 
   return true;
 }
@@ -338,8 +372,8 @@ void WindowManager::DestroyWindowInGroup(const WindowUniqueId &id) {
   } catch (...) {
   }
 
-  // Update the sprites
-  UpdateSprites();
+  // Update the windows
+  UpdateWindows();
 }
 
 void WindowManager::UpdateWindowBufferInGroup(const WindowUniqueId &id,
@@ -381,38 +415,141 @@ void WindowManager::OnResize() {
 
 const WindowUniqueId WindowManager::GetFocusedWindowId() {
   std::lock_guard focused_window_id_lk(focused_window_id_mutex_);
-
   return focused_window_id_;
 }
 
-void WindowManager::SendWindowEventToFocusedWindow(EventResponse &event) {
-  CHECK_F(event.event_case() == EventResponse::kWindowEvent);
+const WindowUniqueId WindowManager::GetHoveredWindowId() {
+  std::lock_guard hovered_window_id_lk(hovered_window_id_mutex_);
+  return hovered_window_id_;
+}
+
+void WindowManager::SendWindowEventToWindow(EventResponse event,
+                                            const WindowUniqueId &window_id) {
+  CHECK_F(event.event_case() == EventResponse::kWindowEvent && window_id);
+
+  // Ignore invalid windows
+  if (!GetWindowWithId(window_id)) {
+    return;
+  }
 
   EventResponse::WindowEvent *window_event = event.mutable_windowevent();
+
+  // Set window group id and window id
+  window_event->set_windowgroupid((const char *)&window_id.group_id,
+                                  sizeof(window_id.group_id));
+  window_event->set_windowid((const char *)&window_id.window_id,
+                             sizeof(window_id.window_id));
+
+  // Send the event to the client that owns the window
+  Core::Get()->get_rpc_server()->get_events_service()->SendEventToClient(
+      window_id.client_id, event);
+}
+
+void WindowManager::SendWindowEventToFocusedWindow(EventResponse event) {
+  CHECK_F(event.event_case() == EventResponse::kWindowEvent);
 
   WindowUniqueId focused_window_id = GetFocusedWindowId();
   if (!focused_window_id) {
     return;
   }
 
-  // Set window group id and window id
-  window_event->set_windowgroupid((const char *)&focused_window_id.group_id,
-                                  sizeof(focused_window_id.group_id));
-  window_event->set_windowid((const char *)&focused_window_id.window_id,
-                             sizeof(focused_window_id.window_id));
-
-  // Send the event to the client that owns the window
-  Core::Get()->get_rpc_server()->get_events_service()->SendEventToClient(
-      focused_window_id.client_id, event);
+  SendWindowEventToWindow(event, focused_window_id);
 }
 
-std::shared_ptr<Window> WindowManager::GetFocusedWindow() {
+void WindowManager::HandleMouseEvent(EventResponse event, POINT point) {
+  CHECK_F(event.event_case() == EventResponse::kWindowEvent);
+
   WindowUniqueId focused_window_id = GetFocusedWindowId();
+  WindowUniqueId new_hovered_window_id;
 
-  return focused_window_id ? GetWindowWithId(focused_window_id) : nullptr;
+  std::vector<std::pair<WindowUniqueId, Rect>> window_rects;
+  {
+    std::lock_guard window_rects_lk(window_rects_mutex_);
+    window_rects = window_rects_;
+  }
+
+  EventResponse::WindowEvent *window_event = event.mutable_windowevent();
+  EventResponse::WindowEvent::MouseInputEvent *input_event =
+      window_event->mutable_mouseinputevent();
+
+  bool in_rect = false, focused = false;
+
+  for (auto window_it = window_rects.rbegin(); window_it != window_rects.rend();
+       window_it++) {
+    in_rect = utils::Rect::PointInRect(point, window_it->second);
+    focused = window_it->first == focused_window_id;
+
+    // If the event is in the window or the window is the focused window
+    if (in_rect || focused) {
+      // Send mouse move and mouse button up to focused window even if not in
+      // rect or send every event except mouse button up to the window the event
+      // occurred in
+      if ((focused && !in_rect &&
+           !(input_event->type() ==
+                 EventResponse::WindowEvent::MouseInputEvent::MOUSE_MOVE ||
+             input_event->type() == EventResponse::WindowEvent::
+                                        MouseInputEvent::MOUSE_BUTTON_UP)) ||
+          (in_rect && !focused &&
+           input_event->type() ==
+               EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP)) {
+        continue;
+      }
+
+      input_event->set_x(point.x - window_it->second.x);
+      input_event->set_y(point.y - window_it->second.y);
+
+      SendWindowEventToWindow(event, window_it->first);
+
+      // Focus on the window that was pressed
+      if (input_event->type() ==
+          EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN) {
+        FocusWindowInGroup(window_it->first);
+      } else if (input_event->type() ==
+                     EventResponse::WindowEvent::MouseInputEvent::MOUSE_MOVE &&
+                 in_rect) {
+        new_hovered_window_id = window_it->first;
+      }
+
+      // If we found the window the event occurred in, break
+      if (in_rect) {
+        break;
+      }
+    }
+  }
+
+  // If the mouse moved, update the hovered window
+  if (input_event->type() ==
+      EventResponse::WindowEvent::MouseInputEvent::MOUSE_MOVE) {
+    SetHoveredWindow(new_hovered_window_id);
+  }
 }
 
-void WindowManager::UpdateSprites() {
+void WindowManager::SetHoveredWindow(const WindowUniqueId &window_id) {
+  std::shared_ptr<Window> window = GetWindowWithId(window_id);
+  WindowUniqueId new_hovered_window_id =
+      window ? window_id
+             : WindowUniqueId();  // Treat invalid windows as no window
+
+  std::unique_lock hovered_window_id_lk(hovered_window_id_mutex_);
+  if (new_hovered_window_id == hovered_window_id_) {
+    return;
+  }
+
+  hovered_window_id_ = new_hovered_window_id;
+  hovered_window_id_lk.unlock();
+
+  if (!window) {
+    Core::Get()->get_input_manager()->set_block_app_input_cursor(
+        LoadCursor(NULL, IDC_ARROW));
+  } else {
+    std::lock_guard window_lk(window->mutex);
+    Core::Get()->get_input_manager()->set_block_app_input_cursor(
+        window->cursor);
+  }
+}
+
+void WindowManager::UpdateWindows() {
+  std::vector<std::pair<WindowUniqueId, Rect>> window_rects;
   std::vector<std::shared_ptr<Sprite>> sprites;
 
   std::vector<std::shared_ptr<WindowGroup>> window_groups;
@@ -493,26 +630,34 @@ void WindowManager::UpdateSprites() {
     FocusWindow(sorted_windows[sorted_windows.size() - 1]);
   }
 
-  // Transform windows into sprites
-  std::transform(sorted_visible_windows.begin(), sorted_visible_windows.end(),
-                 std::back_inserter(sprites),
-                 [](std::shared_ptr<Window> &window) {
-                   std::lock_guard window_lk(window->mutex);
-                   return window->sprite;
-                 });
+  // Transform windows into sprites and rects
+  for (const auto &window : sorted_windows) {
+    std::lock_guard window_lk(window->mutex);
 
-  // Swap the sprites vector
-  std::lock_guard sprites_lk(sprites_mutex_);
-  sprites_.swap(sprites);
+    sprites.push_back(window->sprite);
+    window_rects.push_back(std::make_pair(window->id, window->rect));
+  }
+
+  {
+    // Swap the sprites vector
+    std::lock_guard sprites_lk(sprites_mutex_);
+    sprites_.swap(sprites);
+  }
+
+  {
+    // Swap the rects vector
+    std::lock_guard window_rects_lk(window_rects_mutex_);
+    window_rects_.swap(window_rects);
+  }
 }
 
 void WindowManager::UpdateBlockAppInput() {
   bool block_input = false;
 
-  const WindowUniqueId focused_window_id = GetFocusedWindowId();
-  std::shared_ptr<Window> focused_window =
-      focused_window_id ? GetWindowWithId(focused_window_id) : nullptr;
-  HCURSOR focused_window_cursor = NULL;
+  const WindowUniqueId hovered_window_id = GetHoveredWindowId();
+  std::shared_ptr<Window> hovered_window =
+      hovered_window_id ? GetWindowWithId(hovered_window_id) : nullptr;
+  HCURSOR hovered_window_cursor = NULL;
 
   std::unique_lock window_groups_lk(window_groups_mutex_);
 
@@ -529,34 +674,24 @@ void WindowManager::UpdateBlockAppInput() {
   window_groups_lk.unlock();
   Core::Get()->get_input_manager()->set_block_app_input(block_input);
 
-  // Set focused window's cursor
-  if (focused_window != nullptr) {
-    std::unique_lock focused_window_lk(focused_window->mutex);
-    focused_window_cursor = focused_window->cursor;
-    focused_window_lk.unlock();
+  // Set hovered window's cursor
+  if (hovered_window != nullptr) {
+    std::unique_lock hovered_window_lk(hovered_window->mutex);
+    hovered_window_cursor = hovered_window->cursor;
+    hovered_window_lk.unlock();
 
     Core::Get()->get_input_manager()->set_block_app_input_cursor(
-        focused_window_cursor);
+        hovered_window_cursor);
   }
 }
 
 void WindowManager::FocusWindow(std::shared_ptr<Window> window) {
-  std::unique_lock focused_window_id_lk(focused_window_id_mutex_);
+  std::lock_guard focused_window_id_lk(focused_window_id_mutex_);
   if (window && focused_window_id_ == window->id) {
     return;
   }
 
   focused_window_id_ = window && window->id ? window->id : WindowUniqueId();
-  focused_window_id_lk.unlock();
-
-  if (!window || !window->id) {
-    Core::Get()->get_input_manager()->set_block_app_input_cursor(
-        LoadCursor(NULL, IDC_ARROW));
-  } else {
-    std::lock_guard window_lk(window->mutex);
-    Core::Get()->get_input_manager()->set_block_app_input_cursor(
-        window->cursor);
-  }
 }
 
 std::shared_ptr<Window> WindowManager::CreateBufferWindow(Color color,

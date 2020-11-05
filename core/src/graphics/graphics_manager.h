@@ -20,7 +20,7 @@ class GraphicsManager {
   void BroadcastApplicationStats(double frame_time, double fps);
 
   void Render();
-  void OnResize(size_t width, size_t height, bool fullscreen);
+  void OnResize(uint32_t width, uint32_t height, bool fullscreen);
 
   WindowManager *get_window_manager();
 

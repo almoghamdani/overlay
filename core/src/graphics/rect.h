@@ -6,8 +6,8 @@ namespace core {
 namespace graphics {
 
 struct Rect {
-  size_t height, width;
-  size_t x, y;
+  uint32_t height, width;
+  int32_t x, y;
 };
 
 }  // namespace graphics

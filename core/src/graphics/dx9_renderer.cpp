@@ -161,7 +161,7 @@ void Dx9Renderer::RenderSprites(
   device_->EndScene();
 }
 
-void Dx9Renderer::OnResize(size_t width, size_t height, bool fullscreen) {
+void Dx9Renderer::OnResize(uint32_t width, uint32_t height, bool fullscreen) {
   set_width(width);
   set_height(height);
   set_fullscreen(fullscreen);

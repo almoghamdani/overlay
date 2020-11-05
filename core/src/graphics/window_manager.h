@@ -1,9 +1,11 @@
 #pragma once
+#include <Windows.h>
 #include <guiddef.h>
 
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "color.h"
@@ -33,6 +35,7 @@ class WindowManager {
                               const WindowAttributes &attributes);
   bool SetWindowRect(const WindowUniqueId &id, const Rect &rect);
   bool SetWindowCursor(const WindowUniqueId &id, const HCURSOR cursor);
+  bool FocusWindowInGroup(const WindowUniqueId &id);
   void UpdateWindowBufferInGroup(const WindowUniqueId &id,
                                  std::string &&buffer);
   void DestroyWindowInGroup(const WindowUniqueId &id);
@@ -40,8 +43,10 @@ class WindowManager {
   void RenderWindows(std::unique_ptr<IGraphicsRenderer> &renderer);
   void OnResize();
 
-  void SendWindowEventToFocusedWindow(EventResponse &event);
-  std::shared_ptr<Window> GetFocusedWindow();
+  void SendWindowEventToWindow(EventResponse event,
+                               const WindowUniqueId &window_id);
+  void SendWindowEventToFocusedWindow(EventResponse event);
+  void HandleMouseEvent(EventResponse event, POINT point);
 
  private:
   std::unordered_map<WindowGroupUniqueId, std::shared_ptr<WindowGroup>>
@@ -51,18 +56,27 @@ class WindowManager {
   WindowUniqueId focused_window_id_;
   std::mutex focused_window_id_mutex_;
 
+  WindowUniqueId hovered_window_id_;
+  std::mutex hovered_window_id_mutex_;
+
+  std::vector<std::pair<WindowUniqueId, Rect>> window_rects_;
+  std::mutex window_rects_mutex_;
+
   std::vector<std::shared_ptr<Sprite>> sprites_;
   std::mutex sprites_mutex_;
 
-  void UpdateSprites();
+  void UpdateWindows();
   void UpdateBlockAppInput();
 
   void FocusWindow(std::shared_ptr<Window> window);
+  void SetHoveredWindow(const WindowUniqueId &window_id);
 
   std::shared_ptr<Window> CreateBufferWindow(Color color, double opacity);
 
   std::shared_ptr<Window> GetWindowWithId(const WindowUniqueId &id);
+
   const WindowUniqueId GetFocusedWindowId();
+  const WindowUniqueId GetHoveredWindowId();
 };
 
 }  // namespace graphics

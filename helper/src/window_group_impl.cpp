@@ -86,7 +86,7 @@ std::shared_ptr<Window> WindowGroupImpl::CreateNewWindow(
   window_rect = request.mutable_rect();
   properties->set_opacity(attributes.opacity);
   properties->set_hidden(attributes.hidden);
-  window_rect->set_height(rect.height);
+  window_rect->set_height((int)rect.height);
   window_rect->set_width(rect.width);
   window_rect->set_x(rect.x);
   window_rect->set_y(rect.y);

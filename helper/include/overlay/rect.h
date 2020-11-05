@@ -1,13 +1,13 @@
 #ifndef OVERLAY_RECT_H
 #define OVERLAY_RECT_H
-#include <stddef.h>
+#include <cstdint>
 
 namespace overlay {
 namespace helper {
 
 struct Rect {
-  size_t height, width;
-  size_t x, y;
+  uint32_t height, width;
+  int32_t x, y;
 };
 
 }  // namespace helper
