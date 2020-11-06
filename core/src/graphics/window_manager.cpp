@@ -20,7 +20,6 @@ GUID WindowManager::CreateWindowGroup(std::string client_id,
 
   window_group->id = WindowGroupUniqueId(id, client_id);
   window_group->attributes = attributes;
-  window_group->focused_window_id = GUID_NULL;
 
   if (attributes.has_buffer) {
     window_group->buffer_window =
@@ -161,10 +160,7 @@ GUID WindowManager::CreateWindowInGroup(const WindowGroupUniqueId &group_id,
   {
     std::lock_guard window_group_lk(window_group->mutex);
     window_group->windows[id] = window;
-
-    if (window_group->focused_window_id == GUID_NULL && !attributes.hidden) {
-      window_group->focused_window_id = window->id.window_id;
-    }
+    window_group->windows_order.push_back(id);
   }
 
   DLOG_F(INFO,
@@ -203,34 +199,14 @@ bool WindowManager::UpdateWindowAttributes(const WindowUniqueId &id,
                                            const WindowAttributes &attributes) {
   std::unique_lock sprites_lk(sprites_mutex_, std::defer_lock);
 
-  std::shared_ptr<Window> window = nullptr;
-  std::shared_ptr<WindowGroup> window_group = nullptr;
+  std::shared_ptr<Window> window = GetWindowWithId(id);
 
   std::shared_ptr<Sprite> sprite = nullptr;
 
   bool update_sprites = false;
   double old_opacity = 0;
 
-  // Get the window group
-  try {
-    std::lock_guard window_groups_lk(window_groups_mutex_);
-    window_group = window_groups_.at(id.GetGroupId());
-  } catch (...) {
-    return false;
-  }
-
-  try {
-    std::lock_guard window_group_lk(window_group->mutex);
-    window = window_group->windows.at(id.window_id);
-
-    if (window_group->focused_window_id == id.window_id && attributes.hidden) {
-      window_group->focused_window_id = GUID_NULL;
-    } else if (window_group->focused_window_id == GUID_NULL &&
-               !attributes.hidden) {
-      window_group->focused_window_id = id.window_id;
-    }
-  } catch (...) {
-    // Window wasn't found
+  if (!window) {
     return false;
   }
 
@@ -341,12 +317,27 @@ bool WindowManager::FocusWindowInGroup(const WindowUniqueId &id) {
     }
   }
 
-  {
-    std::lock_guard window_group_lk(window_group->mutex);
-    window_group->focused_window_id = id.window_id;
+  std::unique_lock window_group_lk(window_group->mutex);
+
+  // If the window isn't the front window, move it to the front
+  if (window_group->windows_order.back() != id.window_id) {
+    auto window_it = std::find(window_group->windows_order.begin(),
+                               window_group->windows_order.end(), id.window_id);
+    if (window_it != window_group->windows_order.end()) {
+      window_group->windows_order.erase(window_it);
+      window_group->windows_order.push_back(id.window_id);
+    } else {
+      return false;
+    }
+
+    window_group_lk.unlock();
+    UpdateWindows();
+  } else {
+    window_group_lk.unlock();
   }
 
-  UpdateWindows();
+  // Focus the window
+  FocusWindow(window);
 
   return true;
 }
@@ -366,8 +357,10 @@ void WindowManager::DestroyWindowInGroup(const WindowUniqueId &id) {
     std::lock_guard window_group_lk(window_group->mutex);
     window_group->windows.erase(id.window_id);
 
-    if (window_group->focused_window_id == id.window_id) {
-      window_group->focused_window_id = GUID_NULL;
+    auto window_it = std::find(window_group->windows_order.begin(),
+                               window_group->windows_order.end(), id.window_id);
+    if (window_it != window_group->windows_order.end()) {
+      window_group->windows_order.erase(window_it);
     }
   } catch (...) {
   }
@@ -479,6 +472,13 @@ void WindowManager::HandleMouseEvent(EventResponse event, POINT point) {
     in_rect = utils::Rect::PointInRect(point, window_it->second);
     focused = window_it->first == focused_window_id;
 
+    if (focused && !in_rect &&
+        input_event->type() ==
+            EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN) {
+      FocusWindow(nullptr);
+      focused = false;
+    }
+
     // If the event is in the window or the window is the focused window
     if (in_rect || focused) {
       // Send mouse move and mouse button up to focused window even if not in
@@ -495,10 +495,12 @@ void WindowManager::HandleMouseEvent(EventResponse event, POINT point) {
         continue;
       }
 
-      input_event->set_x(point.x - window_it->second.x);
-      input_event->set_y(point.y - window_it->second.y);
+      if (window_it->first) {
+        input_event->set_x(point.x - window_it->second.x);
+        input_event->set_y(point.y - window_it->second.y);
 
-      SendWindowEventToWindow(event, window_it->first);
+        SendWindowEventToWindow(event, window_it->first);
+      }
 
       // Focus on the window that was pressed
       if (input_event->type() ==
@@ -597,22 +599,12 @@ void WindowManager::UpdateWindows() {
     }
 
     // Get all windows
-    std::transform(window_group->windows.begin(), window_group->windows.end(),
+    std::transform(window_group->windows_order.begin(),
+                   window_group->windows_order.end(),
                    std::back_inserter(sorted_windows),
-                   [](auto &pair) { return pair.second; });
-
-    // Move the focused window to the end
-    if (window_group->focused_window_id != GUID_NULL) {
-      sorted_windows.erase(
-          std::remove_if(sorted_windows.end() - window_group->windows.size(),
-                         sorted_windows.end(),
-                         [id = window_group->focused_window_id](
-                             const std::shared_ptr<Window> &window) {
-                           return window->id.window_id == id;
-                         }));
-      sorted_windows.push_back(
-          window_group->windows[window_group->focused_window_id]);
-    }
+                   [window_group](const GUID &window_id) {
+                     return window_group->windows[window_id];
+                   });
   }
 
   // Remove all hidden windows
@@ -626,8 +618,6 @@ void WindowManager::UpdateWindows() {
   // Set the focused window
   if (sorted_windows.empty()) {
     FocusWindow(nullptr);
-  } else {
-    FocusWindow(sorted_windows[sorted_windows.size() - 1]);
   }
 
   // Transform windows into sprites and rects
@@ -686,12 +676,29 @@ void WindowManager::UpdateBlockAppInput() {
 }
 
 void WindowManager::FocusWindow(std::shared_ptr<Window> window) {
-  std::lock_guard focused_window_id_lk(focused_window_id_mutex_);
+  std::unique_lock focused_window_id_lk(focused_window_id_mutex_);
+  WindowUniqueId old_focused_window_id = focused_window_id_;
+
+  EventResponse event;
+
   if (window && focused_window_id_ == window->id) {
     return;
   }
 
   focused_window_id_ = window && window->id ? window->id : WindowUniqueId();
+  focused_window_id_lk.unlock();
+
+  // Send blur event
+  if (old_focused_window_id) {
+    event.mutable_windowevent()->mutable_blurevent();
+    SendWindowEventToWindow(event, old_focused_window_id);
+  }
+
+  // Send focus event
+  if (window && window->id) {
+    event.mutable_windowevent()->mutable_focusevent();
+    SendWindowEventToWindow(event, window->id);
+  }
 }
 
 std::shared_ptr<Window> WindowManager::CreateBufferWindow(Color color,
@@ -700,8 +707,8 @@ std::shared_ptr<Window> WindowManager::CreateBufferWindow(Color color,
 
   window->attributes.hidden = false;
   window->attributes.opacity = opacity;
-  window->sprite = std::make_shared<Sprite>();
 
+  window->sprite = std::make_shared<Sprite>();
   window->sprite->fill_target = true;
   window->sprite->opacity = opacity;
   window->sprite->solid_color = true;

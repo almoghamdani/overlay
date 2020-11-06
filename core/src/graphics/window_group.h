@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "color.h"
 #include "window.h"
@@ -27,9 +28,7 @@ struct WindowGroupUniqueId {
     return group_id == GUID_NULL && client_id.empty();
   }
 
-  inline explicit operator bool() const {
-    return !Empty();
-  }
+  inline explicit operator bool() const { return !Empty(); }
 
   inline bool operator==(const WindowGroupUniqueId& other) const {
     return group_id == other.group_id && client_id == other.client_id;
@@ -61,7 +60,7 @@ struct WindowGroup {
   std::shared_ptr<Window> buffer_window;
 
   std::unordered_map<GUID, std::shared_ptr<Window>> windows;
-  GUID focused_window_id;
+  std::list<GUID> windows_order;
 
   std::mutex mutex;
 };

@@ -8,7 +8,7 @@
 namespace overlay {
 namespace helper {
 
-enum class WindowEventType { KeyboardInput, MouseInput };
+enum class WindowEventType { KeyboardInput, MouseInput, Focus, Blur };
 
 struct WindowEvent {
   WindowEvent(WindowEventType type) : type(type) {}
@@ -203,6 +203,14 @@ struct WindowMouseInputEvent : public WindowEvent {
     Button button;
     int wheel_delta;
   };
+};
+
+struct WindowFocusEvent : public WindowEvent {
+  WindowFocusEvent() : WindowEvent(WindowEventType::Focus) {}
+};
+
+struct WindowBlurEvent : public WindowEvent {
+  WindowBlurEvent() : WindowEvent(WindowEventType::Blur) {}
 };
 
 }  // namespace helper

@@ -247,7 +247,8 @@ std::shared_ptr<WindowEvent> WindowImpl::GenerateEvent(
 
         case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOWN:
         case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_UP:
-        case EventResponse::WindowEvent::MouseInputEvent::MOUSE_BUTTON_DOUBLE_CLICK:
+        case EventResponse::WindowEvent::MouseInputEvent::
+            MOUSE_BUTTON_DOUBLE_CLICK:
           window_event = new WindowMouseInputEvent(
               (WindowMouseInputEvent::InputType)event.mouseinputevent().type(),
               (size_t)event.mouseinputevent().x(),
@@ -259,6 +260,14 @@ std::shared_ptr<WindowEvent> WindowImpl::GenerateEvent(
           break;
       }
 
+      break;
+
+    case EventResponse::WindowEvent::EventCase::kFocusEvent:
+      window_event = new WindowFocusEvent();
+      break;
+
+    case EventResponse::WindowEvent::EventCase::kBlurEvent:
+      window_event = new WindowBlurEvent();
       break;
 
     default:

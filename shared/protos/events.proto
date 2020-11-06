@@ -53,12 +53,22 @@ message EventResponse {
 			sint32 wheelDelta = 5;
 		}
 
+		message FocusEvent {
+
+		}
+
+		message BlurEvent {
+
+		}
+
 		bytes windowGroupId = 1;
 		bytes windowId = 2;
 
 		oneof event {
 			KeyboardInputEvent keyboardInputEvent = 3;
 			MouseInputEvent mouseInputEvent = 4;
+			FocusEvent focusEvent = 5;
+			BlurEvent blurEvent = 6;
 		}
 	}
 
