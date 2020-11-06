@@ -27,11 +27,6 @@ class EventsServiceImpl final
   void AsyncInitialize(grpc::ServerBuilder &server_builder);
   void StartHandlingAsyncRpcs();
 
-  void RegisterEventWorker(EventResponse::EventCase event_type,
-                           AsyncEventsServiceWorker *worker);
-  void RemoveEventWorker(EventResponse::EventCase event_type,
-                         AsyncEventsServiceWorker *worker);
-
   bool SendEventToClient(std::string client_id, EventResponse event);
   void BroadcastEvent(EventResponse event);
 
@@ -44,6 +39,13 @@ class EventsServiceImpl final
       std::unordered_map<std::string, AsyncEventsServiceWorker *>>
       event_workers_;
   std::mutex event_workers_mutex_;
+
+  void RegisterEventWorker(EventResponse::EventCase event_type,
+                           AsyncEventsServiceWorker *worker);
+  void RemoveEventWorker(EventResponse::EventCase event_type,
+                         AsyncEventsServiceWorker *worker);
+
+  friend class AsyncEventsServiceWorker;
 };
 
 class AsyncEventsServiceWorker {
