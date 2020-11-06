@@ -36,7 +36,7 @@ foreach(PROTO_FILE ${PROTOS})
         "${PROTO_FILE}"
 	  DEPENDS "${PROTO_FILE}")
 endforeach()
-set_source_files_properties(${PROTO_SRCS} ${GRPC_SRCS} PROPERTIES COMPILE_FLAGS "/W0") # Ignore all warnings for protobuf generated files
+set_source_files_properties(${GRPC_SRCS} PROPERTIES COMPILE_FLAGS "/W0") # Ignore all warnings for gRPC protobuf generated files
 
 # Add the overlay shared as an object library
 add_library(${PROJECT_NAME} OBJECT ${SOURCES} ${PROTO_SRCS} ${GRPC_SRCS})
