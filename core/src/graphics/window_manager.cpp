@@ -526,6 +526,22 @@ void WindowManager::HandleMouseEvent(EventResponse event, POINT point) {
   }
 }
 
+void WindowManager::HandleWindowFocus(bool focused) {
+  EventResponse event;
+
+  WindowUniqueId focused_window_id = GetFocusedWindowId();
+
+  if (focused_window_id) {
+    if (focused) {
+      event.mutable_windowevent()->mutable_focusevent();
+    } else {
+      event.mutable_windowevent()->mutable_blurevent();
+    }
+    
+    SendWindowEventToWindow(event, focused_window_id);
+  }
+}
+
 void WindowManager::SetHoveredWindow(const WindowUniqueId &window_id) {
   std::shared_ptr<Window> window = GetWindowWithId(window_id);
   WindowUniqueId new_hovered_window_id =

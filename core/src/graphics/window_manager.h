@@ -47,6 +47,7 @@ class WindowManager {
                                const WindowUniqueId &window_id);
   void SendWindowEventToFocusedWindow(EventResponse event);
   void HandleMouseEvent(EventResponse event, POINT point);
+  void HandleWindowFocus(bool focused);
 
  private:
   std::unordered_map<WindowGroupUniqueId, std::shared_ptr<WindowGroup>>

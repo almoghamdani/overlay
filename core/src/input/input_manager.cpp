@@ -370,6 +370,13 @@ LRESULT InputManager::WindowSubclassProc(_In_ HWND window, _In_ UINT message,
         GetClientRect(window, &window_client_area_);
         break;
 
+      case WM_ACTIVATEAPP:
+        Core::Get()
+            ->get_graphics_manager()
+            ->get_window_manager()
+            ->HandleWindowFocus(word_param == TRUE);
+        break;
+
       case WM_SETCURSOR:
         // Set the cursor if app input is blocked
         if (block_app_input_ && LOWORD(long_param) == HTCLIENT) {
